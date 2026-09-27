@@ -62,13 +62,13 @@ Upload `production/dbfob-gerbers.zip`, then for assembly `production/bom_jlc.csv
 - **Low-stock lines to check before paying:**
   - MK1 IM69D130 (C536262): 614 in stock, about $3 each at small quantities.
   - D3 orange KT-0603O (C111340): 3979 in stock.
-- **Check the placement preview.** `fab.py` adds a 270° offset for TSSOP; everything else uses KiCad's angle. Before paying, confirm:
-  - U1 pin 1 matches the silkscreen dot.
-  - D1–D4 cathodes are on the left.
-  - The MK1 pin-1 corner matches.
-  - BT1's opening faces the bottom edge.
+- **Placement is verified against JLC's own footprints.** JLC places each part with the EasyEDA footprint of its LCSC number. `tools/check_cpl.py` puts those footprints where the CPL says and checks three things: every pad lands on the KiCad pad of the same pin, MK1's port lands on the sound hole, and BT1's opening faces the board edge. `fab.py` refuses to finish if any check fails. The corrections are in `JLC_FRAME` in `fab.py`:
+  - U1: +270°.
+  - MK1: +90°, and the CPL point moves 0.13 mm, because EasyEDA's origin is not the package centre.
+  - BT1: +180°. Its pads are symmetric but the opening is not.
+  - LEDs: none. The cathode is on the left in both libraries, even though the pad numbers differ.
 
-  A wrong rotation shows up as the same constant offset on every part of that package, so fix it in `ROT_OFFSET`.
+  Rev A's first CPL had MK1 turned 90° and BT1 backwards; this check is what caught it. Still glance at JLC's preview before paying.
 - **MK1 is a MEMS mic with an open port.** Make sure the board is not water-washed after reflow.
 
 ## Not verified yet
@@ -78,4 +78,3 @@ This is rev A and no hardware exists. Open items before calling it done:
 - The mic's current when powered from a GPIO.
 - Standby current, and so the cell's shelf life.
 - The hand-held level offset.
-- JLC's rotation convention for these packages.

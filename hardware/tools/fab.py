@@ -12,22 +12,34 @@ A part without an LCSC number is not machine-placed (J1 is pads for pogo pins or
 header, H1 is the keyring hole), so the CPL's exclusion set is read back from the BOM rather than
 written here (etofab.md §6).
 
-JLC's rotation convention differs from KiCad's for some packages. ROT_OFFSET holds the correction
-per footprint; every part of a package carries the same one, so a wrong entry shows up as one
-constant offset in JLC's placement preview, not a part-by-part fix. CHECK THE PREVIEW before
-paying: U1 (pin 1), MK1 (pin 1 and port), D1-D4 (cathode mark), BT1 (opening to the board edge).
+JLC places parts with the EasyEDA footprint of each LCSC number, whose rotation and origin can
+differ from KiCad's. JLC_FRAME holds the correction per footprint and check_cpl.py verifies the
+written CPL against the EasyEDA footprints (pin identity and position, BT1's opening direction);
+fab.py fails if that check does.
 """
-import csv, os, shutil, subprocess, tempfile, zipfile
+import csv, math, os, shutil, subprocess, sys, tempfile, zipfile
 
 HERE = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 PCB = os.path.join(HERE, 'dbfob.kicad_pcb')
 SCH = os.path.join(HERE, 'dbfob.kicad_sch')
 OUT = os.path.join(HERE, 'production')
 
-# footprint name -> degrees added to KiCad's rotation for JLC. TSSOP: JLC's library models are
-# pin 1 bottom-left, KiCad's top-left (the usual 270 of the community rotation tables). Everything
-# else is taken at KiCad's angle until the preview says otherwise.
-ROT_OFFSET = {'TSSOP-20_4.4x6.5mm_P0.65mm': 270}
+# JLC places each part with the EasyEDA footprint of its LCSC number, so the CPL has to be written
+# in that footprint's frame, not KiCad's. Measured by comparing pad positions of both footprints
+# (tools/check_cpl.py re-verifies every run against the EasyEDA data):
+#   TSSOP-20  EasyEDA = KiCad rotated +90 (pin 1 bottom-left)      -> +270
+#   MK1       EasyEDA = KiCad rotated -90                          -> +90, and EasyEDA's origin
+#             sits 0.13 mm towards the pads from the package centre (datasheet fig. 11 agrees
+#             with KiCad's footprint), so the CPL point moves with it
+#   BT1 3034  EasyEDA = KiCad rotated 180 (pads are symmetric; the outline's opening is not -
+#             uncorrected, the holder's opening would face U1 and no cell could go in)
+#   0603 LEDs cathode on the left in both, whatever the pad numbers say -> 0
+# footprint -> (degrees, (dx, dy) of the CPL point in KiCad footprint coordinates, mm)
+JLC_FRAME = {
+    'TSSOP-20_4.4x6.5mm_P0.65mm': (270, (0, 0)),
+    'Infineon_PG-LLGA-5-1': (90, (-0.13, 0)),
+    'BatteryHolder_Keystone_3034_1x20mm': (180, (0, 0)),
+}
 
 
 def run(*a): subprocess.run(['kicad-cli', *a], check=True, capture_output=True)
@@ -77,10 +89,19 @@ def main():
         for r in placed:
             # only what has a part to feed: H1 is not in the BOM at all, J1 has no LCSC number
             if r['Ref'] not in machine: hand.add(r['Ref']); continue
-            rot = (float(r['Rot']) + ROT_OFFSET.get(r['Package'], 0)) % 360
-            w.writerow([r['Ref'], f"{float(r['PosX']):.3f}mm", f"{float(r['PosY']):.3f}mm",
+            off, (dx, dy) = JLC_FRAME.get(r['Package'], (0, (0, 0)))
+            a = math.radians(float(r['Rot']))
+            # footprint frame (y down) -> CPL frame (y up), turned by the part's rotation
+            x = float(r['PosX']) + dx * math.cos(a) + dy * math.sin(a)
+            y = float(r['PosY']) + dx * math.sin(a) - dy * math.cos(a)
+            rot = (float(r['Rot']) + off) % 360
+            w.writerow([r['Ref'], f"{x:.3f}mm", f"{y:.3f}mm",
                         'Top' if r['Side'] == 'top' else 'Bottom', f'{rot:.0f}'])
             n += 1
+    chk = subprocess.run([sys.executable, os.path.join(os.path.dirname(__file__), 'check_cpl.py')],
+                         capture_output=True, text=True)
+    print(chk.stdout.rstrip())
+    if chk.returncode: raise SystemExit('CPL check failed: ' + chk.stderr[-500:])
     back = [r['Ref'] for r in placed if r['Side'] != 'top']
     for side in ('top', 'bottom'):
         run('pcb', 'render', '--side', side, '--width', '1000', '--height', '1400', '--quality', 'high',
