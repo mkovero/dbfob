@@ -81,7 +81,7 @@ A 94 dB pistonphone won't couple to a MEMS port. Calibrate by substitution inste
 
 ```
 hardware/   KiCad project, generator scripts, BOM, gerbers
-firmware/   MCU firmware (A-weighting, LAeq, colour mapping, sleep)
+firmware/   CH32V003 firmware on ch32fun: PDM capture, A-weighting, LAeq, LEDs, standby
 case/       3D-printable shell (STEP + STL)
 docs/       Calibration procedure, measurement notes
 ```
@@ -92,6 +92,7 @@ docs/       Calibration procedure, measurement notes
 - [ ] Breadboard, verify A-weighted LAeq against a reference meter
 - [ ] Define the hand-held offset and the occlusion detector
 - [ ] First PCB, coin-cell powered — rev A [ordered from JLCPCB 2026-09-27](hardware/README.md) (5 assembled, lead-free HASL); bring-up pending
+- [ ] Firmware bring-up on rev A — [firmware/](firmware/README.md) builds and passes host DSP tests (A-weighting within 0.02 dB, 50 Hz–8 kHz); not yet run on hardware
 - [ ] Printable case
 - [ ] Calibration procedure anyone can repeat with a phone and a known-good meter
 - [ ] Dosimeter mode

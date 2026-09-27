@@ -5,3 +5,9 @@ _autosave-*
 ~*.lck
 __pycache__/
 hardware/production.staging/
+firmware/*.elf
+firmware/*.bin
+firmware/*.hex
+firmware/*.lst
+firmware/*.map
+firmware/build/
