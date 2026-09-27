@@ -31,12 +31,16 @@ State at commit:
 | 20 | PD3 | LED_G | TIM2_CH2, D1 yellow-green |
 | 19 | PD2 | LED_Y | TIM1_CH1, D2 yellow |
 | 14 | PC4 | LED_O | TIM1_CH4, D3 orange |
-| 13 | PC3 | LED_R | TIM1_CH3, D4 red |
+| 13 | PC3 | LED_R | TIM1_CH3, D4 red (anode side) |
+| 12 | PC2 | LED_R_K | D4 cathode: drive low to light it; reverse-bias and time the decay to sense ambient light |
 | 10 | PC0 | BTN | SW1 to GND. Use the internal pull-up; EXTI wakes the MCU from standby |
 | 18 | PD1 | SWIO | Programming (WCH-LinkE) |
 | 2 | PD5 | TX | USART1 TX: prints dB readings during calibration |
 
-**LEDs.** All four are low-Vf AlInGaP/GaP types (1.6–2.6 V), so every colour still lights near the end of the cell's life. InGaN green and blue LEDs need about 3 V and would go dark. Current is about 2 mA per LED (4.5 mA on the dimmer yellow-green). Bar order from left to right is G Y · O R. The position of the lit LED also encodes the level, so the bar works for colour-blind users too.
+**LEDs.** The bar is deliberately dim: a club is dark and the fob should not light up the room. The resistors cap the current at about 0.45 mA (2.2 kΩ), or about 1 mA for the dimmer yellow-green (1 kΩ). Firmware uses PWM to go well below that indoors and shows the result for about 2 s.
+- **Ambient light sensing.** D4's cathode is on PC2 rather than GND, so the red LED doubles as a light sensor. Reverse-bias it (PC3 low, PC2 high), switch PC2 to input, and time how long it takes to read low. Fast means bright, which lets the firmware tell a dark room from daylight.
+- **Why these LEDs.** All four are low-Vf AlInGaP/GaP types (1.6–2.6 V), so every colour still lights near the end of the cell's life; InGaN green and blue LEDs need about 3 V.
+- **Order.** The bar runs G Y · O R from left to right. The position of the lit LED also encodes the level, so the bar works for colour-blind users.
 
 **J1** is four 2.54 mm pads: `+ D G T` = VBAT, SWIO, GND, TX. Fit a header by hand, or hold pogo pins against it. It is not assembled.
 

@@ -2530,11 +2530,11 @@
 		)
 		(instances (project "dbfob" (path "/058019d1-3f91-5e5f-9605-7efe8396e2b2" (reference "D4") (unit 1))))
 	)
-	(label "GND"
+	(label "LED_R_K"
 		(at 134.62 64.77 270)
 		(fields_autoplaced yes)
 		(effects (font (size 1.27 1.27)) (justify right bottom))
-		(uuid "a098bbba-fcbb-5fa7-afca-82d7a6fbb938")
+		(uuid "96651e36-c576-5f14-a1fa-c3f38313a7fe")
 	)
 	(symbol
 		(lib_id "Mechanical:MountingHole")
@@ -2747,7 +2747,7 @@
 			(at 48.72 34.64 0)
 			(effects (font (size 1.27 1.27)))
 		)
-		(property "Value" "220"
+		(property "Value" "1k"
 			(at 48.72 46.64 0)
 			(effects (font (size 1.27 1.27)))
 		)
@@ -2759,7 +2759,7 @@
 			(at 45.72 40.64 0)
 			(effects (font (size 1.27 1.27)) (hide yes))
 		)
-		(property "LCSC" "C22962"
+		(property "LCSC" "C21190"
 			(at 45.72 40.64 0)
 			(effects (font (size 1.27 1.27)) (hide yes))
 		)
@@ -2798,7 +2798,7 @@
 			(at 79.2 34.64 0)
 			(effects (font (size 1.27 1.27)))
 		)
-		(property "Value" "470"
+		(property "Value" "2.2k"
 			(at 79.2 46.64 0)
 			(effects (font (size 1.27 1.27)))
 		)
@@ -2810,7 +2810,7 @@
 			(at 76.2 40.64 0)
 			(effects (font (size 1.27 1.27)) (hide yes))
 		)
-		(property "LCSC" "C23179"
+		(property "LCSC" "C4190"
 			(at 76.2 40.64 0)
 			(effects (font (size 1.27 1.27)) (hide yes))
 		)
@@ -2849,7 +2849,7 @@
 			(at 107.14 34.64 0)
 			(effects (font (size 1.27 1.27)))
 		)
-		(property "Value" "470"
+		(property "Value" "2.2k"
 			(at 107.14 46.64 0)
 			(effects (font (size 1.27 1.27)))
 		)
@@ -2861,7 +2861,7 @@
 			(at 104.14 40.64 0)
 			(effects (font (size 1.27 1.27)) (hide yes))
 		)
-		(property "LCSC" "C23179"
+		(property "LCSC" "C4190"
 			(at 104.14 40.64 0)
 			(effects (font (size 1.27 1.27)) (hide yes))
 		)
@@ -2900,7 +2900,7 @@
 			(at 137.62 34.64 0)
 			(effects (font (size 1.27 1.27)))
 		)
-		(property "Value" "470"
+		(property "Value" "2.2k"
 			(at 137.62 46.64 0)
 			(effects (font (size 1.27 1.27)))
 		)
@@ -2912,7 +2912,7 @@
 			(at 134.62 40.64 0)
 			(effects (font (size 1.27 1.27)) (hide yes))
 		)
-		(property "LCSC" "C23179"
+		(property "LCSC" "C4190"
 			(at 134.62 40.64 0)
 			(effects (font (size 1.27 1.27)) (hide yes))
 		)
@@ -3154,6 +3154,12 @@
 		(effects (font (size 1.27 1.27)) (justify right bottom))
 		(uuid "26994e35-4050-5cdf-851e-403e34b358be")
 	)
+	(label "LED_R_K"
+		(at 116.84 86.36 180)
+		(fields_autoplaced yes)
+		(effects (font (size 1.27 1.27)) (justify right bottom))
+		(uuid "4697cb79-0648-56c3-9426-8b860ecfdc31")
+	)
 	(label "SWIO"
 		(at 137.16 83.82 0)
 		(fields_autoplaced yes)
@@ -3193,10 +3199,6 @@
 	(no_connect
 		(at 116.84 83.82)
 		(uuid "0b5aa4ea-773d-5949-a175-cbbdaf0bc95d")
-	)
-	(no_connect
-		(at 116.84 86.36)
-		(uuid "52a4fa2c-4632-53b2-8d97-0a83c5d8b843")
 	)
 	(wire
 		(pts (xy 45.72 57.15) (xy 45.72 44.45))
@@ -3338,11 +3340,11 @@
 		(effects (font (size 1.5 1.5)) (justify left bottom))
 		(uuid "ed86cbdf-ec48-5ac9-ba49-0f26a8d79499")
 	)
-	(text "LEDs on timer channels for PWM: D1 PD3 T2C2, D2 PD2 T1C1, D3 PC4 T1C4, D4 PC3 T1C3."
+	(text "LEDs on timer channels for PWM: D1 PD3 T2C2, D2 PD2 T1C1, D3 PC4 T1C4, D4 PC3 T1C3. D4 cathode on PC2 = ambient light sense."
 		(exclude_from_sim no)
 		(at 20 180 0)
 		(effects (font (size 1.5 1.5)) (justify left bottom))
-		(uuid "cfa75166-4d0a-5bdb-bf24-b3287138a356")
+		(uuid "9926b3de-828e-5afb-8141-13d3559a82ee")
 	)
 	(text "U1 fitted as CH32V003F4P6 (in stock); CH32V002F4P6 / CH32V006F8P6 are drop-in on this footprint."
 		(exclude_from_sim no)

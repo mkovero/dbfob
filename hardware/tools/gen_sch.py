@@ -45,6 +45,7 @@ PARTS = {
             '14': 'LED_O',       # PC4 TIM1_CH4
             '13': 'LED_R',       # PC3 TIM1_CH3
             '10': 'BTN',         # PC0 EXTI wake
+            '12': 'LED_R_K',     # PC2 D4 cathode: low to light, high+input to sense ambient light
             '18': 'SWIO',        # PD1 programming / debug
             '2': 'TX',           # PD5 USART1_TX: dB readout for calibration
             }),
@@ -71,27 +72,31 @@ PARTS = {
            '', '', 'keyring hole', (240, 150, 0), {}),
 }
 # LED bar: four low-Vf AlInGaP/GaP parts (1.6-2.6 V) so every colour still lights on a coin cell
-# near end of life; InGaN green/blue need ~3 V and would not. Current ~2 mA from a 3.0 V cell.
-LEDS = [  # ref, colour, LCSC, MPN, R, R LCSC
-    ('D1', 'LED_G', 'yellow-green 575nm', 'C89809', 'NCD0603C3', '220', 'C22962'),
-    ('D2', 'LED_Y', 'yellow 590nm', 'C2287', 'KT-0603Y', '470', 'C23179'),
-    ('D3', 'LED_O', 'orange 605nm', 'C111340', 'KT-0603O', '470', 'C23179'),
-    ('D4', 'LED_R', 'red 625nm', 'C2286', 'KT-0603R', '470', 'C23179'),
+# near end of life; InGaN green/blue need ~3 V and would not. Deliberately dim: a club is dark and
+# the bar should not light up the room. At 3.0 V the resistors cap the current at ~0.45 mA
+# (2.2 k) and ~1 mA for the dimmer yellow-green (1 k); firmware PWMs well below that indoors.
+# D4's cathode goes to PC2 instead of GND: reverse-biased and timed, the LED doubles as an
+# ambient light sensor, so the firmware can sense dark room vs daylight without a sensor part.
+LEDS = [  # ref, net, colour, LCSC, MPN, R, R LCSC, cathode net
+    ('D1', 'LED_G', 'yellow-green 575nm', 'C89809', 'NCD0603C3', '1k', 'C21190', 'GND'),
+    ('D2', 'LED_Y', 'yellow 590nm', 'C2287', 'KT-0603Y', '2.2k', 'C4190', 'GND'),
+    ('D3', 'LED_O', 'orange 605nm', 'C111340', 'KT-0603O', '2.2k', 'C4190', 'GND'),
+    ('D4', 'LED_R', 'red 625nm', 'C2286', 'KT-0603R', '2.2k', 'C4190', 'LED_R_K'),
 ]
-for i, (d, net, col, lcsc, mpn, rv, rl) in enumerate(LEDS):
+for i, (d, net, col, lcsc, mpn, rv, rl, k) in enumerate(LEDS):
     x = 45 + 30 * i
     PARTS['R%d' % (i + 4)] = ('Device:R', rv, R_FP, rl, '', 'LED current', (x, 40, 0),
                               {'1': net, '2': net + '_A'})
     # Device:LED pin 1 = K, pin 2 = A
-    PARTS[d] = ('Device:LED', col, LED_FP, lcsc, mpn, '', (x, 62, 90), {'2': net + '_A', '1': 'GND'})
+    PARTS[d] = ('Device:LED', col, LED_FP, lcsc, mpn, '', (x, 62, 90), {'2': net + '_A', '1': k})
 
 # MIC_VDD is driven by a GPIO, which ERC cannot know: flag it rather than leave the error standing
 FLAGS = {'#FLG01': ('VBAT', (60, 115)), '#FLG02': ('GND', (70, 150)), '#FLG03': ('MIC_VDD', (230, 75))}
-NOCONNECT = {'U1': ['1', '3', '4', '5', '6', '8', '11', '12']}
+NOCONNECT = {'U1': ['1', '3', '4', '5', '6', '8', '11']}
 TEXT = [
     ('dbfob - keyfob sound level indicator', (20, 20), 2.5),
     ('PDM mic on SPI: PC5 SCK -> CLK, PC7 MISO <- DATA, mic powered from PC6 only while measuring.', (20, 175), 1.5),
-    ('LEDs on timer channels for PWM: D1 PD3 T2C2, D2 PD2 T1C1, D3 PC4 T1C4, D4 PC3 T1C3.', (20, 180), 1.5),
+    ('LEDs on timer channels for PWM: D1 PD3 T2C2, D2 PD2 T1C1, D3 PC4 T1C4, D4 PC3 T1C3. D4 cathode on PC2 = ambient light sense.', (20, 180), 1.5),
     ('U1 fitted as CH32V003F4P6 (in stock); CH32V002F4P6 / CH32V006F8P6 are drop-in on this footprint.', (20, 185), 1.5),
 ]
 
