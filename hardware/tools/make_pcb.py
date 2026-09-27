@@ -64,10 +64,11 @@ SILK_F = [  # text, x, y, size
     ('+', 3.5, 29.2, 0.8), ('D', 6.04, 29.2, 0.8), ('G', 8.58, 29.2, 0.8), ('T', 11.12, 29.2, 0.8),
 ]
 SILK_B = [   # kept clear of BT1's pad vias (y 37, 41, 45) and the router's via at the cell top
+    ('REMOVE CELL TO PROGRAM', 18.0, 23.4, 0.8),   # right of the SWIO via
     ('dbfob rev A', 15.0, 31.6, 1.2),
     ('steady = bare ear', 15.0, 33.6, 0.9),
-    ('blink = with plugs', 15.0, 35.2, 0.9),
-    ('G<=83 Y<=90 O<=96 R>96', 15.0, 48.2, 0.8),
+    ('blink = plugs IF 12 dB', 15.0, 35.2, 0.9),
+    ('G<=83 Y<=90 O<=96 R>=97', 15.0, 48.2, 0.8),
     ('MIC', 15.0, 9.3, 0.8),
     ('dBA at ear  CERN-OHL-P', 15.0, 50.0, 0.8),
 ]
@@ -373,14 +374,29 @@ def main():
     if k: print(f'removed {k} dangling via(s)/stub(s)')
     stabilise_uuids(PCB)        # router tracks and zones come with random UUIDs too
     d = drc()
-    lib = ('lib_footprint_issues', 'lib_footprint_mismatch')
-    v = [x for x in d['violations'] if x['type'] not in lib]
-    errs = [x for x in v if x['severity'] == 'error']
-    print(f"unconnected: {len(d.get('unconnected_items', []))}  errors: {len(errs)}  "
-          f"warnings: {len(v) - len(errs)}  parity: {len(d.get('schematic_parity', []))}")
-    for x in v + d.get('schematic_parity', []) + d.get('unconnected_items', []):
-        print(f"  {x['severity']:8s} {x['type']:28s} {x['description'][:60]} "
-              + '; '.join(i['description'][:50] for i in x.get('items', [])[:2]))
+    problems = gate(d)
+    for x in problems: print('  ', x)
+    if problems: sys.exit(f'{len(problems)} board problem(s): not a releasable board')
+
+
+# The only DRC finding accepted: kicad-cli here has no global footprint-library table, so every
+# footprint reports its library as missing from the configuration. That is an environment warning,
+# not a board property. Anything else - a footprint that differs from its library included - fails.
+ALLOWED_DRC = {'lib_footprint_issues'}
+
+
+def gate(d):
+    """Every unresolved DRC, connectivity or parity finding, as printable lines."""
+    out = []
+    for x in d['violations']:
+        if x['type'] not in ALLOWED_DRC:
+            out.append(f"{x['severity']} {x['type']}: {x['description'][:70]} "
+                       + '; '.join(i['description'][:50] for i in x.get('items', [])[:2]))
+    out += [f"unconnected: {x['description'][:70]}" for x in d.get('unconnected_items', [])]
+    out += [f"parity {x['type']}: {x['description'][:70]}" for x in d.get('schematic_parity', [])]
+    n = len(d.get('unconnected_items', []))
+    print(f"unconnected: {n}  other findings: {len(out) - n}")
+    return out
 
 
 if __name__ == '__main__':

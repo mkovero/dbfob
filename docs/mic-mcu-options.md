@@ -7,11 +7,11 @@ Prices are LCSC / DigiKey list prices seen in September 2026, in USD. Check them
 ## Decision (2026-09-27)
 
 - **Digital (PDM) microphone.** Analog is ruled out; see the cost and calibration comparison below.
-- **AOP ≥ 130 dB SPL is a hard requirement.** 120 dB parts, including the cheap MSM261D series and the I2S hobby modules, are out. The firmware still flags clipping, but only as a sanity check, not as a crutch.
+- **AOP ≥ 130 dB SPL is a hard requirement.** 120 dB parts, including the cheap MSM261D series and the I2S hobby modules, are out. A clipping detector would only be an unvalidated sanity check (see below), never the safeguard.
 - **Microphone: Infineon IM69D130.** AOP 130 dB SPL in *all* clock modes, including 768 kHz. −36 dBFS ±1 dB. Runs at 1.62–3.6 V, straight from a CR2032. About $1.38 at 1k.
   - Second source: **TDK T5818**. It is 1.65–3.63 V and ±1 dB, but it reaches 135 dB AOP only in high-quality mode (clock 2.0–3.3 MHz). Its low-power mode (400–800 kHz) drops to 120 dB. So on the T5818, firmware must run the clock at ≥2.048 MHz and decimate by 128. Keep the decimator's clock rate and decimation ratio configurable so either mic works.
 - **MCU: WCH CH32V002.** Fall back to the CH32V006 if the internal op-amp or extra RAM is ever needed; it is pin-compatible. Not the CH32V003: it has no multiply and a 2.7 V minimum supply.
-- PDM is read through SPI+DMA, with software CIC/FIR decimation to 16 kHz.
+- PDM is read through SPI+DMA at 1.5 MHz, with software CIC/FIR decimation by 64 to 23,437.5 samples/s (see [hardware/README.md](../hardware/README.md#pdm-clock-plan)). An earlier draft said 1.024 MHz, but that falls between the mic's specified clock bands and cannot be divided from 48 MHz.
 - **Rev A is fitted with the CH32V003F4P6.** The V002 and V006 had no JLC/LCSC stock on 2026-09-27, and all three share the TSSOP-20 pinout. See [hardware/README.md](../hardware/README.md#mcu-fitted-with-a-ch32v003).
 
 The survey below is kept for the record.
@@ -30,9 +30,9 @@ The survey below is kept for the record.
 
 ### What AOP means for this device
 
-The top band starts at 108 dBA LAeq. A bass-heavy room at that level can have unweighted peaks of 120–125 dB SPL, so a 120 dB AOP part clips in exactly the region where the answer matters most.
+The red band starts at 97 dBA at a bare ear, and rooms well above that are the point of the device. A bass-heavy room at that level can have unweighted peaks of 120–125 dB SPL, so a 120 dB AOP part clips in exactly the region where the answer matters most.
 
-That can be handled in firmware. With a digital mic, clipping shows up exactly as full-scale samples after decimation. If more than a few samples in the window clip, the firmware shows **red**. The error then always points toward warning: a very bassy 104 dBA room may read red instead of orange, but a genuinely red room never reads orange.
+A firmware clip detector could catch some of this, for example by counting decimated samples near full scale and forcing red. That is unproven, though. AOP is defined by distortion, not a hard rail, and decimation filters smear or remove exact full-scale values. Treat it as a heuristic to validate, not a safeguard. This is why AOP ≥ 130 dB became a hard requirement. The error then always points toward warning: a very bassy 104 dBA room may read red instead of orange, but a genuinely red room never reads orange.
 
 - **130+ dB AOP part (IM69D130):** correct bands everywhere. Costs ~$1 more.
 - **120 dB AOP part (MSM261D):** correct up to orange, and the red band may show more often than it should. Costs ~$0.30.
@@ -71,7 +71,7 @@ The README's "calibration anyone can repeat" goal gets much easier. The procedur
 
 ## MCUs
 
-What the MCU has to do: run SPI with DMA as the PDM clock master (MISO = DATA), decimate 1-bit PDM at 768 kHz–1.024 MHz down to 16 kHz, run three A-weighting biquads, sum squares for 3 s, then drive one LED. Byte-wise lookup-table CIC/FIR decimation (ST AN5027 / OpenPDMFilter style) costs roughly a few percent of a 24–48 MHz core. A hardware multiplier matters for the biquads.
+What the MCU has to do: run SPI with DMA as the PDM clock master (MISO = DATA), decimate 1-bit PDM at 1.5 MHz down to 23,437.5 samples/s, run three A-weighting biquads, sum squares for 3 s, then drive one LED. Byte-wise lookup-table CIC/FIR decimation (ST AN5027 / OpenPDMFilter style) costs roughly a few percent of a 24–48 MHz core. A hardware multiplier matters for the biquads.
 
 | Part | Core | Hardware multiply | VDD min | SPI+DMA | Price | Notes |
 |---|---|---|---|---|---|---|
@@ -83,7 +83,7 @@ What the MCU has to do: run SPI with DMA as the PDM clock master (MISO = DATA), 
 
 **Pick: CH32V002.** It is cheap, has a hardware multiply, runs down to 2 V, and its toolchain and programmer are cheap and widely used by hobbyists. Firmware written for the V002 ports to the V006 or PY32 with little change. If the WCH ecosystem gets in the way during bring-up, move to the STM32C011: it costs ~$0.30 more and has the easiest debugging.
 
-Power: with the mic at ~0.3–1 mA plus the MCU at a few mA for about 3 s per press, each press uses well under 0.01 mAh. A CR2032 (~220 mAh) is limited by self-discharge and the MCU's standby current, not by use.
+Power: see [hardware/README.md § Power](../hardware/README.md#power-unqualified). The V003's run current against a coin cell's internal resistance needs qualification, and its 7.6 µA standby current (the V002 is worse, at 17.5 µA), not self-discharge, sets shelf life at about 3 years.
 
 ## Estimated BOM (digital path, 1k qty)
 
@@ -103,7 +103,7 @@ Power: with the mic at ~0.3–1 mA plus the MCU at a few mA for about 3 s per pr
 ## Next steps
 
 1. Order an IM69D130 breakout (Infineon Shield2Go or any PDM breakout), a CH32V002 dev board and a WCH-LinkE. Optionally add a few T5818s on an adapter to validate the second source.
-2. Bring up PDM over SPI at 1.024 MHz, decimate by 64 to 16 kHz, and implement A-weighting and LAeq.
+2. Bring up PDM over SPI at 1.5 MHz, decimate by 64 to 23,437.5 samples/s, and implement A-weighting (designed for that rate) and LAeq.
 3. Compare against a reference meter with pink noise at 85–115 dBA and with bass-heavy music. Confirm there is no clipping at club levels and measure the hand-held offset.
 
 ## Sources

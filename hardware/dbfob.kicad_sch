@@ -3258,7 +3258,7 @@
 	)
 	(symbol
 		(lib_id "power:PWR_FLAG")
-		(at 71.12 149.86 0)
+		(at 109.22 139.7 0)
 		(unit 1)
 		(exclude_from_sim no)
 		(in_bom no)
@@ -3266,19 +3266,19 @@
 		(dnp no)
 		(uuid "dd89eb9f-fa93-5152-a14c-91ada3d38e9f")
 		(property "Reference" "#FLG02"
-			(at 74.12 143.86 0)
+			(at 112.22 133.7 0)
 			(effects (font (size 1.27 1.27)) (hide yes))
 		)
 		(property "Value" "PWR_FLAG"
-			(at 74.12 155.86 0)
+			(at 112.22 145.7 0)
 			(effects (font (size 1.27 1.27)) (hide yes))
 		)
 		(property "Footprint" ""
-			(at 71.12 149.86 0)
+			(at 109.22 139.7 0)
 			(effects (font (size 1.27 1.27)) (hide yes))
 		)
 		(property "Datasheet" ""
-			(at 71.12 149.86 0)
+			(at 109.22 139.7 0)
 			(effects (font (size 1.27 1.27)) (hide yes))
 		)
 		(pin "1"
@@ -3287,10 +3287,10 @@
 		(instances (project "dbfob" (path "/058019d1-3f91-5e5f-9605-7efe8396e2b2" (reference "#FLG02") (unit 1))))
 	)
 	(label "GND"
-		(at 71.12 149.86 270)
+		(at 109.22 139.7 270)
 		(fields_autoplaced yes)
 		(effects (font (size 1.27 1.27)) (justify right bottom))
-		(uuid "e503db21-445b-57ec-a3e5-176ff33dcdef")
+		(uuid "c3438c41-5eae-5192-b3ff-a25f7f15f15b")
 	)
 	(symbol
 		(lib_id "power:PWR_FLAG")
@@ -3334,23 +3334,41 @@
 		(effects (font (size 2.5 2.5)) (justify left bottom))
 		(uuid "236be938-8ad5-5172-987c-b3deac3bca92")
 	)
-	(text "PDM mic on SPI: PC5 SCK -> CLK, PC7 MISO <- DATA, mic powered from PC6 only while measuring."
+	(text "PDM mic on SPI1: PC5 SCK -> CLK at 1.5 MHz, PC7 MISO <- DATA."
 		(exclude_from_sim no)
-		(at 20 175 0)
+		(at 20 150 0)
 		(effects (font (size 1.5 1.5)) (justify left bottom))
-		(uuid "ed86cbdf-ec48-5ac9-ba49-0f26a8d79499")
+		(uuid "b8e78e54-63f0-502c-8053-834b9473970d")
 	)
-	(text "LEDs on timer channels for PWM: D1 PD3 T2C2, D2 PD2 T1C1, D3 PC4 T1C4, D4 PC3 T1C3. D4 cathode on PC2 = ambient light sense."
+	(text "Mic powered from PC6 only while measuring."
 		(exclude_from_sim no)
-		(at 20 180 0)
+		(at 20 154 0)
 		(effects (font (size 1.5 1.5)) (justify left bottom))
-		(uuid "9926b3de-828e-5afb-8141-13d3559a82ee")
+		(uuid "12cc80e7-3af6-5d37-b2e0-f06d4a9b4b87")
 	)
-	(text "U1 fitted as CH32V003F4P6 (in stock); CH32V002F4P6 / CH32V006F8P6 are drop-in on this footprint."
+	(text "LED PWM: D1 PD3 T2C2, D2 PD2 T1C1, D3 PC4 T1C4, D4 PC3 T1C3."
 		(exclude_from_sim no)
-		(at 20 185 0)
+		(at 20 158 0)
 		(effects (font (size 1.5 1.5)) (justify left bottom))
-		(uuid "e97945b2-41cc-57c7-bb9b-9b574b5357d6")
+		(uuid "d791b757-85d3-51fc-81cb-367b624f1a51")
+	)
+	(text "D4 cathode on PC2 = ambient light sense."
+		(exclude_from_sim no)
+		(at 20 162 0)
+		(effects (font (size 1.5 1.5)) (justify left bottom))
+		(uuid "9671409e-753a-59cf-b278-b9ed2530594e")
+	)
+	(text "U1 fitted CH32V003F4P6; CH32V002/V006 drop-in."
+		(exclude_from_sim no)
+		(at 20 166 0)
+		(effects (font (size 1.5 1.5)) (justify left bottom))
+		(uuid "fb33c810-767d-5f37-b704-02a38783aacd")
+	)
+	(text "Remove the cell before programming through J1."
+		(exclude_from_sim no)
+		(at 20 170 0)
+		(effects (font (size 1.5 1.5)) (justify left bottom))
+		(uuid "e9d5dfb6-30f1-531c-9a86-4bfa04fe50d4")
 	)
 	(sheet_instances
 		(path "/"

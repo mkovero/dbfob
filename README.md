@@ -21,27 +21,27 @@ That's the whole product.
 
 ### Colour bands
 
-Exposure times follow the NIOSH / EU occupational curve (85 dBA for 8 hours, 3 dB exchange rate). The bands apply to the level **at your ear**:
+The bands are **levels at the ear**, not safety guarantees. The times are the full daily allowance at that level under the NIOSH / EU occupational curve, `T = 8 h × 2^((85 − L)/3)`: 85 dBA for 8 hours, 3 dB exchange rate.
 
-| Colour | At the ear (dBA) | Roughly means |
+| Colour | At the ear (dBA) | Daily allowance at that level |
 |---|---|---|
-| Green | ≤ 83 | All night is fine |
-| Yellow | 84–90 | A few hours |
-| Orange | 91–96 | About an hour |
-| Red | > 96 | Minutes: leave, or protect your ears |
+| Green | ≤ 83 | Below the 85 dBA / 8 h limit |
+| Yellow | 84–90 | About 10 h down to 2.5 h |
+| Orange | 91–96 | About 2 h down to 40 min |
+| Red | ≥ 97 | Under about 30 min |
 
-### Both answers at once
+A 3-second spot reading describes the room right now, not your night. The allowance is for a whole day starting from zero, so anything you've already heard today uses part of it. Green means this level is below the limit, not that the whole night is safe.
 
-Every reading shows two verdicts. There is no mode to set and nothing to forget:
+### Two LEDs, two questions
 
-- **Steady LED:** the verdict for a bare ear, from the room level itself.
-- **Blinking LED:** the verdict with earplugs, from the room level minus 12 dB.
+Every reading answers two questions at once, so there is no mode to set or forget:
 
-In a 100 dBA room, red glows steady and yellow blinks: you're in the red, and plugs would bring you to yellow. When both verdicts agree, only one steady LED lights.
+- **Steady LED: what reaches a bare ear.** This is the room level itself: measured, with no assumptions.
+- **Blinking LED: what would reach the ear through plugs that really give 12 dB.** This is a conditional estimate, not a measurement and not a safety verdict. The fob cannot know how well your plugs fit. Foam plugs claim 30+ dB on the box, but inserted in a hurry by someone who's had a drink, 10–15 dB is realistic. A badly seated plug can give much less. Individual fit testing is the only way to know your own attenuation, and NIOSH recommends it.
 
-The obvious alternative was a mode switch, but either default misleads someone. Assume plugs, and people without them get a falsely safe answer. Assume no plugs, and people who do wear them always see red, so the device looks useless to exactly the people doing the right thing. Showing both removes the default, and the gap between the two LEDs is itself the argument for plugs.
+In a 100 dBA room, red glows steady and yellow blinks: you're in the red, and well-fitted plugs could bring you to yellow. When both answers are the same, only one steady LED lights.
 
-The 12 dB figure is deliberately conservative. Foam plugs claim 30+ dB on the box, but inserted in a hurry by someone who's had a drink, 10–15 dB is realistic.
+The obvious alternative was a mode switch, but either default misleads someone. Assume plugs, and people without them get a falsely reassuring answer. Assume no plugs, and people who do wear them always see red, so the device looks useless to the people doing the right thing. Showing both removes the default, and the gap between the two LEDs is itself the argument for plugs.
 
 ### Modes
 
@@ -60,7 +60,7 @@ See [docs/mic-mcu-options.md](docs/mic-mcu-options.md) for the comparison. **Cho
 
 | Block | Options | Notes |
 |---|---|---|
-| MCU | **CH32V002** (alt. CH32V006) | PDM read via SPI+DMA, software decimation to 16 kHz. Hardware multiply for the A-weighting biquads; runs down to 2.0 V. |
+| MCU | **CH32V003F4P6** fitted (CH32V002/V006 drop-in, out of stock) | PDM read via SPI+DMA at 1.5 MHz, software decimation to 23.4 kHz. The V003 has no hardware multiply and needs ≥ 2.7 V; see [hardware/README.md](hardware/README.md#power-unqualified). |
 | Microphone | **Infineon IM69D130** PDM (alt. TDK T5818 in HQ mode) | **Acoustic overload point ≥ 130 dB SPL required.** Many hobby-favourite digital parts clip at ~120 dB, which a club sub stack will exceed. Digital ±1 dB parts allow batch calibration instead of per-unit calibration. |
 | LED | 4× discrete low-Vf LEDs as a bar: yellow-green, yellow, orange, red | InGaN green/blue need ~3 V and fade on a coin cell; the bar position also encodes the level for colour-blind users. |
 | Power | CR2032 in a holder | MCU in stop mode between presses → years of shelf life. |

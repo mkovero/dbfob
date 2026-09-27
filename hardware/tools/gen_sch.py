@@ -91,13 +91,16 @@ for i, (d, net, col, lcsc, mpn, rv, rl, k) in enumerate(LEDS):
     PARTS[d] = ('Device:LED', col, LED_FP, lcsc, mpn, '', (x, 62, 90), {'2': net + '_A', '1': k})
 
 # MIC_VDD is driven by a GPIO, which ERC cannot know: flag it rather than leave the error standing
-FLAGS = {'#FLG01': ('VBAT', (60, 115)), '#FLG02': ('GND', (70, 150)), '#FLG03': ('MIC_VDD', (230, 75))}
+FLAGS = {'#FLG01': ('VBAT', (60, 115)), '#FLG02': ('GND', (110, 140)), '#FLG03': ('MIC_VDD', (230, 75))}
 NOCONNECT = {'U1': ['1', '3', '4', '5', '6', '8', '11']}
-TEXT = [
+TEXT = [   # kept left of and above the title block (which starts at x ~177, y ~166 on A4)
     ('dbfob - keyfob sound level indicator', (20, 20), 2.5),
-    ('PDM mic on SPI: PC5 SCK -> CLK, PC7 MISO <- DATA, mic powered from PC6 only while measuring.', (20, 175), 1.5),
-    ('LEDs on timer channels for PWM: D1 PD3 T2C2, D2 PD2 T1C1, D3 PC4 T1C4, D4 PC3 T1C3. D4 cathode on PC2 = ambient light sense.', (20, 180), 1.5),
-    ('U1 fitted as CH32V003F4P6 (in stock); CH32V002F4P6 / CH32V006F8P6 are drop-in on this footprint.', (20, 185), 1.5),
+    ('PDM mic on SPI1: PC5 SCK -> CLK at 1.5 MHz, PC7 MISO <- DATA.', (20, 150), 1.5),
+    ('Mic powered from PC6 only while measuring.', (20, 154), 1.5),
+    ('LED PWM: D1 PD3 T2C2, D2 PD2 T1C1, D3 PC4 T1C4, D4 PC3 T1C3.', (20, 158), 1.5),
+    ('D4 cathode on PC2 = ambient light sense.', (20, 162), 1.5),
+    ('U1 fitted CH32V003F4P6; CH32V002/V006 drop-in.', (20, 166), 1.5),
+    ('Remove the cell before programming through J1.', (20, 170), 1.5),
 ]
 
 

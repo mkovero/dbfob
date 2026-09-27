@@ -1,6 +1,9 @@
 #!/usr/bin/env python3
 """Verify production/cpl_jlc.csv the way JLC will use it.
 
+First, membership: every BOM designator appears exactly once in the CPL and nothing else does,
+and each row's Layer is the side the footprint is actually on. Then geometry:
+
 JLC places every part with the EasyEDA footprint of its LCSC number, at the CPL position and
 rotation. This script does the same: it takes each EasyEDA footprint (cached in jlc_footprints/,
 fetched from easyeda.com on first use), puts it where the CPL says, and checks that
@@ -18,7 +21,7 @@ import pcbnew
 HERE = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 CACHE = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'jlc_footprints')
 PCB = os.path.join(HERE, 'dbfob.kicad_pcb')
-PROD = os.path.join(HERE, 'production')
+PROD = sys.argv[1] if len(sys.argv) > 1 else os.path.join(HERE, 'production')
 MIL10 = 0.254                  # EasyEDA units: 10 mil
 TOL_HOLE = 0.15                # mm
 
@@ -74,7 +77,20 @@ def main():
     for r in csv.DictReader(open(os.path.join(PROD, 'bom_jlc.csv'))):
         for d in r['Designator'].split(','): lcsc[d.strip()] = r['LCSC Part #']
     bad = 0
-    for r in csv.DictReader(open(os.path.join(PROD, 'cpl_jlc.csv'))):
+    rows = list(csv.DictReader(open(os.path.join(PROD, 'cpl_jlc.csv'))))
+    refs = [r['Designator'] for r in rows]
+    dup = sorted({x for x in refs if refs.count(x) > 1})
+    missing, extra = sorted(set(lcsc) - set(refs)), sorted(set(refs) - set(lcsc))
+    for what, xs in (('duplicated in CPL', dup), ('in BOM, missing from CPL', missing),
+                     ('in CPL, not in BOM', extra)):
+        if xs: print(f'BAD  {what}: {", ".join(xs)}'); bad += 1
+    for r in rows:
+        if r['Designator'] not in fps: continue
+        side = 'Bottom' if fps[r['Designator']].IsFlipped() else 'Top'
+        if r['Layer'] != side:
+            print(f"BAD  {r['Designator']}: CPL layer {r['Layer']}, board side {side}"); bad += 1
+    for r in rows:
+        if r['Designator'] not in fps or r['Designator'] not in lcsc: continue
         ref = r['Designator']; fp = fps[ref]
         fpname = str(fp.GetFPID().GetLibItemName())
         cx, cy = float(r['Mid X'][:-2]), float(r['Mid Y'][:-2])

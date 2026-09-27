@@ -4969,7 +4969,7 @@
 			(justify mirror)
 		)
 	)
-	(gr_text "G<=83 Y<=90 O<=96 R>96"
+	(gr_text "G<=83 Y<=90 O<=96 R>=97"
 		(at 115 148.2 0)
 		(layer "B.SilkS")
 		(uuid "05f2d3e2-0f5a-5e79-85ca-6e9661ab7d91")
@@ -4993,10 +4993,22 @@
 			(justify mirror)
 		)
 	)
+	(gr_text "REMOVE CELL TO PROGRAM"
+		(at 118 123.4 0)
+		(layer "B.SilkS")
+		(uuid "7e6b43b2-6b49-5738-aeba-5221ae64b443")
+		(effects
+			(font
+				(size 0.8 0.8)
+				(thickness 0.15)
+			)
+			(justify mirror)
+		)
+	)
 	(gr_text "steady = bare ear"
 		(at 115 133.6 0)
 		(layer "B.SilkS")
-		(uuid "7e6b43b2-6b49-5738-aeba-5221ae64b443")
+		(uuid "ec8a69ce-f1b1-5503-82de-a5a6177d3e53")
 		(effects
 			(font
 				(size 0.9 0.9)
@@ -5005,10 +5017,10 @@
 			(justify mirror)
 		)
 	)
-	(gr_text "blink = with plugs"
+	(gr_text "blink = plugs IF 12 dB"
 		(at 115 135.2 0)
 		(layer "B.SilkS")
-		(uuid "ec8a69ce-f1b1-5503-82de-a5a6177d3e53")
+		(uuid "072d4385-a0e6-52ab-a298-a7f8ec7bbf4c")
 		(effects
 			(font
 				(size 0.9 0.9)
@@ -5020,7 +5032,7 @@
 	(gr_text "dbfob rev A"
 		(at 115 131.6 0)
 		(layer "B.SilkS")
-		(uuid "072d4385-a0e6-52ab-a298-a7f8ec7bbf4c")
+		(uuid "2abfab68-0576-52a3-829a-aebb5e305d07")
 		(effects
 			(font
 				(size 1.2 1.2)
