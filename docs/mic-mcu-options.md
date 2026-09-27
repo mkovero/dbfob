@@ -14,6 +14,35 @@ Prices are LCSC / DigiKey list prices seen in September 2026, in USD. Check them
 - PDM is read through SPI+DMA at 1.5 MHz, with software CIC/FIR decimation by 64 to 23,437.5 samples/s (see [hardware/README.md](../hardware/README.md#pdm-clock-plan)). An earlier draft said 1.024 MHz, but that falls between the mic's specified clock bands and cannot be divided from 48 MHz.
 - **Rev A is fitted with the CH32V003F4P6.** The V002 and V006 had no JLC/LCSC stock on 2026-09-27, and all three share the TSSOP-20 pinout. See [hardware/README.md](../hardware/README.md#mcu-fitted-with-a-ch32v003).
 
+### Prototype run (rev A), decided 2026-09-27
+
+The prototype run uses the **CH32V003F4P6 and the IM69D130**. Both are in stock at JLC (1025 and 614 units). The V002/V006 are not in stock and the T5818 has none at JLC. The CPU estimate is about 36 % of 48 MHz (mic at 1.5 MHz, filtered down to 23,437.5 samples/s), and the DMA buffers need about 128 B of RAM. Both figures are rough, not measured. The run has to prove four things; if any fails, the fallback is the pin-compatible CH32V006 once stocked:
+
+1. Continuous PDM acquisition, with the time per sample measured.
+2. VDD under load across cell state and temperature.
+3. Standby current.
+4. Accuracy against a reference meter.
+
+### T5818 as second source: clock and CPU
+
+The T5818 holds 135 dB SPL only in high-quality mode, which needs a 2.0–3.3 MHz clock. Its low-power mode (400–800 kHz) clips at 120 dB. The CH32's power-of-two SPI divider reaches that band only at **3.0 MHz** (48/16 or 24/8); 1.5 MHz falls between the T5818's modes. The rates compared:
+
+| | IM69D130 @ 1.5 MHz | T5818 @ 3.0 MHz |
+|---|---|---|
+| SPI + DMA bytes/s | 187.5 k | 375 k |
+| Decimation | ÷64 → 23,437.5 S/s | ÷128 → 23,437.5 S/s |
+| Decimator, byte lookup tables (est.) | ~6 % of 48 MHz | ~12 % |
+| A-weighting, software multiply (est.) | ~30 % | ~30 % (same output rate, same coefficients) |
+| Startup after VDD + clock | 20–50 ms | 7 ms |
+
+The SPI and DMA themselves are not the limit. The cost of switching is:
+- About 6 % more CPU for the decimator.
+- A longer ÷128 filter, whose lookup tables are hard to fit in the V003's 16 KB of flash.
+- A new footprint, since the T5818 is 3.5 × 2.65 mm.
+- A new port position and new sensitivity constants (−41 dBFS against −36).
+
+For either mic, the bigger lever is hardware multiply (CH32V002/V006), which would cut the A-weighting load to a few percent.
+
 The survey below is kept for the record.
 
 ## Microphones
