@@ -4969,7 +4969,7 @@
 			(justify mirror)
 		)
 	)
-	(gr_text "with ~12 dB earplugs"
+	(gr_text "G<=83 Y<=90 O<=96 R>96"
 		(at 115 148.2 0)
 		(layer "B.SilkS")
 		(uuid "05f2d3e2-0f5a-5e79-85ca-6e9661ab7d91")
@@ -4981,7 +4981,7 @@
 			(justify mirror)
 		)
 	)
-	(gr_text "CERN-OHL-P"
+	(gr_text "dBA at ear  CERN-OHL-P"
 		(at 115 150 0)
 		(layer "B.SilkS")
 		(uuid "79db14a0-0c5e-55c9-bd89-4990e87d5389")
@@ -4993,7 +4993,7 @@
 			(justify mirror)
 		)
 	)
-	(gr_text "G <=95  Y <=102"
+	(gr_text "steady = bare ear"
 		(at 115 133.6 0)
 		(layer "B.SilkS")
 		(uuid "7e6b43b2-6b49-5738-aeba-5221ae64b443")
@@ -5005,7 +5005,7 @@
 			(justify mirror)
 		)
 	)
-	(gr_text "O <=108  R >108 dBA"
+	(gr_text "blink = with plugs"
 		(at 115 135.2 0)
 		(layer "B.SilkS")
 		(uuid "ec8a69ce-f1b1-5503-82de-a5a6177d3e53")

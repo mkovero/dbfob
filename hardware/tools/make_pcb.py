@@ -65,11 +65,11 @@ SILK_F = [  # text, x, y, size
 ]
 SILK_B = [   # kept clear of BT1's pad vias (y 37, 41, 45) and the router's via at the cell top
     ('dbfob rev A', 15.0, 31.6, 1.2),
-    ('G <=95  Y <=102', 15.0, 33.6, 0.9),
-    ('O <=108  R >108 dBA', 15.0, 35.2, 0.9),
-    ('with ~12 dB earplugs', 15.0, 48.2, 0.8),
+    ('steady = bare ear', 15.0, 33.6, 0.9),
+    ('blink = with plugs', 15.0, 35.2, 0.9),
+    ('G<=83 Y<=90 O<=96 R>96', 15.0, 48.2, 0.8),
     ('MIC', 15.0, 9.3, 0.8),
-    ('CERN-OHL-P', 15.0, 50.0, 0.8),
+    ('dBA at ear  CERN-OHL-P', 15.0, 50.0, 0.8),
 ]
 
 

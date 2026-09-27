@@ -21,21 +21,32 @@ That's the whole product.
 
 ### Colour bands
 
-Exposure times follow the NIOSH / EU occupational curve (85 dBA for 8 hours, 3 dB exchange rate), **assuming you are wearing earplugs with about 12 dB of real-world attenuation.** Without plugs, drop one band.
+Exposure times follow the NIOSH / EU occupational curve (85 dBA for 8 hours, 3 dB exchange rate). The bands apply to the level **at your ear**:
 
-| Colour | Level (dBA) | Roughly means |
+| Colour | At the ear (dBA) | Roughly means |
 |---|---|---|
-| Green | ≤ 95 | Several hours are fine with plugs |
-| Yellow | 96–102 | About an hour |
-| Orange | 103–108 | Fifteen minutes or so |
-| Red (blinking) | > 108 | Remove yourself now |
+| Green | ≤ 83 | All night is fine |
+| Yellow | 84–90 | A few hours |
+| Orange | 91–96 | About an hour |
+| Red | > 96 | Minutes: leave, or protect your ears |
 
-The 12 dB assumption is deliberately conservative. Foam plugs on the box claim 30+ dB; in practice, inserted in a hurry by someone who's had a drink, 10–15 dB is realistic.
+### Both answers at once
+
+Every reading shows two verdicts. There is no mode to set and nothing to forget:
+
+- **Steady LED:** the verdict for a bare ear, from the room level itself.
+- **Blinking LED:** the verdict with earplugs, from the room level minus 12 dB.
+
+In a 100 dBA room, red glows steady and yellow blinks: you're in the red, and plugs would bring you to yellow. When both verdicts agree, only one steady LED lights.
+
+The obvious alternative was a mode switch, but either default misleads someone. Assume plugs, and people without them get a falsely safe answer. Assume no plugs, and people who do wear them always see red, so the device looks useless to exactly the people doing the right thing. Showing both removes the default, and the gap between the two LEDs is itself the argument for plugs.
+
+The 12 dB figure is deliberately conservative. Foam plugs claim 30+ dB on the box, but inserted in a hurry by someone who's had a drink, 10–15 dB is realistic.
 
 ### Modes
 
 - **Single press — spot check.** Measures the current level and shows a colour for a few seconds. This is the mode that is always trustworthy, because you are holding the device out in front of you.
-- **Double press — dosimeter.** (Optional, later.) Samples for a couple of seconds every minute and accumulates dose. A single press then shows dose as a fraction of the daily allowance instead of instantaneous level.
+- **Double press — dosimeter.** (Optional, later.) Samples for a couple of seconds every minute and accumulates dose. A single press then shows dose (bare ear and with plugs, the same way) as a fraction of the daily allowance instead of instantaneous level.
 
 Dosimeter mode has a fundamental problem: a keyfob lives in a pocket, and a pocket reads 10–20 dB low with the high end rolled off. An unsupervised dose would be a comforting lie. The firmware tries to detect occlusion from the spectrum (high-band to low-band energy ratio collapses in a pocket) and refuses to count those samples, flagging the dose as incomplete with a distinct blink pattern. If you want a real dosimeter, clip it to your shoulder. If you want a keyfob, use single press.
 
