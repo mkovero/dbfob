@@ -51,7 +51,7 @@ See [docs/mic-mcu-options.md](docs/mic-mcu-options.md) for the comparison. **Cho
 |---|---|---|
 | MCU | **CH32V002** (alt. CH32V006) | PDM read via SPI+DMA, software decimation to 16 kHz. Hardware multiply for the A-weighting biquads; runs down to 2.0 V. |
 | Microphone | **Infineon IM69D130** PDM (alt. TDK T5818 in HQ mode) | **Acoustic overload point ≥ 130 dB SPL required.** Many hobby-favourite digital parts clip at ~120 dB, which a club sub stack will exceed. Digital ±1 dB parts allow batch calibration instead of per-unit calibration. |
-| LED | 1× RGB or 3× discrete colour LEDs | |
+| LED | 4× discrete low-Vf LEDs as a bar: yellow-green, yellow, orange, red | InGaN green/blue need ~3 V and fade on a coin cell; the bar position also encodes the level for colour-blind users. |
 | Power | CR2032 in a holder | MCU in stop mode between presses → years of shelf life. |
 | Input | 1× tactile switch | Wakes the MCU. |
 | Case | 3D-printed two-part shell, or bare PCB with a keyring hole | Print it at the library. |
@@ -69,7 +69,7 @@ A 94 dB pistonphone won't couple to a MEMS port. Calibrate by substitution inste
 ## Repository layout (planned)
 
 ```
-hardware/   KiCad project, BOM, gerbers
+hardware/   KiCad project, generator scripts, BOM, gerbers
 firmware/   MCU firmware (A-weighting, LAeq, colour mapping, sleep)
 case/       3D-printable shell (STEP + STL)
 docs/       Calibration procedure, measurement notes
@@ -80,7 +80,7 @@ docs/       Calibration procedure, measurement notes
 - [x] Pick MCU + mic ([options](docs/mic-mcu-options.md))
 - [ ] Breadboard, verify A-weighted LAeq against a reference meter
 - [ ] Define the hand-held offset and the occlusion detector
-- [ ] First PCB, coin-cell powered
+- [ ] First PCB, coin-cell powered — rev A designed, [hardware/](hardware/README.md), not yet built
 - [ ] Printable case
 - [ ] Calibration procedure anyone can repeat with a phone and a known-good meter
 - [ ] Dosimeter mode

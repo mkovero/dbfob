@@ -12,6 +12,7 @@ Prices are LCSC / DigiKey list prices seen in September 2026, in USD. Check them
   - Second source: **TDK T5818**. It is 1.65–3.63 V and ±1 dB, but it reaches 135 dB AOP only in high-quality mode (clock 2.0–3.3 MHz). Its low-power mode (400–800 kHz) drops to 120 dB. So on the T5818, firmware must run the clock at ≥2.048 MHz and decimate by 128. Keep the decimator's clock rate and decimation ratio configurable so either mic works.
 - **MCU: WCH CH32V002.** Fall back to the CH32V006 if the internal op-amp or extra RAM is ever needed; it is pin-compatible. Not the CH32V003: it has no multiply and a 2.7 V minimum supply.
 - PDM is read through SPI+DMA, with software CIC/FIR decimation to 16 kHz.
+- **Rev A is fitted with the CH32V003F4P6.** The V002 and V006 had no JLC/LCSC stock on 2026-09-27, and all three share the TSSOP-20 pinout. See [hardware/README.md](../hardware/README.md#mcu-fitted-with-a-ch32v003).
 
 The survey below is kept for the record.
 
