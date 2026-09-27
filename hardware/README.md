@@ -83,8 +83,15 @@ J1 pin 1 is wired directly to the cell's + terminal. **Take the cell out before 
 
 Upload `production/dbfob-gerbers.zip`, then for assembly `production/bom_jlc.csv` and `production/cpl_jlc.csv`.
 
-- **PCB:** 2 layers, 1.6 mm, any colour. ENIG is recommended over HASL. HASL leaves the flat − battery contact bumpy, and the fine-pitch LGA mic solders more reliably on a flat finish.
-- **Assembly:** top side only, 15 placements, 12 BOM lines. J1 is not placed. Economic assembly should accept everything; check that it does.
+- **PCB:** 2 layers, 1.6 mm, any colour, tented vias.
+- **Finish: lead-free HASL for prototypes, ENIG for production.** At 5 boards ENIG took the PCBA order from €6.46 to €22 (2026-09-27) for little gain here. The mic's 0.45 mm pads on a 0.7 mm pitch solder fine on HASL, and the holder's spring presses the cell onto the slightly domed − pad. Choose lead-free rather than leaded HASL: these get carried on keyrings. At volume the ENIG premium per board shrinks, and its flat, non-oxidising battery contact becomes worth it.
+- **Assembly:** economic, top side only, 15 placements, 12 BOM lines. J1 is not placed. Board cleaning: no.
+- **Tooling holes.** On a 1×1 board without edge rails, JLC drills its tooling holes into the board itself, and ground copper covers almost all of both sides. In the placement review, check they stay clear of:
+  - the cell's − pad and the copper-free ring around it,
+  - the traces between the LEDs and U1,
+  - the mic hole.
+
+  If they don't, order a 1×1 panel with edge rails instead.
 - **Extended parts:** U1, MK1, BT1, D1, D2 and D3 are extended. Each carries JLC's flat per-part setup fee regardless of quantity (etofab.md §7).
 - **Low-stock lines to check before paying:**
   - MK1 IM69D130 (C536262): 614 in stock, about $3 each at small quantities.
