@@ -41,14 +41,16 @@ Dosimeter mode has a fundamental problem: a keyfob lives in a pocket, and a pock
 
 ## Hardware
 
-Design goal: **under €2 all-in at hobby quantities, well under €1 at volume.** No radio, no display, no app.
+Design goal: **under €2 all-in at hobby quantities.** A 130 dB-capable mic alone is ~€1.2, so sub-€1 is off the table unless mic prices drop. No radio, no display, no app.
 
 ### Candidate parts
 
+See [docs/mic-mcu-options.md](docs/mic-mcu-options.md) for the comparison. **Chosen:** Infineon IM69D130 PDM mic (130 dB SPL AOP, ±1 dB) + WCH CH32V002.
+
 | Block | Options | Notes |
 |---|---|---|
-| MCU | PY32F002/003, CH32V003, STM32C0/G0 | Needs a fast ADC (analog mic) or I2S/PDM (digital mic). A-weighting is three biquads at 16 kHz — a rounding error of CPU. |
-| Microphone | Analog MEMS (cheapest) or I2S/PDM MEMS | Pick a part with **acoustic overload point ≥ 130 dB SPL**. Many hobby-favourite digital parts clip at ~120 dB, which a club sub stack will exceed. |
+| MCU | **CH32V002** (alt. CH32V006) | PDM read via SPI+DMA, software decimation to 16 kHz. Hardware multiply for the A-weighting biquads; runs down to 2.0 V. |
+| Microphone | **Infineon IM69D130** PDM (alt. TDK T5818 in HQ mode) | **Acoustic overload point ≥ 130 dB SPL required.** Many hobby-favourite digital parts clip at ~120 dB, which a club sub stack will exceed. Digital ±1 dB parts allow batch calibration instead of per-unit calibration. |
 | LED | 1× RGB or 3× discrete colour LEDs | |
 | Power | CR2032 in a holder | MCU in stop mode between presses → years of shelf life. |
 | Input | 1× tactile switch | Wakes the MCU. |
@@ -75,7 +77,8 @@ docs/       Calibration procedure, measurement notes
 
 ## Roadmap
 
-- [ ] Pick MCU + mic, breadboard, verify A-weighted LAeq against a reference meter
+- [x] Pick MCU + mic ([options](docs/mic-mcu-options.md))
+- [ ] Breadboard, verify A-weighted LAeq against a reference meter
 - [ ] Define the hand-held offset and the occlusion detector
 - [ ] First PCB, coin-cell powered
 - [ ] Printable case
