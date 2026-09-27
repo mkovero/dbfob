@@ -91,7 +91,7 @@ docs/       Calibration procedure, measurement notes
 - [x] Pick MCU + mic ([options](docs/mic-mcu-options.md))
 - [ ] Breadboard, verify A-weighted LAeq against a reference meter
 - [ ] Define the hand-held offset and the occlusion detector
-- [ ] First PCB, coin-cell powered — rev A designed, [hardware/](hardware/README.md), not yet built
+- [ ] First PCB, coin-cell powered — rev A [ordered from JLCPCB 2026-09-27](hardware/README.md) (5 assembled, lead-free HASL); bring-up pending
 - [ ] Printable case
 - [ ] Calibration procedure anyone can repeat with a phone and a known-good meter
 - [ ] Dosimeter mode
