@@ -36,13 +36,17 @@ Z_SPLIT = BT                                 # shells meet at the board's top fa
 Z_CEIL = BT + TALLEST + HEADROOM             # inside of the front
 Z_TOPF = Z_CEIL + TOP                        # outer front face
 
-SCREW = (BW / 2, -3.2)                       # M2, past the edge the cell comes out of
-SCREW_END = 6.2                              # case extends this far below the board
-SCREW_CLEAR, SCREW_HEAD, SCREW_HEAD_D = 2.3, 4.2, 1.4
-SCREW_PILOT, SCREW_DEPTH = 1.7, 5.0          # thread-forming M2 x 8 (1.7) or heat-set insert (3.2)
+# The screw goes through the board's own Ø3.2 hole (H1) at the top end, clamping the board. The
+# keyring is at the opposite, bottom end, in the case only, so a hand holding it by the keys
+# does not cover the mic port or the LEDs at the top.
+SCREW = tuple(PARTS['H1']['center'])
+SCREW_CLEAR, SCREW_HEAD, SCREW_HEAD_D = 2.3, 4.2, 0.8   # back is only 1.6 thick here: M2 x 6 button head
+SCREW_PILOT, SCREW_DEPTH = 1.7, 4.5          # thread-forming M2 x 6: ~3.6 mm engaged in the front boss
+BOSS_D = 6.0                                 # screw boss: clamps the board around H1 from both sides
 
-RING_XY = tuple(PARTS['H1']['center'])       # keyring hole
-RING_HOLE, RING_BOSS = 3.4, 6.0
+SCREW_END = 8.0                              # the case extends this far below the board ...
+RING_XY = (BW / 2, -4.2)                     # ... to carry the keyring hole
+RING_HOLE = 3.6
 
 MIC = next(tuple(h['at']) for h in GEOM['holes'] if h['ref'] == 'MK1')
 MIC_HOLE, MIC_RECESS, MIC_RECESS_D = 1.2, 3.0, 0.4
@@ -130,7 +134,7 @@ def back_shell():
     s = s.fuse(cyl(MIC[0], MIC[1], GASKET_OD, -STANDOFF, 0).cut(cyl(MIC[0], MIC[1], GASKET_ID, -1, 1)))
     if CRUSH:
         s = s.fuse(crush_bead())
-    s = s.fuse(cyl(RING_XY[0], RING_XY[1], RING_BOSS, -STANDOFF, 0))           # support at the ring
+    s = s.fuse(cyl(SCREW[0], SCREW[1], BOSS_D, -STANDOFF, 0))                  # supports the board at H1
     s = s.cut(cyl(MIC[0], MIC[1], MIC_HOLE, Z_BOT - 1, 1))                     # mic port
     s = s.cut(cyl(MIC[0], MIC[1], MIC_RECESS, Z_BOT - 1, Z_BOT + MIC_RECESS_D))
     s = s.cut(cyl(RING_XY[0], RING_XY[1], RING_HOLE, Z_BOT - 1, Z_SPLIT + 1))
@@ -146,8 +150,8 @@ def front_shell():
     rib = pocket(Z_SPLIT, Z_CEIL).cut(rbox(RIB, RIB, BW - RIB, BH - RIB, max(BR - RIB, 0.5), Z_SPLIT - 1, Z_CEIL + 1))
     s = s.cut(cav).fuse(rib)
     s = s.cut(band(0, 2 * LIP_CL + LIP_W, Z_SPLIT - 1, Z_SPLIT + LIP_H + LIP_CL))  # its groove
-    # keyring boss clamps the board around its hole
-    s = s.fuse(cyl(RING_XY[0], RING_XY[1], RING_BOSS, Z_SPLIT, Z_CEIL))
+    # screw boss clamps the board around H1; keyring hole through the bottom end
+    s = s.fuse(cyl(SCREW[0], SCREW[1], BOSS_D, Z_SPLIT, Z_CEIL))
     s = s.cut(cyl(RING_XY[0], RING_XY[1], RING_HOLE, Z_SPLIT - 1, Z_TOPF + 1))
     # LED light tubes and windows
     for ref in LEDS:
@@ -192,6 +196,7 @@ def build(doc_name='dbfob_case'):
     board, comps = board_model()
     back, front = back_shell(), front_shell()
     report = {
+        'keyring_web_mm': [round(RING_XY[1] - RING_HOLE / 2 + SCREW_END, 2), round(-CL - (RING_XY[1] + RING_HOLE / 2), 2)],  # to outer edge, to board pocket
         'outer_mm': [round(BW + 2 * (CL + WALL), 2), round(BH + CL + WALL + SCREW_END, 2), round(Z_TOPF - Z_BOT, 2)],
         'back_volume_mm3': round(back.Volume, 1), 'front_volume_mm3': round(front.Volume, 1),
         'valid': [back.isValid(), front.isValid()],

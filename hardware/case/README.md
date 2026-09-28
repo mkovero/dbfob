@@ -1,6 +1,8 @@
 # dbfob case, rev A
 
-A two-part FDM case around the rev A board: a **front shell** and a **back shell**, held by **one M2 screw**. To change the cell, open the case: undo the screw, lift the front, slide the cell out of the bottom of the holder. The LEDs show through **open windows**.
+A two-part case (SLA by default, FDM possible) around the rev A board: a **front shell** and a **back shell**, held by **one M2 screw**. To change the cell, open the case: undo the screw, lift the front, slide the cell out of the bottom of the holder. The LEDs show through **open windows**.
+
+**Ends.** The mic port and the LEDs are at the top end; the keyring is at the opposite, bottom end. A hand holding the fob by its keys therefore doesn't cover the mic. The screw uses the board's own Ø3.2 hole (H1) at the top end.
 
 Inputs, both generated from the board so the case follows any layout change:
 - `dbfob-board.step`, from `kicad-cli pcb export step --subst-models --drill-origin`. It has no 3D models for MK1 and SW1; their sizes come from the datasheets and are recorded in the JSON.
@@ -17,17 +19,18 @@ Coordinates are in the board's fab frame: x to the right and y up from the board
 | Other parts | SW1 1.5 (incl. plunger), MK1 / U1 1.2, LEDs 0.8 mm | datasheets |
 | Clearance | SLA: 0.15 mm board to wall, 0.1 mm lip, 0.1 mm nub gap (FDM: 0.3 / 0.15 / 0.2); 0.5 mm above BT1 | `PROCESS` in `make_case.py` |
 | Walls / floor / top | 1.6 / 1.2 / 1.2 mm | 4 perimeters at 0.4 mm |
-| Outer size | SLA 33.5 × 60.45 × 8.9 mm (FDM 33.8 × 60.6 × 8.9) | board + walls + screw end |
+| Outer size | SLA 33.5 × 62.25 × 8.9 mm | board + walls + keyring end |
 
 ## Features
 
-- **Screw end.** An M2 boss sits below the board at (15, −3.2), past the edge the cell comes out of.
-  - Back shell: Ø2.3 through hole with a Ø4.2 counterbore for a pan head.
-  - Front shell: Ø1.7 pilot for a thread-forming M2 × 8, or Ø3.2 for a heat-set insert.
-- **Keyring.** A Ø3.4 tube through both shells, coaxial with the board's Ø3.2 hole at (15, 47.5).
-  - The front boss (OD 6) clamps the board top. Nothing is within r = 3.5 of the hole.
-  - The keyring goes through case and board together.
-- **Board retention.** The board is located by the keyring tube and its outline pocket.
+- **Screw.** An M2 × 6 **button head** (ISO 7380) goes through H1 at (15, 47.5), the board's own hole, and clamps the board between two Ø6 bosses.
+  - Back shell: Ø2.3 clearance hole, with a Ø4.2 × 0.8 mm counterbore. The back is only 1.6 mm thick there.
+  - Front shell: Ø1.7 pilot, 4.5 mm deep. The screw engages 3.6 mm, and its tip stops 2.1 mm short of the front face.
+- **Keyring.** A Ø3.6 hole through both shells at the bottom end, (15, −4.2). The case extends 8 mm below the board to carry it.
+  - It leaves 2.0 mm of material to the outer edge and 2.25 mm to the board pocket.
+  - It's the end the cell comes out of, but the case is opened to change the cell anyway.
+  - The mic port is not routed to an edge: a 13 mm duct to the top edge would resonate at about 6.6 kHz, inside the measured band.
+- **Board retention.** The board is located by its outline pocket and the screw through H1.
   - It is clamped by 1 mm edge ribs from the front shell.
   - The ribs stay clear of J1's pads (x < 2.2 on the left) and BT1's tabs (x 3.1 and 26.9, y 8.9–14.1).
 - **LED windows.** 1.4 × 1.0 mm openings over D1–D4 at x = 4.5, 9, 21, 25.5, y = 48.5.
@@ -54,8 +57,8 @@ Coordinates are in the board's fab frame: x to the right and y up from the board
 | File | What |
 |---|---|
 | `make_case.py` | The source: a FreeCAD script that builds both shells from `board_geometry.json`, checks fit and exports |
-| `dbfob-case-back.stl` / `.step` | Back shell, floor down: 33.5 × 60.45 × 4.0 mm (SLA build) |
-| `dbfob-case-front.stl` / `.step` | Front shell, top down: 33.5 × 60.45 × 5.7 mm (SLA build) |
+| `dbfob-case-back.stl` / `.step` | Back shell, floor down: 33.5 × 62.25 × 4.0 mm (SLA build) |
+| `dbfob-case-front.stl` / `.step` | Front shell, top down: 33.5 × 62.25 × 5.7 mm (SLA build) |
 
 The committed files are the **SLA** build, with `PROCESS = 'sla'`. For FDM, set `PROCESS = 'fdm'` and re-export. That opens up the clearances and drops the crush bead, since FDM layer lines would not seal against it anyway.
 
@@ -67,7 +70,7 @@ The committed files are the **SLA** build, with `PROCESS = 'sla'`. For FDM, set 
   - the crush bead,
   - the lip.
 - **Post-cure:** fully, before assembly. Resin shrinks by about 0.5–1 % on curing; if the board pocket comes out tight, scale X/Y by +0.5 % in the slicer rather than re-cutting clearances.
-- **Screw:** M2 × 8 thread-forming into the Ø1.7 pilot. Don't overtighten into resin. Heat-set inserts don't work in thermoset resin.
+- **Screw:** M2 × 6 button-head (ISO 7380) thread-forming screw into the Ø1.7 pilot. Don't overtighten into resin. Heat-set inserts don't work in thermoset resin.
 
 Fit check on rev A (SLA):
 - Front shell vs board, front shell vs parts, and front vs back: 0 mm³ overlap in each case.
