@@ -45,3 +45,25 @@ Coordinates are in the board's fab frame: x to the right and y up from the board
 - Tolerances: the board pocket, the screw pilot, and the flexure's stiffness and travel.
 - Whether the gasket ring seals well enough, measured as the level difference with the hole open and taped.
 - The case's acoustic effect on the reading. The hand-held calibration from the firmware bring-up is done **in the case**.
+
+## Files and printing
+
+| File | What |
+|---|---|
+| `make_case.py` | The source: a FreeCAD script that builds both shells from `board_geometry.json`, checks fit and exports |
+| `dbfob-case-back.stl` / `.step` | Back shell in print orientation, floor on the bed: 33.8 × 60.6 × 4.0 mm |
+| `dbfob-case-front.stl` / `.step` | Front shell in print orientation, top on the bed: 33.8 × 60.6 × 5.7 mm |
+
+Neither shell needs supports. The light tubes and the button nub print upwards from the front's top face, and the screw counterbore opens onto the bed.
+
+Suggested print settings: 0.4 mm nozzle, 0.2 mm layers (0.12 mm for the front, so the LED windows and flexure slot come out cleanly), PETG or PLA, 4 perimeters.
+
+Hardware: one M2 × 8 pan-head thread-forming screw, or a plain M2 × 8 with a Ø3.2 heat-set insert. For the insert, set `SCREW_PILOT = 3.2` and re-export.
+
+Fit check on rev A: the overlap volume of back shell vs board, front shell vs board, front shell vs parts, and front vs back is 0 mm³ in every case.
+
+### Regenerating
+
+Run `make_case.py` in FreeCAD. The script only reads `board_geometry.json` from its own folder. Refresh that file from the board first if the layout changed; see the git history for the generator snippet.
+
+`export(doc, out_dir)` writes the four files. On this project FreeCAD runs on a desktop with its MCP RPC port reverse-tunnelled to the dev machine. The exports come back with `scp -i ~/.ssh/id_free`, and are checked by SHA-256 against the desktop copies.
