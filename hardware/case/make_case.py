@@ -1,0 +1,201 @@
+# dbfob case, rev A - FreeCAD script. Builds the front and back shells around the board from
+# board_geometry.json (generated from the KiCad layout), checks the fit, and exports.
+#
+# Run inside FreeCAD (GUI or freecadcmd). GEOM may be injected before running; otherwise it is
+# read from board_geometry.json next to this file. The design and its numbers are in README.md.
+#
+# Frame: the board's fab frame - x right, y up from the board's bottom-left corner, z = 0 at
+# the board's back face. The board occupies z 0..1.6.
+import json, os
+import FreeCAD as App
+import Part
+
+V = App.Vector
+
+if 'GEOM' not in globals():
+    GEOM = json.load(open(os.path.join(os.path.dirname(__file__), 'board_geometry.json')))
+
+B = GEOM['board']
+BW, BH, BT, BR = B['w'], B['h'], B['t'], B['corner_r']
+PARTS = GEOM['parts']
+
+# ---- parameters (README.md "Numbers") ------------------------------------------------------
+CL = 0.3            # board edge to wall
+WALL = 1.6          # 4 perimeters at 0.4 mm
+FLOOR = 1.2
+TOP = 1.2
+STANDOFF = 0.4      # back floor below the board: the board rests on a ledge and the gasket ring
+LEDGE = 1.5         # width of that ledge inside the board edge
+HEADROOM = 0.5      # above the tallest part (BT1 + cell)
+TALLEST = max(p['height'] for p in PARTS.values())
+Z_BOT = -(STANDOFF + FLOOR)                  # outer back face
+Z_SPLIT = BT                                 # shells meet at the board's top face
+Z_CEIL = BT + TALLEST + HEADROOM             # inside of the front
+Z_TOPF = Z_CEIL + TOP                        # outer front face
+
+SCREW = (BW / 2, -3.2)                       # M2, past the edge the cell comes out of
+SCREW_END = 6.2                              # case extends this far below the board
+SCREW_CLEAR, SCREW_HEAD, SCREW_HEAD_D = 2.3, 4.2, 1.4
+SCREW_PILOT, SCREW_DEPTH = 1.7, 5.0          # thread-forming M2 x 8 (1.7) or heat-set insert (3.2)
+
+RING_XY = tuple(PARTS['H1']['center'])       # keyring hole
+RING_HOLE, RING_BOSS = 3.4, 6.0
+
+MIC = next(tuple(h['at']) for h in GEOM['holes'] if h['ref'] == 'MK1')
+MIC_HOLE, MIC_RECESS, MIC_RECESS_D = 1.2, 3.0, 0.4
+GASKET_ID, GASKET_OD = 2.0, 3.2
+
+LEDS = ['D1', 'D2', 'D3', 'D4']
+WIN_X, WIN_Y = 1.4, 1.0                      # LED window
+TUBE_X, TUBE_Y, TUBE_GAP = 2.6, 2.2, 0.2     # light tube, stops TUBE_GAP above the LED
+
+SW = tuple(PARTS['SW1']['center'])
+TONGUE = (SW[0] - 4.5, SW[1] - 4.5, SW[0] + 4.5, SW[1] + 4.5)   # 9 x 9 flexure
+HINGE_ON_LEFT = True                         # hinge towards the board centre
+SLOT, TONGUE_T, NUB_D, NUB_GAP = 0.6, 0.8, 2.5, 0.2
+
+RIB = 0.8                                    # front clamps the board within RIB of its edge
+LIP_W, LIP_H, LIP_CL = 0.6, 0.8, 0.15         # alignment lip on the back, groove in the front
+LIP_Y_MIN = 3.0                              # no lip along the bottom edge: the cell slides out there
+
+OUT_R = BR + CL + WALL
+
+
+# ---- helpers --------------------------------------------------------------------------------
+def rbox(x0, y0, x1, y1, r, z0, z1):
+    """Box with vertical edges filleted to r."""
+    b = Part.makeBox(x1 - x0, y1 - y0, z1 - z0, V(x0, y0, z0))
+    if r <= 0: return b
+    edges = [e for e in b.Edges if abs(e.Vertexes[0].Point.z - e.Vertexes[-1].Point.z) > 1e-6]
+    return b.makeFillet(r, edges)
+
+
+def cyl(x, y, d, z0, z1):
+    return Part.makeCylinder(d / 2, z1 - z0, V(x, y, z0))
+
+
+def box(cx, cy, w, h, z0, z1):
+    return Part.makeBox(w, h, z1 - z0, V(cx - w / 2, cy - h / 2, z0))
+
+
+# ---- the board, as the case sees it ---------------------------------------------------------
+def board_model():
+    s = rbox(0, 0, BW, BH, BR, 0, BT)
+    for h in GEOM['holes']:
+        if not h['plated']: s = s.cut(cyl(h['at'][0], h['at'][1], h['d'], -1, BT + 1))
+    parts = []
+    for ref, p in PARTS.items():
+        if p['height'] <= 0: continue
+        x0, y0, x1, y1 = p['bbox']
+        parts.append(Part.makeBox(x1 - x0, y1 - y0, p['height'], V(x0, y0, BT)))
+    return s, Part.makeCompound(parts)
+
+
+# ---- shells ---------------------------------------------------------------------------------
+def outer(z0, z1):
+    return rbox(-CL - WALL, -SCREW_END, BW + CL + WALL, BH + CL + WALL, OUT_R, z0, z1)
+
+
+def pocket(z0, z1):
+    return rbox(-CL, -CL, BW + CL, BH + CL, BR + CL, z0, z1)
+
+
+def band(d0, d1, z0, z1):
+    """Ring between the board pocket grown by d0 and by d1, except along the cell edge."""
+    ring = rbox(-CL - d1, -CL - d1, BW + CL + d1, BH + CL + d1, BR + CL + d1, z0, z1).cut(
+        rbox(-CL - d0, -CL - d0, BW + CL + d0, BH + CL + d0, BR + CL + d0, z0 - 1, z1 + 1))
+    return ring.cut(Part.makeBox(BW + 20, 20, z1 - z0 + 2, V(-10, LIP_Y_MIN - 20, z0 - 1)))
+
+
+def back_shell():
+    s = outer(Z_BOT, Z_SPLIT)
+    s = s.fuse(band(LIP_CL, LIP_CL + LIP_W, Z_SPLIT, Z_SPLIT + LIP_H))           # alignment lip
+    s = s.cut(pocket(0, Z_SPLIT + 1))                                           # board pocket
+    s = s.cut(rbox(LEDGE, LEDGE, BW - LEDGE, BH - LEDGE, max(BR - LEDGE, 0.5), -STANDOFF, 0.01))
+    s = s.fuse(cyl(MIC[0], MIC[1], GASKET_OD, -STANDOFF, 0).cut(cyl(MIC[0], MIC[1], GASKET_ID, -1, 1)))
+    s = s.fuse(cyl(RING_XY[0], RING_XY[1], RING_BOSS, -STANDOFF, 0))           # support at the ring
+    s = s.cut(cyl(MIC[0], MIC[1], MIC_HOLE, Z_BOT - 1, 1))                     # mic port
+    s = s.cut(cyl(MIC[0], MIC[1], MIC_RECESS, Z_BOT - 1, Z_BOT + MIC_RECESS_D))
+    s = s.cut(cyl(RING_XY[0], RING_XY[1], RING_HOLE, Z_BOT - 1, Z_SPLIT + 1))
+    s = s.cut(cyl(SCREW[0], SCREW[1], SCREW_CLEAR, Z_BOT - 1, Z_SPLIT + 1))
+    s = s.cut(cyl(SCREW[0], SCREW[1], SCREW_HEAD, Z_BOT - 1, Z_BOT + SCREW_HEAD_D))
+    return s.removeSplitter()
+
+
+def front_shell():
+    s = outer(Z_SPLIT, Z_TOPF)
+    cav = pocket(Z_SPLIT - 1, Z_CEIL)
+    # edge rib: the band within RIB inside the board edge stays solid and clamps the board
+    rib = pocket(Z_SPLIT, Z_CEIL).cut(rbox(RIB, RIB, BW - RIB, BH - RIB, max(BR - RIB, 0.5), Z_SPLIT - 1, Z_CEIL + 1))
+    s = s.cut(cav).fuse(rib)
+    s = s.cut(band(0, 2 * LIP_CL + LIP_W, Z_SPLIT - 1, Z_SPLIT + LIP_H + LIP_CL))  # its groove
+    # keyring boss clamps the board around its hole
+    s = s.fuse(cyl(RING_XY[0], RING_XY[1], RING_BOSS, Z_SPLIT, Z_CEIL))
+    s = s.cut(cyl(RING_XY[0], RING_XY[1], RING_HOLE, Z_SPLIT - 1, Z_TOPF + 1))
+    # LED light tubes and windows
+    for ref in LEDS:
+        x, y = PARTS[ref]['center']
+        z0 = BT + PARTS[ref]['height'] + TUBE_GAP
+        s = s.fuse(box(x, y, TUBE_X, TUBE_Y, z0, Z_CEIL))
+        s = s.cut(box(x, y, WIN_X, WIN_Y, z0 - 1, Z_TOPF + 1))
+    # button flexure: U-slot through the top, tongue thinned from below, nub down to the plunger
+    x0, y0, x1, y1 = TONGUE
+    slot = box((x0 + x1) / 2 + SLOT / 2, y1 + SLOT / 2, x1 - x0 + SLOT, SLOT, Z_CEIL - 1, Z_TOPF + 1)
+    slot = slot.fuse(box((x0 + x1) / 2 + SLOT / 2, y0 - SLOT / 2, x1 - x0 + SLOT, SLOT, Z_CEIL - 1, Z_TOPF + 1))
+    slot = slot.fuse(box(x1 + SLOT / 2, (y0 + y1) / 2, SLOT, y1 - y0 + 2 * SLOT, Z_CEIL - 1, Z_TOPF + 1))
+    s = s.cut(slot)
+    s = s.cut(Part.makeBox(x1 - x0, y1 - y0, TOP - TONGUE_T, V(x0, y0, Z_CEIL)))
+    s = s.fuse(cyl(SW[0], SW[1], NUB_D, BT + PARTS['SW1']['height'] + NUB_GAP, Z_CEIL + TOP - TONGUE_T))
+    s = s.cut(cyl(SW[0], SW[1], 4.0, Z_TOPF - 0.3, Z_TOPF + 1))           # finger dimple
+    # screw pilot
+    s = s.cut(cyl(SCREW[0], SCREW[1], SCREW_PILOT, Z_SPLIT - 1, Z_SPLIT + SCREW_DEPTH))
+    return s.removeSplitter()
+
+
+# ---- build, check, show ---------------------------------------------------------------------
+def export(doc, out_dir):
+    """STEP + STL per shell, in print orientation: back floor down, front top down."""
+    import Mesh, MeshPart
+    os.makedirs(out_dir, exist_ok=True)
+    files = []
+    for name, flip in (('Back', False), ('Front', True)):
+        shp = doc.getObject(name).Shape.copy()
+        if flip: shp.rotate(V(0, 0, 0), V(1, 0, 0), 180)
+        bb = shp.BoundBox
+        shp.translate(V(-bb.XMin, -bb.YMin, -bb.ZMin))
+        step = os.path.join(out_dir, f'dbfob-case-{name.lower()}.step')
+        stl = os.path.join(out_dir, f'dbfob-case-{name.lower()}.stl')
+        shp.exportStep(step)
+        MeshPart.meshFromShape(Shape=shp, LinearDeflection=0.02, AngularDeflection=0.15).write(stl)
+        files += [step, stl]
+    return files
+
+
+def build(doc_name='dbfob_case'):
+    board, comps = board_model()
+    back, front = back_shell(), front_shell()
+    report = {
+        'outer_mm': [round(BW + 2 * (CL + WALL), 2), round(BH + CL + WALL + SCREW_END, 2), round(Z_TOPF - Z_BOT, 2)],
+        'back_volume_mm3': round(back.Volume, 1), 'front_volume_mm3': round(front.Volume, 1),
+        'valid': [back.isValid(), front.isValid()],
+        # every one of these must be 0: the case may touch the board, never overlap it
+        'overlap_back_board': round(back.common(board).Volume, 3),
+        'overlap_front_board': round(front.common(board).Volume, 3),
+        'overlap_front_parts': round(front.common(comps).Volume, 3),
+        'overlap_shells': round(front.common(back).Volume, 3),
+    }
+    doc = App.getDocument(doc_name) if doc_name in App.listDocuments() else App.newDocument(doc_name)
+    for o in list(doc.Objects): doc.removeObject(o.Name)
+    for name, shp, col in (('Board', board, (0.1, 0.45, 0.2)), ('Parts', comps, (0.7, 0.7, 0.7)),
+                           ('Back', back, (0.2, 0.2, 0.25)), ('Front', front, (0.85, 0.5, 0.1))):
+        o = doc.addObject('Part::Feature', name); o.Shape = shp
+        if App.GuiUp:
+            o.ViewObject.ShapeColor = col
+            if name == 'Front': o.ViewObject.Transparency = 60
+    doc.recompute()
+    return doc, report
+
+
+if __name__ == '__main__' or 'GEOM' in globals():
+    doc, report = build()
+    print(json.dumps(report, indent=1))
