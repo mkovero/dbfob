@@ -20,7 +20,10 @@ BW, BH, BT, BR = B['w'], B['h'], B['t'], B['corner_r']
 PARTS = GEOM['parts']
 
 # ---- parameters (README.md "Numbers") ------------------------------------------------------
-CL = 0.3            # board edge to wall
+# 'sla' (resin, +-0.05 mm: tight fits, preloaded gasket) or 'fdm' (0.4 mm nozzle: loose fits)
+PROCESS = globals().get('PROCESS', 'sla')
+SLA = PROCESS == 'sla'
+CL = 0.15 if SLA else 0.3   # board edge to wall
 WALL = 1.6          # 4 perimeters at 0.4 mm
 FLOOR = 1.2
 TOP = 1.2
@@ -44,18 +47,25 @@ RING_HOLE, RING_BOSS = 3.4, 6.0
 MIC = next(tuple(h['at']) for h in GEOM['holes'] if h['ref'] == 'MK1')
 MIC_HOLE, MIC_RECESS, MIC_RECESS_D = 1.2, 3.0, 0.4
 GASKET_ID, GASKET_OD = 2.0, 3.2
+# SLA: a 0.3 mm crush bead on the ring stands CRUSH above the ledge, so the board is preloaded
+# onto it and the mic port is sealed from the case cavity. FDM layer lines would not seal anyway.
+CRUSH = 0.08 if SLA else 0.0
 
 LEDS = ['D1', 'D2', 'D3', 'D4']
 WIN_X, WIN_Y = 1.4, 1.0                      # LED window
 TUBE_X, TUBE_Y, TUBE_GAP = 2.6, 2.2, 0.2     # light tube, stops TUBE_GAP above the LED
 
 SW = tuple(PARTS['SW1']['center'])
-TONGUE = (SW[0] - 4.5, SW[1] - 4.5, SW[0] + 4.5, SW[1] + 4.5)   # 9 x 9 flexure
+# Flexure: hinge 8 mm from the nub. At 4.5 mm the hinge strained ~2.7 % through the travel
+# (3 t d / 2 L^2), marginal for PLA and a crack in resin; at 8 mm with the smaller gap it is < 0.7 %.
+TONGUE = (SW[0] - 8.0, SW[1] - 4.5, SW[0] + 4.5, SW[1] + 4.5)
 HINGE_ON_LEFT = True                         # hinge towards the board centre
-SLOT, TONGUE_T, NUB_D, NUB_GAP = 0.6, 0.8, 2.5, 0.2
+SLOT, TONGUE_T, NUB_D = 0.6, 0.8, 2.5
+NUB_GAP = 0.1 if SLA else 0.2                # nub above the switch plunger
 
 RIB = 0.8                                    # front clamps the board within RIB of its edge
-LIP_W, LIP_H, LIP_CL = 0.6, 0.8, 0.15         # alignment lip on the back, groove in the front
+LIP_W, LIP_H = 0.6, 0.8                       # alignment lip on the back, groove in the front
+LIP_CL = 0.1 if SLA else 0.15
 LIP_Y_MIN = 3.0                              # no lip along the bottom edge: the cell slides out there
 
 OUT_R = BR + CL + WALL
@@ -107,12 +117,19 @@ def band(d0, d1, z0, z1):
     return ring.cut(Part.makeBox(BW + 20, 20, z1 - z0 + 2, V(-10, LIP_Y_MIN - 20, z0 - 1)))
 
 
+def crush_bead():
+    rm = (GASKET_ID + GASKET_OD) / 4
+    return cyl(MIC[0], MIC[1], 2 * rm + 0.3, 0, CRUSH).cut(cyl(MIC[0], MIC[1], 2 * rm - 0.3, -1, 1))
+
+
 def back_shell():
     s = outer(Z_BOT, Z_SPLIT)
     s = s.fuse(band(LIP_CL, LIP_CL + LIP_W, Z_SPLIT, Z_SPLIT + LIP_H))           # alignment lip
     s = s.cut(pocket(0, Z_SPLIT + 1))                                           # board pocket
     s = s.cut(rbox(LEDGE, LEDGE, BW - LEDGE, BH - LEDGE, max(BR - LEDGE, 0.5), -STANDOFF, 0.01))
     s = s.fuse(cyl(MIC[0], MIC[1], GASKET_OD, -STANDOFF, 0).cut(cyl(MIC[0], MIC[1], GASKET_ID, -1, 1)))
+    if CRUSH:
+        s = s.fuse(crush_bead())
     s = s.fuse(cyl(RING_XY[0], RING_XY[1], RING_BOSS, -STANDOFF, 0))           # support at the ring
     s = s.cut(cyl(MIC[0], MIC[1], MIC_HOLE, Z_BOT - 1, 1))                     # mic port
     s = s.cut(cyl(MIC[0], MIC[1], MIC_RECESS, Z_BOT - 1, Z_BOT + MIC_RECESS_D))
@@ -179,7 +196,11 @@ def build(doc_name='dbfob_case'):
         'back_volume_mm3': round(back.Volume, 1), 'front_volume_mm3': round(front.Volume, 1),
         'valid': [back.isValid(), front.isValid()],
         # every one of these must be 0: the case may touch the board, never overlap it
-        'overlap_back_board': round(back.common(board).Volume, 3),
+        'process': PROCESS,
+        # the crush bead is meant to press into the board: the back may overlap the board by
+        # exactly the bead's interference and nothing else
+        'overlap_back_board_beyond_bead': round(back.common(board).Volume - (crush_bead().common(board).Volume if CRUSH else 0), 3),
+        'crush_bead_interference_mm3': round(crush_bead().common(board).Volume, 3) if CRUSH else 0,
         'overlap_front_board': round(front.common(board).Volume, 3),
         'overlap_front_parts': round(front.common(comps).Volume, 3),
         'overlap_shells': round(front.common(back).Volume, 3),
