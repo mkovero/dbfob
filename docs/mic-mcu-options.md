@@ -1,6 +1,6 @@
 # Microphone and MCU options
 
-Roadmap item: *Pick MCU + mic, breadboard, verify A-weighted LAeq against a reference meter.*
+The decision record for the microphone and MCU. The decision itself is at the top, followed by the survey that led to it. Rev A was built with this choice: see [hardware/README.md](../hardware/README.md).
 
 Prices are LCSC / DigiKey list prices seen in September 2026, in USD. Check them again before ordering.
 
@@ -66,7 +66,7 @@ A firmware clip detector could catch some of this, for example by counting decim
 - **130+ dB AOP part (IM69D130):** correct bands everywhere. Costs ~$1 more.
 - **120 dB AOP part (MSM261D):** correct up to orange, and the red band may show more often than it should. Costs ~$0.30.
 
-Measure this on the breadboard (see [Next steps](#next-steps)) before choosing between them.
+Settled by the [Decision](#decision-2026-09-27): AOP ≥ 130 dB is a hard requirement, so the IM69D130.
 
 ## Analog vs digital: the price difference and what it means
 
@@ -131,9 +131,7 @@ Power: see [hardware/README.md § Power](../hardware/README.md#power-unqualified
 
 ## Next steps
 
-1. Order an IM69D130 breakout (Infineon Shield2Go or any PDM breakout), a CH32V002 dev board and a WCH-LinkE. Optionally add a few T5818s on an adapter to validate the second source.
-2. Bring up PDM over SPI at 1.5 MHz, decimate by 64 to 23,437.5 samples/s, and implement A-weighting (designed for that rate) and LAeq.
-3. Compare against a reference meter with pink noise at 85–115 dBA and with bass-heavy music. Confirm there is no clipping at club levels and measure the hand-held offset.
+The breadboard stage was skipped: rev A went straight to assembled boards. Validation now happens on rev A itself, following the bring-up checklist in [firmware/README.md](../firmware/README.md#bring-up-checklist). That covers PDM capture at 1.5 MHz, CPU load, the level against a reference meter, no clipping at club levels, and the hand-held offset.
 
 ## Sources
 
