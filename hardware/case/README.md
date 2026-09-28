@@ -40,10 +40,11 @@ Coordinates are in the board's fab frame: x to the right and y up from the board
   - It is a U-slot 0.6 mm wide, 12.5 × 9 mm, hinged towards the board centre, 8 mm from the nub, and thinned to 0.8 mm.
   - The hinge strain at full travel is 0.66 % (3·t·d / 2L²). The first draft's 4.5 mm hinge came to 2.7 %, which would have cracked in resin.
   - A Ø2.5 nub stops 0.1 mm (SLA) above the plunger.
-- **Mic port.** A Ø1.2 hole in the back under MK1's port at (14.32, 40.5), with a 3 mm recess so a fingertip doesn't seal it.
-  - Inside, a gasket ring (ID 2.0, OD 3.2) on the floor meets the board's back face, so sound reaches the mic through the hole and not from the case cavity.
-  - On SLA the ring carries a 0.3 mm wide crush bead standing 0.08 mm proud. The board is preloaded onto it (0.196 mm³ of intended interference, flexing the board slightly), which seals the mic port.
-  - The port's Helmholtz resonance is estimated at 35–40 kHz, well above the band measured.
+- **Mic port.** The visible port is **centred** at x = 15.0, a Ø1.0 hole in a Ø3 × 0.4 mm recess, so a fingertip doesn't seal it.
+  - The IM69D130's own port is 0.68 mm off its package centre, so the board's sound hole is at x = 14.32. Inside the back, a stadium-shaped cavity (0.68 mm³) under the board joins the two. That is acoustically negligible: the port resonance stays far above audio, estimated at 35–40 kHz.
+  - A gasket wall (0.6 mm) around the cavity meets the board's back face, so sound reaches the mic only through the port.
+  - On SLA the wall carries a 0.3 mm crush bead standing 0.08 mm proud (0.161 mm³ of intended interference); the board is preloaded onto it and the port is sealed.
+  - The wall passes over the tented SWIO via at (15.83, 40.47): a centred port leaves no route around it. **Put a dab of UV resin on that via before assembly** so the seal doesn't depend on the solder mask.
 - **Back floor.** It stands 0.4 mm off the board on a perimeter ledge and the gasket ring. The back of the board is flat: GND pour and tented vias only.
 
 ## Open until the first print

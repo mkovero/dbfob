@@ -48,11 +48,17 @@ SCREW_END = 8.0                              # the case extends this far below t
 RING_XY = (BW / 2, -4.2)                     # ... to carry the keyring hole
 RING_HOLE = 3.6
 
-MIC = next(tuple(h['at']) for h in GEOM['holes'] if h['ref'] == 'MK1')
-MIC_HOLE, MIC_RECESS, MIC_RECESS_D = 1.2, 3.0, 0.4
-GASKET_ID, GASKET_OD = 2.0, 3.2
-# SLA: a 0.3 mm crush bead on the ring stands CRUSH above the ledge, so the board is preloaded
+MIC = next(tuple(h['at']) for h in GEOM['holes'] if h['ref'] == 'MK1')   # board's sound hole
+# The IM69D130's port is 0.68 mm off its package centre, so the board hole is at x = 14.32. The
+# case port is centred (x = BW / 2) and joined to the board hole by a small stadium-shaped cavity
+# inside the gasket; the extra < 0.5 mm^3 moves the port resonance nowhere near the audio band.
+PORT = (BW / 2, MIC[1])
+MIC_HOLE, MIC_RECESS, MIC_RECESS_D = 1.0, 3.0, 0.4
+CAV_R, GASKET_WALL = 0.55, 0.6               # stadium cavity half-width, gasket wall around it
+# SLA: a 0.3 mm crush bead on the gasket stands CRUSH above the ledge, so the board is preloaded
 # onto it and the mic port is sealed from the case cavity. FDM layer lines would not seal anyway.
+# The gasket wall and bead pass over the tented SWIO via at (15.83, 40.47): a centred port leaves
+# no route around it. A dab of UV resin on that via before assembly makes the seal certain.
 CRUSH = 0.08 if SLA else 0.0
 
 LEDS = ['D1', 'D2', 'D3', 'D4']
@@ -121,9 +127,22 @@ def band(d0, d1, z0, z1):
     return ring.cut(Part.makeBox(BW + 20, 20, z1 - z0 + 2, V(-10, LIP_Y_MIN - 20, z0 - 1)))
 
 
+def stadium(r, z0, z1):
+    """Stadium around the segment from the board's sound hole to the centred case port."""
+    (ax, ay), (bx, by) = MIC, PORT
+    s = cyl(ax, ay, 2 * r, z0, z1).fuse(cyl(bx, by, 2 * r, z0, z1))
+    if abs(bx - ax) > 1e-6:
+        s = s.fuse(Part.makeBox(abs(bx - ax), 2 * r, z1 - z0, V(min(ax, bx), ay - r, z0)))
+    return s.removeSplitter()
+
+
+def gasket():
+    return stadium(CAV_R + GASKET_WALL, -STANDOFF, 0).cut(stadium(CAV_R, -STANDOFF - 1, 1))
+
+
 def crush_bead():
-    rm = (GASKET_ID + GASKET_OD) / 4
-    return cyl(MIC[0], MIC[1], 2 * rm + 0.3, 0, CRUSH).cut(cyl(MIC[0], MIC[1], 2 * rm - 0.3, -1, 1))
+    rm = CAV_R + GASKET_WALL / 2
+    return stadium(rm + 0.15, 0, CRUSH).cut(stadium(rm - 0.15, -1, 1))
 
 
 def back_shell():
@@ -131,12 +150,13 @@ def back_shell():
     s = s.fuse(band(LIP_CL, LIP_CL + LIP_W, Z_SPLIT, Z_SPLIT + LIP_H))           # alignment lip
     s = s.cut(pocket(0, Z_SPLIT + 1))                                           # board pocket
     s = s.cut(rbox(LEDGE, LEDGE, BW - LEDGE, BH - LEDGE, max(BR - LEDGE, 0.5), -STANDOFF, 0.01))
-    s = s.fuse(cyl(MIC[0], MIC[1], GASKET_OD, -STANDOFF, 0).cut(cyl(MIC[0], MIC[1], GASKET_ID, -1, 1)))
+    s = s.fuse(gasket())
     if CRUSH:
         s = s.fuse(crush_bead())
     s = s.fuse(cyl(SCREW[0], SCREW[1], BOSS_D, -STANDOFF, 0))                  # supports the board at H1
-    s = s.cut(cyl(MIC[0], MIC[1], MIC_HOLE, Z_BOT - 1, 1))                     # mic port
-    s = s.cut(cyl(MIC[0], MIC[1], MIC_RECESS, Z_BOT - 1, Z_BOT + MIC_RECESS_D))
+    s = s.cut(stadium(CAV_R, -STANDOFF, 1))                                    # cavity to the board hole
+    s = s.cut(cyl(PORT[0], PORT[1], MIC_HOLE, Z_BOT - 1, 0))                   # centred mic port
+    s = s.cut(cyl(PORT[0], PORT[1], MIC_RECESS, Z_BOT - 1, Z_BOT + MIC_RECESS_D))
     s = s.cut(cyl(RING_XY[0], RING_XY[1], RING_HOLE, Z_BOT - 1, Z_SPLIT + 1))
     s = s.cut(cyl(SCREW[0], SCREW[1], SCREW_CLEAR, Z_BOT - 1, Z_SPLIT + 1))
     s = s.cut(cyl(SCREW[0], SCREW[1], SCREW_HEAD, Z_BOT - 1, Z_BOT + SCREW_HEAD_D))
@@ -196,6 +216,7 @@ def build(doc_name='dbfob_case'):
     board, comps = board_model()
     back, front = back_shell(), front_shell()
     report = {
+        'port_x': [round(PORT[0], 2), 'board hole', round(MIC[0], 2)],
         'keyring_web_mm': [round(RING_XY[1] - RING_HOLE / 2 + SCREW_END, 2), round(-CL - (RING_XY[1] + RING_HOLE / 2), 2)],  # to outer edge, to board pocket
         'outer_mm': [round(BW + 2 * (CL + WALL), 2), round(BH + CL + WALL + SCREW_END, 2), round(Z_TOPF - Z_BOT, 2)],
         'back_volume_mm3': round(back.Volume, 1), 'front_volume_mm3': round(front.Volume, 1),
