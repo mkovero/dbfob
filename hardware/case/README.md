@@ -40,11 +40,11 @@ Coordinates are in the board's fab frame: x to the right and y up from the board
   - It is a U-slot 0.6 mm wide, 12.5 × 9 mm, hinged towards the board centre, 8 mm from the nub, and thinned to 0.8 mm.
   - The hinge strain at full travel is 0.66 % (3·t·d / 2L²). The first draft's 4.5 mm hinge came to 2.7 %, which would have cracked in resin.
   - A Ø2.5 nub stops 0.1 mm (SLA) above the plunger.
-- **Mic port.** The visible port is **centred** at x = 15.0, a Ø1.0 hole in a Ø3 × 0.4 mm recess, so a fingertip doesn't seal it.
-  - The IM69D130's own port is 0.68 mm off its package centre, so the board's sound hole is at x = 14.32. Inside the back, a stadium-shaped cavity (0.68 mm³) under the board joins the two. That is acoustically negligible: the port resonance stays far above audio, estimated at 35–40 kHz.
-  - A gasket wall (0.6 mm) around the cavity meets the board's back face, so sound reaches the mic only through the port.
-  - On SLA the wall carries a 0.3 mm crush bead standing 0.08 mm proud (0.161 mm³ of intended interference); the board is preloaded onto it and the port is sealed.
-  - The wall passes over the tented SWIO via at (15.83, 40.47): a centred port leaves no route around it. **Put a dab of UV resin on that via before assembly** so the seal doesn't depend on the solder mask.
+- **Mic port.** A straight Ø1.0 hole in the back, directly under the board's sound hole at (14.32, 40.5), inside a Ø3 × 0.4 mm recess so a fingertip doesn't seal it.
+  - It sits 0.68 mm off the case centreline. That's deliberate: the IM69D130's port is off its package centre and the board is fixed. Centring it would need a cavity joining two holes, with the gasket crossing a via.
+  - Inside, a gasket ring (cavity Ø1.2, wall 0.5 mm, outer radius 1.1 mm) meets the board's back face, so sound reaches the mic only through the port. The ring clears the nearby tented SWIO via at (15.83, 40.47) by 0.11 mm.
+  - On SLA the ring carries a 0.3 mm crush bead standing 0.08 mm proud (0.128 mm³ of intended interference); the board is preloaded onto it and the port is sealed.
+  - The port's resonance is estimated at 35–40 kHz, well above the band measured.
 - **Back floor.** It stands 0.4 mm off the board on a perimeter ledge and the gasket ring. The back of the board is flat: GND pour and tented vias only.
 
 ## Open until the first print
@@ -75,7 +75,8 @@ The committed files are the **SLA** build, with `PROCESS = 'sla'`. For FDM, set 
 
 Fit check on rev A (SLA):
 - Front shell vs board, front shell vs parts, and front vs back: 0 mm³ overlap in each case.
-- Back shell vs board: overlap is exactly the crush bead's intended 0.196 mm³, and nothing else.
+- Back shell vs board: overlap is exactly the crush bead's intended 0.128 mm³, and nothing else.
+- The gasket stays clear of the via.
 
 ### Regenerating
 
