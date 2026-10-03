@@ -64,14 +64,41 @@ This needs `riscv64-elf-gcc` and `riscv64-elf-newlib` (Arch: `pacman -S riscv64-
 
 **Take the coin cell out first.** J1 pin 1 is wired straight to the cell's + terminal, and a programmer supplying 3.3 V would charge it (see [hardware/README.md](../hardware/README.md#programming)).
 
-Connect a WCH-LinkE to J1 (`+ D G T` = 3V3, SWIO, GND, and TX to your USB-UART RX), then run `make flash`. The firmware stays awake for 3 s after reset, sweeping the LEDs, so the programmer can reattach later. In standby SWIO is not answering; press the button or power-cycle to get a window.
+You need one programmer. minichlink detects either of these automatically.
+
+| Programmer | J1 `+` | J1 `D` (SWIO) | J1 `G` |
+|---|---|---|---|
+| WCH-LinkE | 3V3 | SWDIO | GND |
+| ESP32-S2 with [esp32s2-funprog](https://github.com/cnlohr/esp32s2-cookbook/tree/master/ch32v003programmer) | **3V3, never 5 V** (the mic's maximum is 3.6 V) | GPIO6, optional 10 kΩ pull-up to 3V3 | GND |
+
+Setting up the ESP32-S2 (once):
+1. Hold BOOT while plugging it in.
+2. From `esp32s2-cookbook/ch32v003programmer`, flash the prebuilt firmware:
+   ```sh
+   uvx esptool --chip esp32s2 -p /dev/ttyACM0 -b 460800 --before=no_reset --after=no_reset \
+     write_flash --flash_mode dio --flash_freq 80m --flash_size 4MB \
+     0x1000 build/bootloader/bootloader.bin 0x8000 build/partition_table/partition-table.bin 0x10000 build/usb_sandbox.bin
+   ```
+3. Replug it. It now enumerates as USB HID `303a:4004`.
+4. Install `ch32fun/minichlink/99-minichlink.rules` into `/etc/udev/rules.d/` for access without root.
+
+Then `make flash`. The firmware stays awake for 3 s after reset, sweeping the LEDs, so the programmer can reattach later. In standby SWIO is not answering; press the button or power-cycle to get a window.
+
+### Reading the output
+
+| Build | Output on | Read with |
+|---|---|---|
+| `make flash` (normal) | UART TX on J1 `T`, 115200 8N1 | Any 3.3 V USB-UART, or the WCH-LinkE's built-in one |
+| `make flash PRINTF=swio` (bring-up) | The SWIO wire itself | `make monitor`, through the same programmer, ESP32-S2 included. No USB-UART needed. |
+
+In the SWIO build, each `printf` waits up to about 200 ms when nothing is listening, so use it for bench work, not on a fob running from its cell.
 
 ## Bring-up checklist
 
 Work down this list in order and record the numbers in `hardware/README.md`.
 
 1. **Before power.** Check VBAT to GND is not a short. Check part orientation against the placement review.
-2. **First power, from the WCH-LinkE with no cell.** `make flash`, then look for the boot banner with `vdd=`. The LEDs sweep G Y O R dimly.
+2. **First power, from the programmer with no cell.** Run `make flash PRINTF=swio && make monitor`, then look for the boot banner with `vdd=`. The LEDs sweep G Y O R dimly.
 3. **Mic capture.** Press the button in a quiet room and check:
    - `n` is about 70,300 (3 s × 23,437.5).
    - `overruns=0`.
