@@ -79,7 +79,10 @@ Setting up the ESP32-S2 (once):
      write_flash --flash_mode dio --flash_freq 80m --flash_size 4MB \
      0x1000 build/bootloader/bootloader.bin 0x8000 build/partition_table/partition-table.bin 0x10000 build/usb_sandbox.bin
    ```
-3. Replug it. It now enumerates as USB HID `303a:4004`.
+3. Connect the S2's **native USB**: this is where the programmer appears, not the USB-UART port. It enumerates as USB HID `303a:4004` ("CNLohr ESP32-S2 CH32V003Programmer").
+   - On a board with only a USB-UART connector, such as the **ESP32-S2-Saola-1**, whose micro-USB is a CP2102N, wire a second USB cable to the header: D− → GPIO19, D+ → GPIO20, GND → GND.
+   - Leave that cable's 5 V unconnected, and keep powering the board from its micro-USB.
+   - Press EN after wiring.
 4. Install `ch32fun/minichlink/99-minichlink.rules` into `/etc/udev/rules.d/` for access without root.
 
 Then `make flash`. The firmware stays awake for 3 s after reset, sweeping the LEDs, so the programmer can reattach later. In standby SWIO is not answering; press the button or power-cycle to get a window.
