@@ -24,7 +24,7 @@ PARTS = GEOM['parts']
 PROCESS = globals().get('PROCESS', 'sla')
 SLA = PROCESS == 'sla'
 CL = 0.15 if SLA else 0.3   # board edge to wall
-WALL = 1.6          # 4 perimeters at 0.4 mm
+WALL = 1.6 if SLA else 2.0   # FDM: the lip groove must leave >= 2 lines of outer skin
 FLOOR = 1.2
 TOP = 1.2
 STANDOFF = 0.4      # back floor below the board: the board rests on a ledge and the gasket ring
@@ -40,8 +40,8 @@ Z_TOPF = Z_CEIL + TOP                        # outer front face
 # keyring is at the opposite, bottom end, in the case only, so a hand holding it by the keys
 # does not cover the mic port or the LEDs at the top.
 SCREW = tuple(PARTS['H1']['center'])
-SCREW_CLEAR, SCREW_HEAD, SCREW_HEAD_D = 2.3, 4.2, 0.8   # back is only 1.6 thick here: M2 x 6 button head
-SCREW_PILOT, SCREW_DEPTH = 1.7, 4.5          # thread-forming M2 x 6: ~3.6 mm engaged in the front boss
+SCREW_CLEAR, SCREW_HEAD, SCREW_HEAD_D = (2.3 if SLA else 2.4), 4.2, 0.8   # back is 1.6 thick here: M2 x 6 button head
+SCREW_PILOT, SCREW_DEPTH = (1.7 if SLA else 1.8), 4.5   # thread-forming M2 x 6: ~3.6 mm engaged; FDM holes print small
 BOSS_D = 6.0                                 # screw boss: clamps the board around H1 from both sides
 
 SCREW_END = 8.0                              # the case extends this far below the board ...
@@ -63,15 +63,17 @@ CAV_R, GASKET_WALL = 0.6, 0.5
 CRUSH = 0.08 if SLA else 0.0
 
 LEDS = ['D1', 'D2', 'D3', 'D4']
-WIN_X, WIN_Y = 1.4, 1.0                      # LED window
-TUBE_X, TUBE_Y, TUBE_GAP = 2.6, 2.2, 0.2     # light tube, stops TUBE_GAP above the LED
+WIN_X, WIN_Y = (1.4, 1.0) if SLA else (1.6, 1.2)   # LED window; FDM holes print small
+TUBE_X, TUBE_Y = (2.6, 2.2) if SLA else (3.2, 2.8)   # light tube: FDM walls >= 2 lines (0.8 mm)
+TUBE_GAP = 0.2                               # tube stops this far above the LED
 
 SW = tuple(PARTS['SW1']['center'])
 # Flexure: hinge 8 mm from the nub. At 4.5 mm the hinge strained ~2.7 % through the travel
 # (3 t d / 2 L^2), marginal for PLA and a crack in resin; at 8 mm with the smaller gap it is < 0.7 %.
 TONGUE = (SW[0] - 8.0, SW[1] - 4.5, SW[0] + 4.5, SW[1] + 4.5)
 HINGE_ON_LEFT = True                         # hinge towards the board centre
-SLOT, TONGUE_T, NUB_D = 0.6, 0.8, 2.5
+SLOT = 0.6 if SLA else 0.8                   # FDM: elephant's foot would close a 0.6 slot
+TONGUE_T, NUB_D = 0.8, 2.5
 NUB_GAP = 0.1 if SLA else 0.2                # nub above the switch plunger
 
 RIB = 0.8                                    # front clamps the board within RIB of its edge
@@ -206,8 +208,8 @@ def export(doc, out_dir):
         if flip: shp.rotate(V(0, 0, 0), V(1, 0, 0), 180)
         bb = shp.BoundBox
         shp.translate(V(-bb.XMin, -bb.YMin, -bb.ZMin))
-        step = os.path.join(out_dir, f'dbfob-case-{name.lower()}.step')
-        stl = os.path.join(out_dir, f'dbfob-case-{name.lower()}.stl')
+        step = os.path.join(out_dir, f'dbfob-case-{name.lower()}-{PROCESS}.step')
+        stl = os.path.join(out_dir, f'dbfob-case-{name.lower()}-{PROCESS}.stl')
         shp.exportStep(step)
         MeshPart.meshFromShape(Shape=shp, LinearDeflection=0.02, AngularDeflection=0.15).write(stl)
         files += [step, stl]

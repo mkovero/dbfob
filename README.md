@@ -14,7 +14,7 @@ dbfob is an open-hardware sound level indicator sized for a keyring. It exists b
 |---|---|
 | [Hardware](hardware/README.md) | 5 assembled boards ordered from JLCPCB, 2026-09-27. DRC-clean, placement verified against JLC's footprints. |
 | [Firmware](firmware/README.md) | Builds for the CH32V003 and passes the host DSP tests (A-weighting within 0.02 dB, 50 Hz–8 kHz). Not yet run on a board. |
-| [Case](hardware/case/README.md) | Two-shell SLA case modelled, fit-checked and exported. Not yet printed. |
+| [Case](hardware/case/README.md) | Two-shell case modelled, fit-checked and exported, in SLA and FDM builds. Not yet printed. |
 
 Next steps are bring-up and calibration against a reference meter. See [Next](#next).
 
