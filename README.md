@@ -21,7 +21,7 @@ Next step is calibration against a reference meter. See [Next](#next).
 ## How it works
 
 1. Press the button. The fob wakes from standby.
-2. A PDM MEMS microphone samples the room for 3 seconds.
+2. A PDM MEMS microphone samples the room for 3 seconds. Meanwhile the LED bar fills up, so you know the press registered and when the answer is coming.
 3. The firmware A-weights the signal and computes the equivalent continuous level (LAeq).
 4. A four-LED bar shows two verdicts for 2 seconds: a steady LED for a bare ear and a blinking LED for ear plugs. See below.
 

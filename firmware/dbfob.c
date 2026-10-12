@@ -1,7 +1,7 @@
 // dbfob firmware, rev A board (CH32V003F4P6 + IM69D130).
 //
-// Press the button: the fob wakes from standby, powers the mic, captures 3 s of PDM over SPI1+DMA,
-// A-weights it (src/dsp.c), and shows two verdicts on the LED bar for ~2 s: steady LED = bare ear,
+// Press the button: the fob wakes from standby, powers the mic, captures 3 s of PDM over SPI1+DMA
+// while the LED bar fills as a progress bar, A-weights it (src/dsp.c), and shows two verdicts on the LED bar for ~2 s: steady LED = bare ear,
 // blinking LED = with plugs giving 12 dB. Then back to standby. Every reading is also printed on
 // USART1 TX (PD5, J1 "T") for calibration against a reference meter.
 //
@@ -38,6 +38,7 @@
 // ---- display ---------------------------------------------------------------------------------
 #define SHOW_MS           2000
 #define BLINK_MS          250
+#define BAR_GAP_MS        200            // dark pause between the full progress bar and the verdict
 #define PWM_TOP           999            // 48 kHz PWM
 // light sense: D4 discharge time -> brightness. BRINGUP: both thresholds from bench readings.
 #define LIGHT_BRIGHT_US   2000           // faster than this: daylight, full brightness
@@ -177,6 +178,15 @@ static void leds_two(int steady, int blink, int blink_on, uint32_t duty)
 	TIM1->CH3CVR = (steady == LED_R || (blink_on && blink == LED_R)) ? duty : 0;
 }
 
+// Progress bar: the lowest `n` LEDs lit (0 = all off)
+static void leds_bar(int n, uint32_t duty)
+{
+	TIM2->CH2CVR = n > LED_G ? duty : 0;
+	TIM1->CH1CVR = n > LED_Y ? duty : 0;
+	TIM1->CH4CVR = n > LED_O ? duty : 0;
+	TIM1->CH3CVR = n > LED_R ? duty : 0;
+}
+
 // ---- ambient light: D4 reverse-biased, time the photocurrent discharge ------------------------
 static uint32_t light_us(void)
 {
@@ -233,12 +243,15 @@ static void measure_and_show(void)
 	capturing = 1;
 	uint32_t t0 = SysTick->CNT;
 	mic_start();
+	// The bar fills G -> R while measuring: it confirms the press and shows when the verdict comes.
 	for (uint32_t ms = 0; ms < SETTLE_MS + MEASURE_MS; ms += 50) {
+		leds_bar((ms + 50) * 4 / (SETTLE_MS + MEASURE_MS), duty);
 		Delay_Ms(50);
 		uint32_t v = vdd_mv();                                 // VDD under load, throughout
 		if (v < v_min) v_min = v;
 	}
 	mic_stop();
+	leds_bar(0, 0);
 	uint32_t total = SysTick->CNT - t0;
 
 	int32_t dbfs = dsp_level_dbfs_q8((dsp_t *)&dsp);
@@ -255,6 +268,7 @@ static void measure_and_show(void)
 	       (unsigned long)(total ? (uint64_t)isr_cycles * 100 / total : 0), (unsigned long)overruns,
 	       invalid ? " INVALID" : "");
 
+	Delay_Ms(BAR_GAP_MS);                                     // dark gap: the verdict reads as separate
 	if (invalid) { show_invalid(duty); return; }
 	int bare = overload ? LED_R : band(dba);
 	int plugs = overload ? LED_R : band(dba - PLUG_DB * 256);

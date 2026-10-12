@@ -11,6 +11,8 @@ Firmware for the rev A board: a CH32V003F4P6 with an IM69D130 PDM mic. It is bui
 3. It powers the mic from PC6 and clocks it at **1.5 MHz**: SPI1 SCK on PC5, 48 MHz / 32.
 4. It captures PDM from MISO (PC7) by DMA into a 128-byte ring. Each 64-byte half is processed in the DMA interrupt.
 5. It discards 150 ms of mic start-up and filter settling, then integrates **3 s** of A-weighted energy. VDD is read under load every 50 ms throughout.
+   - Meanwhile the LED bar fills G → Y → O → R as a progress bar. It confirms the press and shows when the verdict is due.
+   - When the bar is full, the LEDs go dark for 200 ms before the verdict.
 6. It shows two verdicts for 2 s (see the [top-level README](../README.md#colour-bands)):
    - **Steady LED:** bare ear.
    - **Blinking LED:** with plugs giving 12 dB.
