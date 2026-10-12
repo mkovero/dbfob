@@ -247,6 +247,16 @@ static void print_q8(const char *name, int32_t q8)
 	printf(" %s=%s%ld.%01ld", name, q8 < 0 ? "-" : "", (long)(a >> 8), (long)(((a & 255) * 10) >> 8));
 }
 
+// Sleep (core clock stopped, peripherals running) for ms. Only while capturing: the DMA
+// interrupt every 0.34 ms is what wakes the core. Measured on board 1: running at 48 MHz is
+// 6.7 mA of the 8.4 mA a sample costs, so the core should not busy-wait through it.
+static void capture_sleep_ms(uint32_t ms)
+{
+	uint32_t t0 = SysTick->CNT, n = ms * (FUNCONF_SYSTEM_CORE_CLOCK / 1000);
+	PFIC->SCTLR &= ~(1 << 2);                                 // plain sleep: standby would end the capture
+	while (SysTick->CNT - t0 < n) __WFI();
+}
+
 typedef struct {
 	uint64_t ms;                                              // weighted mean square (dsp_mean_square)
 	int32_t dba;                                              // Q8, INT32_MIN if nothing accumulated
@@ -267,7 +277,7 @@ static reading_t measure(const char *tag, uint32_t measure_ms, uint32_t bar_duty
 	mic_start();
 	for (uint32_t ms = 0; ms < SETTLE_MS + measure_ms; ms += 50) {
 		if (bar_duty) leds_bar((ms + 50) * 4 / (SETTLE_MS + measure_ms), bar_duty);
-		Delay_Ms(50);
+		capture_sleep_ms(50);
 		uint32_t v = vdd_mv();                                 // VDD under load, throughout
 		if (v < v_min) v_min = v;
 	}
@@ -503,11 +513,15 @@ int main(void)
 	led_set(LED_NONE, 0);
 	for (;;) {
 		standby();
-		Delay_Ms(DEBOUNCE_MS);
-		if (!pressed()) {                                     // the AWU, or a bounce
+		// A press reads low within 1 ms of its wake edge. Checking that early keeps the dosimeter's
+		// timer-only wakes short: at 6.7 mA, a 20 ms wake every 30 s was ~4 uA of average current.
+		Delay_Ms(1);
+		if (!pressed()) {                                     // the AWU
 			if (dose.state == DOSE_ON) dose_tick();
 			continue;
 		}
+		Delay_Ms(DEBOUNCE_MS);
+		if (!pressed()) continue;                             // a bounce
 		switch (button_event()) {
 		case EV_DOUBLE: spot_check(); break;
 		case EV_SINGLE: if (dose.state != DOSE_OFF) dose_show(); break;   // otherwise ignored (pocket)
