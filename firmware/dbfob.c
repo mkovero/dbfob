@@ -484,8 +484,11 @@ static void standby(void)
 	RCC->APB1PCENR |= RCC_APB1Periph_PWR;
 	PWR->CTLR |= PWR_CTLR_PDDS;
 	PFIC->SCTLR |= 1 << 2;                                    // SLEEPDEEP
+	// The ADC keeps its analog block powered through standby: ~0.57 mA measured on board 1.
+	ADC1->CTLR2 &= ~ADC_ADON;
 	__WFE();
 	SystemInit();                                             // back to 48 MHz after wake
+	adc_init();                                               // power up and recalibrate (~20 us)
 }
 
 int main(void)
