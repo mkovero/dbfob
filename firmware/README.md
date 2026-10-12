@@ -66,10 +66,10 @@ This needs `riscv64-elf-gcc` and `riscv64-elf-newlib` (Arch: `pacman -S riscv64-
 
 You need one programmer. minichlink detects either of these automatically.
 
-| Programmer | J1 `+` | J1 `D` (SWIO) | J1 `G` |
-|---|---|---|---|
-| WCH-LinkE | 3V3 | SWDIO | GND |
-| ESP32-S2 with [esp32s2-funprog](https://github.com/cnlohr/esp32s2-cookbook/tree/master/ch32v003programmer) | **3V3, never 5 V** (the mic's maximum is 3.6 V) | GPIO6, optional 10 kΩ pull-up to 3V3 | GND |
+| Programmer | J1 `+` | J1 `D` (SWIO) | J1 `G` | J1 `T` (UART TX) |
+|---|---|---|---|---|
+| WCH-LinkE | 3V3 | SWDIO | GND | RX |
+| ESP32-S2 with [esp32s2-funprog](https://github.com/cnlohr/esp32s2-cookbook/tree/master/ch32v003programmer) | **3V3, never 5 V** (the mic's maximum is 3.6 V) | GPIO6, optional 10 kΩ pull-up to 3V3 | GND | GPIO7, through 1 kΩ. Not read by the stock firmware; reserved for a future USB-serial bridge. |
 
 Setting up the ESP32-S2 (once):
 1. Hold BOOT while plugging it in.

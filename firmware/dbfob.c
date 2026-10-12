@@ -73,6 +73,8 @@ static void mic_start(void)
 	funPinMode(PC5, GPIO_CFGLR_OUT_50Mhz_AF_PP);             // SCK
 	funPinMode(PC7, GPIO_CFGLR_IN_FLOAT);                    // MISO
 
+	RCC->AHBPCENR |= RCC_AHBPeriph_DMA1;
+	RCC->APB2PCENR |= RCC_APB2Periph_SPI1;
 	RCC->APB2PRSTR |= RCC_APB2Periph_SPI1;
 	RCC->APB2PRSTR &= ~RCC_APB2Periph_SPI1;
 	DMA1_Channel2->CFGR = 0;
@@ -85,7 +87,8 @@ static void mic_start(void)
 	NVIC_EnableIRQ(DMA1_Channel2_IRQn);
 	// CPOL 0 / CPHA 0: sample on the rising edge. RX-only master clocks continuously once enabled.
 	SPI1->CTLR2 = SPI_CTLR2_RXDMAEN;
-	SPI1->CTLR1 = SPI_NSS_Soft | SPI_CPHA_1Edge | SPI_CPOL_Low | SPI_DataSize_8b | SPI_FirstBit_MSB |
+	// software NSS held high (SSI), or the master sees a mode fault and drops to slave
+	SPI1->CTLR1 = SPI_NSS_Soft | SPI_NSSInternalSoft_Set | SPI_CPHA_1Edge | SPI_CPOL_Low | SPI_DataSize_8b | SPI_FirstBit_MSB |
 	              SPI_Mode_Master | SPI_Direction_2Lines_RxOnly | SPI_BaudRatePrescaler_32;
 	SPI1->CTLR1 |= CTLR1_SPE_Set;
 }
@@ -98,6 +101,8 @@ static void mic_stop(void)
 	DMA1_Channel2->CFGR = 0;
 	RCC->APB2PRSTR |= RCC_APB2Periph_SPI1;                   // RX-only master: reset is the clean stop
 	RCC->APB2PRSTR &= ~RCC_APB2Periph_SPI1;
+	RCC->APB2PCENR &= ~RCC_APB2Periph_SPI1;
+	RCC->AHBPCENR &= ~RCC_AHBPeriph_DMA1;
 	funPinMode(PC5, GPIO_CFGLR_OUT_2Mhz_PP);
 	funDigitalWrite(PC5, FUN_LOW);
 	funDigitalWrite(PC6, FUN_LOW);                           // mic off: no standby current
@@ -212,6 +217,7 @@ static void show_invalid(uint32_t duty)                     // battery / invalid
 
 static void print_q8(const char *name, int32_t q8)
 {
+	if (q8 == INT32_MIN) { printf(" %s=none", name); return; }
 	int32_t a = q8 < 0 ? -q8 : q8;
 	printf(" %s=%s%ld.%01ld", name, q8 < 0 ? "-" : "", (long)(a >> 8), (long)(((a & 255) * 10) >> 8));
 }
@@ -236,7 +242,7 @@ static void measure_and_show(void)
 	uint32_t total = SysTick->CNT - t0;
 
 	int32_t dbfs = dsp_level_dbfs_q8((dsp_t *)&dsp);
-	int32_t dba = dbfs + CAL_DB_Q8;
+	int32_t dba = dbfs == INT32_MIN ? INT32_MIN : dbfs + CAL_DB_Q8;
 	int overload = dsp.pcm_peak >= OVERLOAD_PCM;
 	int invalid = v_min < VBAT_MIN_MV || !dsp.n || overruns;
 
