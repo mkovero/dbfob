@@ -391,9 +391,83 @@ static void dose_print(const char *what)
 	printf("\n");
 }
 
+// ---- dose log in flash ----------------------------------------------------------------------
+// The last run is kept in the last 1 KB of flash, so it survives taking the cell out and can be
+// read later with the programmer (`make dose-log`, tools/dose_log.py). Layout, little endian:
+//   0x00 u16 DOSE_LOG_MAGIC   0x02 u16 CAL_DB_Q8   0x04 u32 tick_ms
+//   0x08 u16 ticks per sample 0x0A u16 sample ms   0x0C... one byte per sample:
+//   1-250 = dBA (code / 2 + 20, 0.5 dB steps), 0 = invalid, 0xFD = stopped, 0xFE = auto-off,
+//   0xFF = not written. The 1 KB is erased once per run and written a half-word (two samples) at a
+//   time, so a run costs one erase of each 64-byte page.
+#define DOSE_LOG_ADDR     0x08003C00     // the firmware must stay below this: `make check` tests it
+#define DOSE_LOG_SIZE     1024
+#define DOSE_LOG_MAGIC    0xDB01
+#define DOSE_LOG_HDR      12
+#define LOG_STOPPED       0xFD
+#define LOG_AUTO_OFF      0xFE
+
+static struct { uint16_t pos; int16_t pending; } dlog;      // pending: low byte waiting for a pair, or -1
+
+static void flash_unlock(void)
+{
+	FLASH->KEYR = FLASH_KEY1; FLASH->KEYR = FLASH_KEY2;
+	FLASH->MODEKEYR = FLASH_KEY1; FLASH->MODEKEYR = FLASH_KEY2;   // fast page erase
+}
+
+static void flash_write16(uint32_t addr, uint16_t v)
+{
+	if (addr < DOSE_LOG_ADDR || addr >= DOSE_LOG_ADDR + DOSE_LOG_SIZE) return;   // never the firmware
+	flash_unlock();
+	FLASH->CTLR = CR_PG_Set;
+	*(volatile uint16_t *)addr = v;
+	while (FLASH->STATR & FLASH_STATR_BSY);
+	FLASH->CTLR = CR_LOCK_Set;
+}
+
+static void dose_log_start(void)
+{
+	flash_unlock();
+	for (uint32_t a = DOSE_LOG_ADDR; a < DOSE_LOG_ADDR + DOSE_LOG_SIZE; a += 64) {   // 64-byte pages
+		FLASH->CTLR = CR_PAGE_ER;
+		FLASH->ADDR = a;
+		FLASH->CTLR = CR_STRT_Set | CR_PAGE_ER;
+		while (FLASH->STATR & FLASH_STATR_BSY);
+	}
+	FLASH->CTLR = CR_LOCK_Set;
+	flash_write16(DOSE_LOG_ADDR + 0, DOSE_LOG_MAGIC);
+	flash_write16(DOSE_LOG_ADDR + 2, (uint16_t)CAL_DB_Q8);
+	flash_write16(DOSE_LOG_ADDR + 4, (uint16_t)dose.tick_ms);
+	flash_write16(DOSE_LOG_ADDR + 6, (uint16_t)(dose.tick_ms >> 16));
+	flash_write16(DOSE_LOG_ADDR + 8, DOSE_TICKS_PER_SAMPLE);
+	flash_write16(DOSE_LOG_ADDR + 10, DOSE_SAMPLE_MS);
+	dlog.pos = DOSE_LOG_HDR; dlog.pending = -1;
+}
+
+static void dose_log_byte(uint8_t b)
+{
+	if (dlog.pos >= DOSE_LOG_SIZE) return;                    // full: ~17 h at one sample a minute
+	if (dlog.pending < 0) { dlog.pending = b; return; }
+	flash_write16(DOSE_LOG_ADDR + dlog.pos, (uint16_t)(dlog.pending | (b << 8)));
+	dlog.pos += 2; dlog.pending = -1;
+}
+
+static void dose_log_end(uint8_t marker)
+{
+	dose_log_byte(marker);
+	if (dlog.pending >= 0) dose_log_byte(0xFF);               // flush: 0xFF stays "not written"
+}
+
+static uint8_t dose_log_code(const reading_t *r)
+{
+	if (r->invalid || r->dba == INT32_MIN) return 0;
+	int32_t c = (r->dba - 20 * 256 + 64) >> 7;                // (dBA - 20) * 2, rounded
+	return c < 1 ? 1 : c > 250 ? 250 : (uint8_t)c;
+}
+
 static void dose_sample(void)
 {
 	reading_t r = measure("dose_sample", DOSE_SAMPLE_MS, 0, 0);
+	dose_log_byte(dose_log_code(&r));
 	dose.samples++;
 	if (!r.invalid) { dose.sum_ms += r.ms; dose.valid++; }
 }
@@ -403,6 +477,7 @@ static void dose_start(void)
 	leds_bar(4, DUTY_MIN * 4);                                // acknowledge: all on while the LSI is timed
 	dose = (typeof(dose)){ .state = DOSE_ON };
 	dose.tick_ms = awu_tick_ms();
+	dose_log_start();
 	for (int i = 0; i < 2; i++) { leds_bar(0, 0); Delay_Ms(150); leds_bar(4, DUTY_MIN * 4); Delay_Ms(150); }
 	leds_bar(0, 0);
 	dose_print("start");
@@ -412,6 +487,7 @@ static void dose_start(void)
 static void dose_stop(int state)
 {
 	awu_stop();
+	dose_log_end(state == DOSE_DONE ? LOG_AUTO_OFF : LOG_STOPPED);
 	dose.state = state;
 	dose_print(state == DOSE_DONE ? "auto_off" : "stop");
 }

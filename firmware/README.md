@@ -34,6 +34,7 @@ Firmware for the rev A board: a CH32V003F4P6 with an IM69D130 PDM mic. It is bui
   - After 12 h it stops by itself. A click then still shows the last dose.
   - If fewer than half the samples were valid (low battery), it shows the invalid pattern instead.
 - **Output:** each sample prints a `dose_sample` line, and start / show / stop print a `dose` summary.
+- **Flash log:** each run is also kept in the last 1 KB of flash (0x08003C00), so it can be read without a live UART. A start erases it. It holds a 12-byte header, then one byte per sample (0.5 dB steps, 0 = invalid) and an end marker (stopped / auto-off). That is about 1000 samples, about 17 h. To read it: take the cell out, connect the programmer and run `sudo make dose-log`. That runs `minichlink -r dose.bin 0x08003C00 1024`, then `tools/dose_log.py dose.bin`, which prints the run length, LAeq, the dose and a 10-minute table (`--all` for every sample). Reflashing keeps the log, as long as the firmware stays below 0x3C00 (`make check` tests this).
 
 Example output line:
 

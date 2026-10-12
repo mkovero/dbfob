@@ -69,6 +69,7 @@ The obvious alternative was a mode switch, but either default misleads someone. 
   - **Stop:** another long press. The bar empties from red to green.
   - **Auto-off:** after 12 h it stops by itself. A single click still shows the final dose until the next start.
   - **Double click:** a spot check, which works as usual while the dosimeter runs.
+  - **Log:** the latest run, with about one level per minute, stays in flash after the cell is removed. You can read it later through the programmer with `make dose-log` (see [firmware/README.md](firmware/README.md)).
 
 The catch is that a keyfob lives in a pocket. A pocket reads 10–20 dB low with the high end rolled off, so a dose collected in a pocket is a comforting lie. The dosimeter doesn't yet detect this. It would need to from the spectrum, since the high-band to low-band energy ratio collapses in a pocket, and then refuse to count those samples and flag the dose as incomplete. For now, clip it to your shoulder or a bag strap, with the mic port uncovered.
 

@@ -8,6 +8,7 @@
 #   make check   - build, verify no software multiply in the hot path, run the host tests
 #   make bench   - DSP instruction count per second of audio, under qemu-riscv32
 #   make filters - regenerate src/filters.h and src/cic_tables.h
+#   make dose-log - read the last dosimeter run from flash and decode it (cell out, programmer on)
 all : build
 
 TARGET := dbfob
@@ -29,6 +30,7 @@ test :
 
 # build + hot-path check + host tests: run before flashing anything
 check : build
+	@test $$(stat -c %s $(TARGET).bin) -le 15360 || { echo "firmware reaches the dose log at 0x3C00"; exit 1; }
 	tools/check_hotpath.sh
 	python3 test/test_dsp.py
 
@@ -39,4 +41,8 @@ bench :
 filters :
 	python3 tools/design_filters.py
 
-.PHONY : test filters check bench
+dose-log :
+	$(MINICHLINK)/minichlink -r dose.bin 0x08003C00 1024
+	python3 tools/dose_log.py dose.bin
+
+.PHONY : test filters check bench dose-log
