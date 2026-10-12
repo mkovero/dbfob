@@ -66,7 +66,7 @@ Still to show on hardware: the V003 has no multiplier and 2 KB of RAM, so it mus
 
 ## Power (unqualified)
 
-These are datasheet estimates. No board current has been measured yet.
+These are datasheet estimates. No board current has been measured yet (see the [bring-up log](#bring-up-log)).
 
 - **Active.** The CH32V003 draws about 4–6 mA at 48 MHz (HSI), and the mic about 0.6 mA. A CR2032's internal resistance rises as it discharges and as it gets cold. With 50 Ω, 6 mA pulls a 3.0 V cell down to the V003's 2.7 V minimum, and the 10 µF cap bridges that for only about half a millisecond, not a 3 s measurement. The V003 can also run below its guaranteed range before its reset threshold trips.
   - Firmware runs the measurement at 24 MHz, and measures VDD under load against the internal reference throughout.
@@ -113,10 +113,23 @@ On 2026-09-27, DigiKey lists IM69D130V01XTSA1 as *Active*. The [hardware audit](
 
 `make_pcb.py` exits nonzero on any DRC error, open net, schematic-parity issue, or DRC warning other than the missing-library-table one. `fab.py` refuses to write anything unless ERC, DRC and parity are clean. The only exceptions are the library-table warnings and the documented MIC_VDD PWR_FLAG. It builds every output in `production.staging/`, runs `check_cpl.py` there, and only then replaces `production/`. `check_cpl.py` also requires the BOM and CPL designator sets to match, each designator to appear once, and each CPL layer to match the board side.
 
+## Bring-up log
+
+**2026-10-12, board 1**, powered from an ESP32-S2 programmer at 3.3 V, no cell, firmware `67c708f`:
+- No assembly faults. It programmed first time over SWIO: CH32V003, read protection off.
+- The LEDs sweep, and light sensing responds: `light_us` 31–44k indoors.
+- PDM capture runs continuously at 1.5 MHz: n = 70,397 per 3 s, 0 overruns, **ISR load 40 %** of 48 MHz.
+  - The first firmware had SPI1 and DMA1 unclocked, so it read n = 0. Fixed in `67c708f`.
+- VDD 3335 mV idle, 3326 mV with the mic on.
+- Levels, uncalibrated (datasheet sensitivity only):
+  - Quiet room: 48.7 dBA, −81.2 dBFS, noise-like (crest factor about 4).
+  - Room with talking: 62.8 dBA.
+  - Judged realistic; no reference meter yet.
+- A-weighting removes the large unweighted low-frequency/DC content (`pcm_peak` 570 against a weighted peak of 15).
+
 ## Not verified yet
 
-This is rev A and no hardware exists. Open items before calling it done:
-- Continuous 1.5 MHz PDM acquisition and decimation on the V003 (no multiplier, 2 KB RAM).
+Open items before calling rev A done:
 - Weighted level accuracy across frequency, SPL, hand placement and battery state, and behaviour on overload.
 - The mic's current when powered from a GPIO.
 - Standby current, VDD under load across cell state (see Power), and so usable capacity and shelf life.

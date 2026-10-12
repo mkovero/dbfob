@@ -8,15 +8,15 @@ dbfob is an open-hardware sound level indicator sized for a keyring. It exists b
 
 ## Status
 
-**Rev A prototype, not yet validated on hardware.**
+**Rev A prototype: first board up, measuring, not yet calibrated.**
 
 | Part | State |
 |---|---|
-| [Hardware](hardware/README.md) | 5 assembled boards ordered from JLCPCB, 2026-09-27. DRC-clean, placement verified against JLC's footprints. |
-| [Firmware](firmware/README.md) | Builds for the CH32V003 and passes the host DSP tests (A-weighting within 0.02 dB, 50 Hz–8 kHz). Not yet run on a board. |
+| [Hardware](hardware/README.md) | 5 assembled boards from JLCPCB, arrived 2026-10-12. Board 1 is up with no assembly faults ([bring-up log](hardware/README.md#bring-up-log)). |
+| [Firmware](firmware/README.md) | Runs on board 1: PDM capture, A-weighting and the level reading work (40 % CPU, no overruns). Not yet calibrated against a reference meter. |
 | [Case](hardware/case/README.md) | Two-shell case modelled, fit-checked and exported, in SLA and FDM builds. Not yet printed. |
 
-Next steps are bring-up and calibration against a reference meter. See [Next](#next).
+Next step is calibration against a reference meter. See [Next](#next).
 
 ## How it works
 
@@ -94,7 +94,8 @@ docs/            part selection, hardware audit
 
 ## Next
 
-- [ ] Bring-up on rev A: power, programming, mic capture, CPU load, standby current. See [firmware/README.md](firmware/README.md#bring-up-checklist).
+- [x] First bring-up: power, programming, mic capture, CPU load.
+- [ ] Standby current, VDD reference trim, light-sense thresholds. See [firmware/README.md](firmware/README.md#bring-up-checklist).
 - [ ] Calibrate against a reference meter, in the case: the level offset and the hand-held offset.
 - [ ] Qualify the battery: the supply voltage under load across cell charge and temperature, then set the cutoff.
 - [ ] Print the case and check the tolerances, the button flexure and the mic seal.
