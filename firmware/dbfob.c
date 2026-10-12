@@ -1,6 +1,6 @@
 // dbfob firmware, rev A board (CH32V003F4P6 + IM69D130).
 //
-// Press the button: the fob wakes from standby, powers the mic, captures 3 s of PDM over SPI1+DMA
+// Double-click the button: the fob wakes from standby, powers the mic, captures 3 s of PDM over SPI1+DMA
 // while the LED bar fills as a progress bar, A-weights it (src/dsp.c), and shows two verdicts on the LED bar for ~2 s: steady LED = bare ear,
 // blinking LED = with plugs giving 12 dB. Then back to standby. Every reading is also printed on
 // USART1 TX (PD5, J1 "T") for calibration against a reference meter.
@@ -36,6 +36,13 @@
 #define VREFINT_MV        1200           // datasheet 1.17-1.23 V; BRINGUP: calibrate per board
 
 // ---- display ---------------------------------------------------------------------------------
+// ---- button ----------------------------------------------------------------------------------
+// A double click starts a measurement; a single press, or a long squeeze in a pocket, does not.
+// BRINGUP: tune both by feel.
+#define CLICK_MAX_MS      500            // a click held longer than this is not a click
+#define CLICK_GAP_MS      400            // the second click must start within this of the first release
+#define DEBOUNCE_MS       20
+
 #define SHOW_MS           2000
 #define BLINK_MS          250
 #define BAR_GAP_MS        200            // dark pause between the full progress bar and the verdict
@@ -279,6 +286,27 @@ static void measure_and_show(void)
 	led_set(LED_NONE, 0);
 }
 
+// ---- button ----------------------------------------------------------------------------------
+static int pressed(void) { return !funDigitalRead(PC0); }
+
+// Called with the first click down. Returns 1 if a second click follows in time.
+static int double_click(void)
+{
+	for (uint32_t ms = 0; pressed(); ms += 5) {              // first click: must be short
+		if (ms > CLICK_MAX_MS) return 0;
+		Delay_Ms(5);
+	}
+	Delay_Ms(DEBOUNCE_MS);
+	for (uint32_t ms = 0; ms < CLICK_GAP_MS; ms += 5) {      // second click
+		if (pressed()) {
+			Delay_Ms(DEBOUNCE_MS);
+			return pressed();
+		}
+		Delay_Ms(5);
+	}
+	return 0;
+}
+
 // ---- power -----------------------------------------------------------------------------------
 static void pins_init(void)
 {
@@ -323,9 +351,9 @@ int main(void)
 	led_set(LED_NONE, 0);
 	for (;;) {
 		standby();
-		Delay_Ms(20);                                         // debounce
-		if (funDigitalRead(PC0)) continue;                    // not a press
-		measure_and_show();
-		while (!funDigitalRead(PC0)) Delay_Ms(10);            // wait for release
+		Delay_Ms(DEBOUNCE_MS);
+		if (!pressed()) continue;                             // not a press
+		if (double_click()) measure_and_show();
+		while (pressed()) Delay_Ms(10);                       // wait for release
 	}
 }

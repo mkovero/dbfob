@@ -2,7 +2,7 @@
 
 **A dirt-cheap keyfob that tells you how loud it is — and how long your ears can take it.**
 
-Press the button, look at the colour. Green means you're fine. Red means leave.
+Double-click the button, look at the colour. Green means you're fine. Red means leave.
 
 dbfob is an open-hardware sound level indicator sized for a keyring. It exists because nobody pulls out a phone on a dark dance floor to run a sound level meter, but everybody can glance at an LED. It is meant to be cheap enough that a venue, a festival or a hearing-health campaign can hand them out at the door next to the free earplugs.
 
@@ -20,7 +20,7 @@ Next step is calibration against a reference meter. See [Next](#next).
 
 ## How it works
 
-1. Press the button. The fob wakes from standby.
+1. Double-click the button. The fob wakes from standby. A single press, such as one in a pocket, is ignored.
 2. A PDM MEMS microphone samples the room for 3 seconds. Meanwhile the LED bar fills up, so you know the press registered and when the answer is coming.
 3. The firmware A-weights the signal and computes the equivalent continuous level (LAeq).
 4. A four-LED bar shows two verdicts for 2 seconds: a steady LED for a bare ear and a blinking LED for ear plugs. See below.
@@ -53,8 +53,8 @@ The obvious alternative was a mode switch, but either default misleads someone. 
 
 ### Modes
 
-- **Single press — spot check.** Measures the current level and shows a colour for a few seconds. This is the mode that is always trustworthy, because you are holding the device out in front of you.
-- **Double press — dosimeter.** *Not implemented; an idea for later.* The fob would sample for a couple of seconds every minute and accumulate dose. A single press would then show dose as a fraction of the daily allowance, bare ear and with plugs the same way.
+- **Double click — spot check.** Measures the current level and shows a colour for a few seconds. This is the mode that is always trustworthy, because you are holding the device out in front of you.
+- **Long press — dosimeter.** *Not implemented; an idea for later.* The fob would sample for a couple of seconds every minute and accumulate dose. A double click would then show dose as a fraction of the daily allowance, bare ear and with plugs the same way.
 
 The catch is that a keyfob lives in a pocket. A pocket reads 10–20 dB low with the high end rolled off, so an unsupervised dose would be a comforting lie. Dosimeter mode would need to detect occlusion from the spectrum, since the high-band to low-band energy ratio collapses in a pocket. It would refuse to count those samples and flag the dose as incomplete. For a real dosimeter, clip it to your shoulder.
 

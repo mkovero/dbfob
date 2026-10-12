@@ -7,6 +7,8 @@ Firmware for the rev A board: a CH32V003F4P6 with an IM69D130 PDM mic. It is bui
 ## What it does
 
 1. The board sits in standby until the button (PC0) is pressed.
+   - A **double click** starts a measurement: the first click is under 500 ms, and the second starts within 400 ms of releasing it.
+   - Anything else goes straight back to standby: a single press, or a long squeeze in a pocket.
 2. It senses ambient light through D4 to set LED brightness.
 3. It powers the mic from PC6 and clocks it at **1.5 MHz**: SPI1 SCK on PC5, 48 MHz / 32.
 4. It captures PDM from MISO (PC7) by DMA into a 128-byte ring. Each 64-byte half is processed in the DMA interrupt.
@@ -87,7 +89,7 @@ Setting up the ESP32-S2 (once):
    - Press EN after wiring.
 4. Install `ch32fun/minichlink/99-minichlink.rules` into `/etc/udev/rules.d/` for access without root.
 
-Then `make flash`. The firmware stays awake for 3 s after reset, sweeping the LEDs, so the programmer can reattach later. In standby SWIO is not answering; press the button or power-cycle to get a window.
+Then `make flash`. The firmware stays awake for 3 s after reset, sweeping the LEDs, so the programmer can reattach later. In standby SWIO is not answering; double-click the button or power-cycle to get a window.
 
 ### Reading the output
 
@@ -104,7 +106,7 @@ Work down this list in order and record the numbers in `hardware/README.md`.
 
 1. **Before power.** Check VBAT to GND is not a short. Check part orientation against the placement review.
 2. **First power, from the programmer with no cell.** Run `make flash PRINTF=swio && make monitor`, then look for the boot banner with `vdd=`. The LEDs sweep G Y O R dimly.
-3. **Mic capture.** Press the button in a quiet room and check:
+3. **Mic capture.** Double-click the button in a quiet room and check:
    - `n` is about 70,300 (3 s × 23,437.5).
    - `overruns=0`.
    - `cpu=` is recorded. The estimate is 28–35 %, and anything under about 70 % is fine.
@@ -118,7 +120,7 @@ Work down this list in order and record the numbers in `hardware/README.md`.
 ## Not done yet
 
 - Storing calibration constants in flash, instead of setting them at compile time.
-- Double-press dosimeter mode.
+- Long-press dosimeter mode.
 - Pocket (occlusion) detection.
 - A clip heuristic beyond the PCM-peak flag, which is not validated as a safeguard.
 - Logarithmic brightness mapping.
