@@ -89,8 +89,7 @@ static void mic_start(void)
 	funPinMode(PC5, GPIO_CFGLR_OUT_50Mhz_AF_PP);             // SCK
 	funPinMode(PC7, GPIO_CFGLR_IN_FLOAT);                    // MISO
 
-	// SRAMEN keeps the SRAM clocked in sleep: the core sleeps through the capture while DMA writes
-	RCC->AHBPCENR |= RCC_AHBPeriph_DMA1 | RCC_AHBPeriph_SRAM;
+	RCC->AHBPCENR |= RCC_AHBPeriph_DMA1;
 	RCC->APB2PCENR |= RCC_APB2Periph_SPI1;
 	RCC->APB2PRSTR |= RCC_APB2Periph_SPI1;
 	RCC->APB2PRSTR &= ~RCC_APB2Periph_SPI1;
@@ -248,25 +247,6 @@ static void print_q8(const char *name, int32_t q8)
 	printf(" %s=%s%ld.%01ld", name, q8 < 0 ? "-" : "", (long)(a >> 8), (long)(((a & 255) * 10) >> 8));
 }
 
-// Sleep (core clock stopped, peripherals running) for ms. Only while capturing: the DMA
-// interrupt every 0.34 ms is what wakes the core. Measured on board 1: running at 48 MHz is
-// 6.7 mA of the 8.4 mA a sample costs, so the core should not busy-wait through it.
-// BRINGUP: the first version hung (core asleep, 5.2 mA). This one also ends after the number of
-// DMA half-transfers the time takes, in case SysTick stops in sleep, and blinks D1 every 128
-// wakes as a sign of life.
-static uint32_t capture_wakes;
-static void capture_sleep_ms(uint32_t ms)
-{
-	uint32_t t0 = SysTick->CNT, n = ms * (FUNCONF_SYSTEM_CORE_CLOCK / 1000);
-	uint32_t w = 0, w_max = ms * 3;                           // one half-transfer per 341 us
-	PFIC->SCTLR &= ~(1 << 2);                                 // plain sleep: standby would end the capture
-	while (SysTick->CNT - t0 < n && w < w_max) {
-		__WFI();
-		w++;
-		if (!(++capture_wakes & 127)) TIM2->CH2CVR = TIM2->CH2CVR ? 0 : DUTY_MIN * 4;
-	}
-}
-
 typedef struct {
 	uint64_t ms;                                              // weighted mean square (dsp_mean_square)
 	int32_t dba;                                              // Q8, INT32_MIN if nothing accumulated
@@ -283,12 +263,13 @@ static reading_t measure(const char *tag, uint32_t measure_ms, uint32_t bar_duty
 	dsp_reset((dsp_t *)&dsp, SETTLE_MS * FS_OUT_HZ_X2 / 2000);
 	isr_cycles = 0; overruns = 0;
 	capturing = 1;
-	capture_wakes = 0;
 	uint32_t t0 = SysTick->CNT;
 	mic_start();
 	for (uint32_t ms = 0; ms < SETTLE_MS + measure_ms; ms += 50) {
 		if (bar_duty) leds_bar((ms + 50) * 4 / (SETTLE_MS + measure_ms), bar_duty);
-		capture_sleep_ms(50);
+		// Busy-wait: sleeping here (WFI between DMA interrupts) hung on board 1 - the DMA
+		// interrupt never woke the core. Running costs ~3 mA of the 8.4 mA a sample draws.
+		Delay_Ms(50);
 		uint32_t v = vdd_mv();                                 // VDD under load, throughout
 		if (v < v_min) v_min = v;
 	}
@@ -305,11 +286,11 @@ static reading_t measure(const char *tag, uint32_t measure_ms, uint32_t bar_duty
 	printf("%s", tag);
 	print_q8("dBA", r.dba); print_q8("dBFS", dbfs);
 	printf(" n=%lu peak=%ld pcm_peak=%ld overload=%d vdd_idle=%lu vdd_min=%lu light_us=%lu duty=%lu"
-	       " cpu=%lu%% overruns=%lu wakes=%lu%s\n",
+	       " cpu=%lu%% overruns=%lu%s\n",
 	       (unsigned long)dsp.n, (long)dsp.peak, (long)dsp.pcm_peak, r.overload, (unsigned long)v_idle,
 	       (unsigned long)v_min, (unsigned long)light, (unsigned long)bar_duty,
 	       (unsigned long)(total ? (uint64_t)isr_cycles * 100 / total : 0), (unsigned long)overruns,
-	       (unsigned long)capture_wakes, r.invalid ? " INVALID" : "");
+	       r.invalid ? " INVALID" : "");
 	return r;
 }
 
@@ -518,7 +499,7 @@ int main(void)
 	pins_init();
 	adc_init();
 	leds_init();
-	printf("\ndbfob rev A fw " __DATE__ " vdd=%lu ahb=0x%lx\n", (unsigned long)vdd_mv(), (unsigned long)RCC->AHBPCENR);
+	printf("\ndbfob rev A fw " __DATE__ " vdd=%lu\n", (unsigned long)vdd_mv());
 	// Stay awake 3 s after reset so a programmer can attach before the first standby.
 	for (int i = 0; i < 4; i++) { led_set(i, DUTY_MIN * 4); Delay_Ms(750); }
 	led_set(LED_NONE, 0);
