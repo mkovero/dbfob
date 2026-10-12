@@ -251,11 +251,20 @@ static void print_q8(const char *name, int32_t q8)
 // Sleep (core clock stopped, peripherals running) for ms. Only while capturing: the DMA
 // interrupt every 0.34 ms is what wakes the core. Measured on board 1: running at 48 MHz is
 // 6.7 mA of the 8.4 mA a sample costs, so the core should not busy-wait through it.
+// BRINGUP: the first version hung (core asleep, 5.2 mA). This one also ends after the number of
+// DMA half-transfers the time takes, in case SysTick stops in sleep, and blinks D1 every 128
+// wakes as a sign of life.
+static uint32_t capture_wakes;
 static void capture_sleep_ms(uint32_t ms)
 {
 	uint32_t t0 = SysTick->CNT, n = ms * (FUNCONF_SYSTEM_CORE_CLOCK / 1000);
+	uint32_t w = 0, w_max = ms * 3;                           // one half-transfer per 341 us
 	PFIC->SCTLR &= ~(1 << 2);                                 // plain sleep: standby would end the capture
-	while (SysTick->CNT - t0 < n) __WFI();
+	while (SysTick->CNT - t0 < n && w < w_max) {
+		__WFI();
+		w++;
+		if (!(++capture_wakes & 127)) TIM2->CH2CVR = TIM2->CH2CVR ? 0 : DUTY_MIN * 4;
+	}
 }
 
 typedef struct {
@@ -274,6 +283,7 @@ static reading_t measure(const char *tag, uint32_t measure_ms, uint32_t bar_duty
 	dsp_reset((dsp_t *)&dsp, SETTLE_MS * FS_OUT_HZ_X2 / 2000);
 	isr_cycles = 0; overruns = 0;
 	capturing = 1;
+	capture_wakes = 0;
 	uint32_t t0 = SysTick->CNT;
 	mic_start();
 	for (uint32_t ms = 0; ms < SETTLE_MS + measure_ms; ms += 50) {
@@ -295,11 +305,11 @@ static reading_t measure(const char *tag, uint32_t measure_ms, uint32_t bar_duty
 	printf("%s", tag);
 	print_q8("dBA", r.dba); print_q8("dBFS", dbfs);
 	printf(" n=%lu peak=%ld pcm_peak=%ld overload=%d vdd_idle=%lu vdd_min=%lu light_us=%lu duty=%lu"
-	       " cpu=%lu%% overruns=%lu%s\n",
+	       " cpu=%lu%% overruns=%lu wakes=%lu%s\n",
 	       (unsigned long)dsp.n, (long)dsp.peak, (long)dsp.pcm_peak, r.overload, (unsigned long)v_idle,
 	       (unsigned long)v_min, (unsigned long)light, (unsigned long)bar_duty,
 	       (unsigned long)(total ? (uint64_t)isr_cycles * 100 / total : 0), (unsigned long)overruns,
-	       r.invalid ? " INVALID" : "");
+	       (unsigned long)capture_wakes, r.invalid ? " INVALID" : "");
 	return r;
 }
 
