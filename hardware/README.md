@@ -125,6 +125,12 @@ On 2026-09-27, DigiKey lists IM69D130V01XTSA1 as *Active*. The [hardware audit](
   - Quiet room: 48.7 dBA, −81.2 dBFS, identical in every reading. **That was the firmware's floor, not the room**: the mean square was rounded to whole LSB², and the squares were of |y|/4. Fixed after `3856f71`; the floor is now about 28 dBA, set by the integer sample, and the rest of the chain goes down to −117 dBFS.
   - Room with talking: 62.8 dBA.
   - Judged realistic; no reference meter yet.
+- **First comparison with reference meters** (`ba1a855`, still uncalibrated: datasheet sensitivity only):
+  - At about 61 dBA (61.3 and 61.8): within 0.5 dB of a Parkside meter. A measurement-mic setup on an AC2 read 57–58 dBA; its calibration is not known.
+  - Quiet room: the fob reads 48.1–48.5 dBA while the AC2 reads about 33. That is the fob's **noise floor**.
+    - The filter arithmetic alone measures about −90 dBFS (about 40 dBA) on the host.
+    - Most likely cause: the mic's own modulator noise at the low 1.5 MHz clock, folding in near the 11.7 kHz band edge, where the CIC-droop correction adds up to +11.5 dB. Not confirmed on the board.
+    - It does not affect the bands: at the 83 dBA threshold, a 48 dBA floor adds about 0.001 dB.
 - A-weighting removes the large unweighted low-frequency/DC content (`pcm_peak` 570 against a weighted peak of 15).
 
 ## Not verified yet
