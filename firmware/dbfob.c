@@ -1,9 +1,10 @@
 // dbfob firmware, rev A board (CH32V003F4P6 + IM69D130).
 //
-// Double-click the button: the fob wakes from standby, powers the mic, captures 3 s of PDM over SPI1+DMA
-// while the LED bar fills as a progress bar, A-weights it (src/dsp.c), and shows two verdicts on the LED bar for ~2 s: steady LED = bare ear,
-// blinking LED = with plugs giving 12 dB. Then back to standby. Every reading is also printed on
-// USART1 TX (PD5, J1 "T") for calibration against a reference meter.
+// Double click: spot check. The fob wakes from standby, powers the mic, captures 3 s of PDM over
+// SPI1+DMA while the LED bar fills as a progress bar, A-weights it (src/dsp.c), and shows two
+// verdicts on the LED bar for ~2 s: steady LED = bare ear, blinking LED = with plugs giving 12 dB.
+// Long press: dosimeter on / off; single click while on shows the dose the same way.
+// Every reading is also printed on USART1 TX (PD5, J1 "T") for calibration against a reference meter.
 //
 // Pins (hardware/README.md):
 //   PC5 SPI1 SCK  -> MIC_CLK   1.5 MHz (48 MHz / 32)
@@ -37,11 +38,18 @@
 
 // ---- display ---------------------------------------------------------------------------------
 // ---- button ----------------------------------------------------------------------------------
-// A double click starts a measurement; a single press, or a long squeeze in a pocket, does not.
-// BRINGUP: tune both by feel.
+// A double click starts a measurement; a single press, or a short squeeze in a pocket, does not.
+// BRINGUP: tune by feel.
 #define CLICK_MAX_MS      500            // a click held longer than this is not a click
 #define CLICK_GAP_MS      400            // the second click must start within this of the first release
 #define DEBOUNCE_MS       20
+#define LONG_PRESS_MS     2000           // starts / stops the dosimeter; long enough not to happen in a pocket by chance
+
+// ---- dosimeter -------------------------------------------------------------------------------
+#define DOSE_AWU_WINDOW   63             // AWU period = 61440 * 63 / LSI (128 kHz nominal) = ~30 s
+#define DOSE_TICKS_PER_SAMPLE 2          // one sample per ~60 s
+#define DOSE_SAMPLE_MS    2000
+#define DOSE_MAX_S        (12 * 3600UL)  // stops by itself after this
 
 #define SHOW_MS           2000
 #define BLINK_MS          250
@@ -239,10 +247,17 @@ static void print_q8(const char *name, int32_t q8)
 	printf(" %s=%s%ld.%01ld", name, q8 < 0 ? "-" : "", (long)(a >> 8), (long)(((a & 255) * 10) >> 8));
 }
 
-static void measure_and_show(void)
+typedef struct {
+	uint64_t ms;                                              // weighted mean square (dsp_mean_square)
+	int32_t dba;                                              // Q8, INT32_MIN if nothing accumulated
+	int overload, invalid;
+} reading_t;
+
+// Capture measure_ms of audio. With bar_duty set, the LED bar fills G -> R meanwhile: it confirms
+// the press and shows when the verdict comes. Prints one line, tagged `tag`.
+static reading_t measure(const char *tag, uint32_t measure_ms, uint32_t bar_duty, uint32_t light)
 {
-	uint32_t light = light_us();
-	uint32_t duty = duty_for_light(light);
+	reading_t r;
 	uint32_t v_idle = vdd_mv(), v_min = v_idle;
 
 	dsp_reset((dsp_t *)&dsp, SETTLE_MS * FS_OUT_HZ_X2 / 2000);
@@ -250,9 +265,8 @@ static void measure_and_show(void)
 	capturing = 1;
 	uint32_t t0 = SysTick->CNT;
 	mic_start();
-	// The bar fills G -> R while measuring: it confirms the press and shows when the verdict comes.
-	for (uint32_t ms = 0; ms < SETTLE_MS + MEASURE_MS; ms += 50) {
-		leds_bar((ms + 50) * 4 / (SETTLE_MS + MEASURE_MS), duty);
+	for (uint32_t ms = 0; ms < SETTLE_MS + measure_ms; ms += 50) {
+		if (bar_duty) leds_bar((ms + 50) * 4 / (SETTLE_MS + measure_ms), bar_duty);
 		Delay_Ms(50);
 		uint32_t v = vdd_mv();                                 // VDD under load, throughout
 		if (v < v_min) v_min = v;
@@ -261,24 +275,26 @@ static void measure_and_show(void)
 	leds_bar(0, 0);
 	uint32_t total = SysTick->CNT - t0;
 
+	r.ms = dsp_mean_square((dsp_t *)&dsp);
 	int32_t dbfs = dsp_level_dbfs_q8((dsp_t *)&dsp);
-	int32_t dba = dbfs == INT32_MIN ? INT32_MIN : dbfs + CAL_DB_Q8;
-	int overload = dsp.pcm_peak >= OVERLOAD_PCM;
-	int invalid = v_min < VBAT_MIN_MV || !dsp.n || overruns;
+	r.dba = dbfs == INT32_MIN ? INT32_MIN : dbfs + CAL_DB_Q8;
+	r.overload = dsp.pcm_peak >= OVERLOAD_PCM;
+	r.invalid = v_min < VBAT_MIN_MV || !dsp.n || overruns;
 
-	printf("dbfob");
-	print_q8("dBA", dba); print_q8("dBFS", dbfs);
+	printf("%s", tag);
+	print_q8("dBA", r.dba); print_q8("dBFS", dbfs);
 	printf(" n=%lu peak=%ld pcm_peak=%ld overload=%d vdd_idle=%lu vdd_min=%lu light_us=%lu duty=%lu"
 	       " cpu=%lu%% overruns=%lu%s\n",
-	       (unsigned long)dsp.n, (long)dsp.peak, (long)dsp.pcm_peak, overload, (unsigned long)v_idle,
-	       (unsigned long)v_min, (unsigned long)light, (unsigned long)duty,
+	       (unsigned long)dsp.n, (long)dsp.peak, (long)dsp.pcm_peak, r.overload, (unsigned long)v_idle,
+	       (unsigned long)v_min, (unsigned long)light, (unsigned long)bar_duty,
 	       (unsigned long)(total ? (uint64_t)isr_cycles * 100 / total : 0), (unsigned long)overruns,
-	       invalid ? " INVALID" : "");
+	       r.invalid ? " INVALID" : "");
+	return r;
+}
 
-	Delay_Ms(BAR_GAP_MS);                                     // dark gap: the verdict reads as separate
-	if (invalid) { show_invalid(duty); return; }
-	int bare = overload ? LED_R : band(dba);
-	int plugs = overload ? LED_R : band(dba - PLUG_DB * 256);
+// Two verdicts at once: steady = bare ear, blinking = with plugs (only if different)
+static void show_two(int bare, int plugs, uint32_t duty)
+{
 	for (uint32_t ms = 0; ms < SHOW_MS; ms += BLINK_MS) {
 		leds_two(bare, plugs == bare ? LED_NONE : plugs, (ms / BLINK_MS) & 1, duty);
 		Delay_Ms(BLINK_MS);
@@ -286,25 +302,158 @@ static void measure_and_show(void)
 	led_set(LED_NONE, 0);
 }
 
+static void spot_check(void)
+{
+	uint32_t light = light_us();
+	uint32_t duty = duty_for_light(light);
+	reading_t r = measure("dbfob", MEASURE_MS, duty, light);
+	Delay_Ms(BAR_GAP_MS);                                     // dark gap: the verdict reads as separate
+	if (r.invalid) { show_invalid(duty); return; }
+	show_two(r.overload ? LED_R : band(r.dba), r.overload ? LED_R : band(r.dba - PLUG_DB * 256), duty);
+}
+
+// ---- dosimeter -------------------------------------------------------------------------------
+// Long press starts it: the fob then wakes on the auto-wakeup timer (AWU, from the LSI) every
+// ~30 s and samples DOSE_SAMPLE_MS every DOSE_TICKS_PER_SAMPLE ticks, with the LEDs off. Each
+// sample stands for the time since the last one. A single click shows the dose so far, a long
+// press stops it, and it stops by itself after DOSE_MAX_S. The dose is the NIOSH one: 85 dBA for
+// 8 h = 100 %, 3 dB exchange, so dose = (T / 8 h) * 10^((LAeq - 85) / 10), within 0.05 dB of 2^(x/3).
+enum { DOSE_OFF, DOSE_ON, DOSE_DONE };
+static struct {
+	uint8_t state;
+	uint32_t tick_ms;                                         // AWU period, measured at start
+	uint32_t ticks, samples, valid;
+	uint64_t sum_ms;                                          // sum of the valid samples' mean squares
+} dose;
+
+static void awu_start(uint32_t psc, uint32_t window)
+{
+	RCC->APB1PCENR |= RCC_APB1Periph_PWR;
+	RCC->RSTSCKR |= RCC_LSION;
+	while (!(RCC->RSTSCKR & RCC_LSIRDY));
+	EXTI->EVENR |= EXTI_Line9;                                // AWU wakes as an event, like the button
+	EXTI->FTENR |= EXTI_Line9;
+	PWR->AWUCSR = 0;
+	PWR->AWUPSC = psc;
+	PWR->AWUWR = window;
+	PWR->AWUCSR = PWR_AWUCSR_AWUEN;
+}
+
+static void awu_stop(void)
+{
+	PWR->AWUCSR = 0;
+	EXTI->EVENR &= ~EXTI_Line9;
+	RCC->RSTSCKR &= ~RCC_LSION;                               // no LSI current when not dosing
+}
+
+// The LSI is only loosely trimmed, so time one short AWU period against the 48 MHz clock (in
+// sleep, where SysTick keeps running) and scale it to the dosimeter's period.
+static uint32_t awu_tick_ms(void)
+{
+	awu_start(PWR_AWUPSC_1024, DOSE_AWU_WINDOW);              // ~0.5 s
+	PFIC->SCTLR &= ~(1 << 2);                                 // plain sleep, not standby
+	__WFE(); __WFE();                                         // drop a stale event, then align
+	uint32_t t0 = SysTick->CNT;
+	__WFE();
+	uint32_t cycles = SysTick->CNT - t0;
+	awu_start(PWR_AWUPSC_61440, DOSE_AWU_WINDOW);
+	return (uint32_t)((uint64_t)cycles * (61440 / 1024) / (FUNCONF_SYSTEM_CORE_CLOCK / 1000));
+}
+
+static uint32_t dose_elapsed_s(void) { return (uint32_t)((uint64_t)dose.ticks * dose.tick_ms / 1000); }
+
+// Dose in dB relative to 100 %, Q8; INT32_MIN if there is nothing to show
+static int32_t dose_db_q8(void)
+{
+	if (!dose.valid) return INT32_MIN;
+	int32_t laeq = dsp_ms_dbfs_q8(dose.sum_ms / dose.valid) + CAL_DB_Q8;
+	uint32_t t = dose_elapsed_s();
+	return laeq - 85 * 256 + dsp_db10_q8(t ? t : 1) - dsp_db10_q8(8 * 3600);
+}
+
+static int dose_band(int32_t db_q8)
+{
+	if (db_q8 < -6 * 256) return LED_G;                       // < 25 % of the daily allowance
+	if (db_q8 < -3 * 256) return LED_Y;                       // 25-50 %
+	if (db_q8 < 0) return LED_O;                              // 50-100 %
+	return LED_R;                                             // used up
+}
+
+static void dose_print(const char *what)
+{
+	int32_t db = dose_db_q8();
+	printf("dose %s elapsed_s=%lu samples=%lu valid=%lu tick_ms=%lu", what, (unsigned long)dose_elapsed_s(),
+	       (unsigned long)dose.samples, (unsigned long)dose.valid, (unsigned long)dose.tick_ms);
+	print_q8("LAeq", dose.valid ? dsp_ms_dbfs_q8(dose.sum_ms / dose.valid) + CAL_DB_Q8 : INT32_MIN);
+	print_q8("dose_dB", db);
+	printf("\n");
+}
+
+static void dose_sample(void)
+{
+	reading_t r = measure("dose_sample", DOSE_SAMPLE_MS, 0, 0);
+	dose.samples++;
+	if (!r.invalid) { dose.sum_ms += r.ms; dose.valid++; }
+}
+
+static void dose_start(void)
+{
+	leds_bar(4, DUTY_MIN * 4);                                // acknowledge: all on while the LSI is timed
+	dose = (typeof(dose)){ .state = DOSE_ON };
+	dose.tick_ms = awu_tick_ms();
+	for (int i = 0; i < 2; i++) { leds_bar(0, 0); Delay_Ms(150); leds_bar(4, DUTY_MIN * 4); Delay_Ms(150); }
+	leds_bar(0, 0);
+	dose_print("start");
+	dose_sample();                                            // the first sample stands for the first period
+}
+
+static void dose_stop(int state)
+{
+	awu_stop();
+	dose.state = state;
+	dose_print(state == DOSE_DONE ? "auto_off" : "stop");
+}
+
+static void dose_show(void)
+{
+	uint32_t duty = duty_for_light(light_us());
+	int32_t db = dose_db_q8();
+	dose_print("show");
+	if (db == INT32_MIN || dose.valid * 2 < dose.samples) { show_invalid(duty); return; }
+	show_two(dose_band(db), dose_band(db - PLUG_DB * 256), duty);
+}
+
+// Woken by the AWU with the button up
+static void dose_tick(void)
+{
+	dose.ticks++;
+	if (dose.ticks % DOSE_TICKS_PER_SAMPLE == 0) dose_sample();
+	if (dose_elapsed_s() >= DOSE_MAX_S) dose_stop(DOSE_DONE);  // kept: a click still shows it
+}
+
 // ---- button ----------------------------------------------------------------------------------
+enum { EV_NONE, EV_SINGLE, EV_DOUBLE, EV_LONG };
 static int pressed(void) { return !funDigitalRead(PC0); }
 
-// Called with the first click down. Returns 1 if a second click follows in time.
-static int double_click(void)
+// Called with the button down. A long press is reported as soon as it is long enough, while
+// still held, so the LEDs can acknowledge it under the finger.
+static int button_event(void)
 {
-	for (uint32_t ms = 0; pressed(); ms += 5) {              // first click: must be short
-		if (ms > CLICK_MAX_MS) return 0;
+	uint32_t ms = 0;
+	for (; pressed(); ms += 5) {
+		if (ms >= LONG_PRESS_MS) return EV_LONG;
 		Delay_Ms(5);
 	}
+	if (ms > CLICK_MAX_MS) return EV_NONE;                    // neither a click nor a long press
 	Delay_Ms(DEBOUNCE_MS);
-	for (uint32_t ms = 0; ms < CLICK_GAP_MS; ms += 5) {      // second click
+	for (ms = 0; ms < CLICK_GAP_MS; ms += 5) {                // a second click?
 		if (pressed()) {
 			Delay_Ms(DEBOUNCE_MS);
-			return pressed();
+			return pressed() ? EV_DOUBLE : EV_SINGLE;
 		}
 		Delay_Ms(5);
 	}
-	return 0;
+	return EV_SINGLE;
 }
 
 // ---- power -----------------------------------------------------------------------------------
@@ -352,8 +501,21 @@ int main(void)
 	for (;;) {
 		standby();
 		Delay_Ms(DEBOUNCE_MS);
-		if (!pressed()) continue;                             // not a press
-		if (double_click()) measure_and_show();
+		if (!pressed()) {                                     // the AWU, or a bounce
+			if (dose.state == DOSE_ON) dose_tick();
+			continue;
+		}
+		switch (button_event()) {
+		case EV_DOUBLE: spot_check(); break;
+		case EV_SINGLE: if (dose.state != DOSE_OFF) dose_show(); break;   // otherwise ignored (pocket)
+		case EV_LONG:
+			if (dose.state == DOSE_ON) {
+				// stop: the bar empties R -> G
+				for (int n = 4; n >= 0; n--) { leds_bar(n, DUTY_MIN * 4); Delay_Ms(250); }
+				dose_stop(DOSE_OFF);
+			} else dose_start();
+			break;
+		}
 		while (pressed()) Delay_Ms(10);                       // wait for release
 	}
 }

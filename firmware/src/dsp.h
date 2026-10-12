@@ -31,5 +31,11 @@ void dsp_feed(dsp_t *d, const uint8_t *buf, uint32_t len);
 // 1 kHz sine reads 0. Returns INT32_MIN if nothing was accumulated.
 int32_t dsp_level_dbfs_q8(const dsp_t *d);
 
+// Mean square of the weighted signal, with DSP_MS_FRAC fraction bits (0 if nothing accumulated),
+// and its level in dBFS Q8. Mean squares can be averaged (the dosimeter) before taking the level.
+#define DSP_MS_FS (1ULL << (31 + DSP_MS_FRAC))   // a full-scale sine's mean square
+uint64_t dsp_mean_square(const dsp_t *d);
+int32_t dsp_ms_dbfs_q8(uint64_t ms);
+
 // Exposed for the test: 10*log10(x) in Q8 for x >= 1
 int32_t dsp_db10_q8(uint64_t x);

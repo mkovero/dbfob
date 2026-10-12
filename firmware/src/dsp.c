@@ -129,13 +129,21 @@ int32_t dsp_db10_q8(uint64_t x)
 	return (int32_t)(((int64_t)log2_q8 * 197283 + 32768) >> 16);   // * 3.0103 (197283 / 2^16)
 }
 
+uint64_t dsp_mean_square(const dsp_t *d)
+{
+	// With DSP_MS_FRAC fraction bits: without them a mean square under 2 LSB^2, a quiet room,
+	// was pinned at -81.3 dBFS. energy < 2^51 over 3 s, so << 8 fits.
+	return d->n ? (d->energy << DSP_MS_FRAC) / d->n : 0;
+}
+
+int32_t dsp_ms_dbfs_q8(uint64_t ms)
+{
+	// against a full-scale sine's mean square: amplitude DSP_FS = 2^16, mean square 2^31
+	return dsp_db10_q8(ms ? ms : 1) - dsp_db10_q8(DSP_MS_FS);
+}
+
 int32_t dsp_level_dbfs_q8(const dsp_t *d)
 {
 	if (!d->n) return INT32_MIN;
-	// Mean square with DSP_MS_FRAC fraction bits, against a full-scale sine's: amplitude
-	// DSP_FS = 2^16, mean square 2^31. Without the fraction bits a mean square under 2 LSB^2,
-	// a quiet room, was pinned at -81.3 dBFS. energy < 2^51 over 3 s, so << 8 fits.
-	uint64_t ms = (d->energy << DSP_MS_FRAC) / d->n;
-	if (!ms) ms = 1;
-	return dsp_db10_q8(ms) - dsp_db10_q8(1ULL << (31 + DSP_MS_FRAC));
+	return dsp_ms_dbfs_q8(dsp_mean_square(d));
 }

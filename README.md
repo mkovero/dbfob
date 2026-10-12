@@ -54,9 +54,23 @@ The obvious alternative was a mode switch, but either default misleads someone. 
 ### Modes
 
 - **Double click — spot check.** Measures the current level and shows a colour for a few seconds. This is the mode that is always trustworthy, because you are holding the device out in front of you.
-- **Long press — dosimeter.** *Not implemented; an idea for later.* The fob would sample for a couple of seconds every minute and accumulate dose. A double click would then show dose as a fraction of the daily allowance, bare ear and with plugs the same way.
+- **Long press (2 s) — dosimeter.** *Implemented, not yet tested on hardware.*
+  - **Start:** the LEDs light up and flash twice to confirm.
+  - **While running:** the fob wakes about every 30 s and samples for 2 s about once a minute, with the LEDs off.
+  - **Single click:** shows the dose so far as a share of the daily allowance, with the same steady / blinking display (bare ear / 12 dB plugs):
 
-The catch is that a keyfob lives in a pocket. A pocket reads 10–20 dB low with the high end rolled off, so an unsupervised dose would be a comforting lie. Dosimeter mode would need to detect occlusion from the spectrum, since the high-band to low-band energy ratio collapses in a pocket. It would refuse to count those samples and flag the dose as incomplete. For a real dosimeter, clip it to your shoulder.
+    | Colour | Share of the daily allowance |
+    |---|---|
+    | Green | under 25 % |
+    | Yellow | 25–50 % |
+    | Orange | 50–100 % |
+    | Red | used up |
+
+  - **Stop:** another long press. The bar empties from red to green.
+  - **Auto-off:** after 12 h it stops by itself. A single click still shows the final dose until the next start.
+  - **Double click:** a spot check, which works as usual while the dosimeter runs.
+
+The catch is that a keyfob lives in a pocket. A pocket reads 10–20 dB low with the high end rolled off, so a dose collected in a pocket is a comforting lie. The dosimeter doesn't yet detect this. It would need to from the spectrum, since the high-band to low-band energy ratio collapses in a pocket, and then refuse to count those samples and flag the dose as incomplete. For now, clip it to your shoulder or a bag strap, with the mic port uncovered.
 
 ## Hardware
 
@@ -101,7 +115,7 @@ docs/            part selection, hardware audit
 - [ ] Print the case and check the tolerances, the button flexure and the mic seal.
 - [ ] A calibration procedure anyone can repeat with a known-good meter.
 - [ ] Rev B board: centre the mic port, add UART RX for a bootloader, CH32V002/V006 if in stock, possibly a power latch for shelf life.
-- [ ] Dosimeter mode with occlusion detection.
+- [ ] Dosimeter: test on hardware, then add occlusion (pocket) detection.
 - [ ] Get a batch into a venue and see if people use them.
 
 ## Non-goals

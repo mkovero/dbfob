@@ -21,6 +21,20 @@ Firmware for the rev A board: a CH32V003F4P6 with an IM69D130 PDM mic. It is bui
    - **Alternating G/R:** invalid reading (battery below the cutoff, no samples, or DMA overrun).
 7. It prints one line per reading on USART1 TX (PD5, J1 pin 4 "T", 115200 8N1), then returns to standby.
 
+**Dosimeter (long press, 2 s):**
+- **Timing:** the CH32V003's auto-wakeup timer (AWU, clocked by the LSI) wakes it about every 30 s. Every second wake it takes a 2 s sample with the LEDs off.
+  - The LSI is loosely trimmed, so at start the AWU period is timed against the 48 MHz clock (`tick_ms`).
+- **Dose:** NIOSH, 85 dBA for 8 h = 100 % with a 3 dB exchange: dose = (T / 8 h) · 10^((LAeq − 85) / 10).
+  - LAeq is the energy average of the valid samples.
+  - T is the elapsed AWU time.
+  - With plugs, the dose is 12 dB lower, i.e. 1/16.
+- **States:**
+  - A single click shows the dose (G < 25 %, Y < 50 %, O < 100 %, R ≥ 100 %).
+  - A long press stops it.
+  - After 12 h it stops by itself. A click then still shows the last dose.
+  - If fewer than half the samples were valid (low battery), it shows the invalid pattern instead.
+- **Output:** each sample prints a `dose_sample` line, and start / show / stop print a `dose` summary.
+
 Example output line:
 
 ```
@@ -120,7 +134,7 @@ Work down this list in order and record the numbers in `hardware/README.md`.
 ## Not done yet
 
 - Storing calibration constants in flash, instead of setting them at compile time.
-- Long-press dosimeter mode.
+- Dosimeter: occlusion (pocket) detection. The mode itself is in, but not yet tried on hardware.
 - Pocket (occlusion) detection.
 - A clip heuristic beyond the PCM-peak flag, which is not validated as a safeguard.
 - Logarithmic brightness mapping.
