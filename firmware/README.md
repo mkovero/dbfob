@@ -134,7 +134,7 @@ Work down this list in order and record the numbers in `hardware/README.md`.
 ## Not done yet
 
 - Storing calibration constants in flash, instead of setting them at compile time.
-- Dosimeter: occlusion (pocket) detection. The mode itself is in, but not yet tried on hardware.
+- Dosimeter: occlusion (pocket) detection. The mode itself works on board 1 over short tests.
 - Pocket (occlusion) detection.
 - A clip heuristic beyond the PCM-peak flag, which is not validated as a safeguard.
 - Logarithmic brightness mapping.

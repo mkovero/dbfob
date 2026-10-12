@@ -131,6 +131,11 @@ On 2026-09-27, DigiKey lists IM69D130V01XTSA1 as *Active*. The [hardware audit](
     - The filter arithmetic alone measures about −90 dBFS (about 40 dBA) on the host.
     - Most likely cause: the mic's own modulator noise at the low 1.5 MHz clock, folding in near the 11.7 kHz band edge, where the CIC-droop correction adds up to +11.5 dB. Not confirmed on the board.
     - It does not affect the bands: at the 83 dBA threshold, a 48 dBA floor adds about 0.001 dB.
+- **Dosimeter** (`40761a5`): start, sampling, show and stop all work as designed.
+  - The AWU period measured 31.6 s against 30.2 s nominal: the LSI runs about 4.4 % slow, about 122 kHz. That's why it is timed at start.
+  - 2 s samples, n = 46,933.
+  - The dose matches the formula: 49.0 dBA for 63 s gives −62.5 dB.
+  - Not yet run for hours, nor checked for drift in `tick_ms` over temperature.
 - A-weighting removes the large unweighted low-frequency/DC content (`pcm_peak` 570 against a weighted peak of 15).
 
 ## Not verified yet
