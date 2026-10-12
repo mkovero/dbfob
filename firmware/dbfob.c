@@ -89,7 +89,8 @@ static void mic_start(void)
 	funPinMode(PC5, GPIO_CFGLR_OUT_50Mhz_AF_PP);             // SCK
 	funPinMode(PC7, GPIO_CFGLR_IN_FLOAT);                    // MISO
 
-	RCC->AHBPCENR |= RCC_AHBPeriph_DMA1;
+	// SRAMEN keeps the SRAM clocked in sleep: the core sleeps through the capture while DMA writes
+	RCC->AHBPCENR |= RCC_AHBPeriph_DMA1 | RCC_AHBPeriph_SRAM;
 	RCC->APB2PCENR |= RCC_APB2Periph_SPI1;
 	RCC->APB2PRSTR |= RCC_APB2Periph_SPI1;
 	RCC->APB2PRSTR &= ~RCC_APB2Periph_SPI1;
@@ -507,7 +508,7 @@ int main(void)
 	pins_init();
 	adc_init();
 	leds_init();
-	printf("\ndbfob rev A fw " __DATE__ " vdd=%lu\n", (unsigned long)vdd_mv());
+	printf("\ndbfob rev A fw " __DATE__ " vdd=%lu ahb=0x%lx\n", (unsigned long)vdd_mv(), (unsigned long)RCC->AHBPCENR);
 	// Stay awake 3 s after reset so a programmer can attach before the first standby.
 	for (int i = 0; i < 4; i++) { led_set(i, DUTY_MIN * 4); Delay_Ms(750); }
 	led_set(LED_NONE, 0);
