@@ -122,7 +122,7 @@ On 2026-09-27, DigiKey lists IM69D130V01XTSA1 as *Active*. The [hardware audit](
   - The first firmware had SPI1 and DMA1 unclocked, so it read n = 0. Fixed in `67c708f`.
 - VDD 3335 mV idle, 3326 mV with the mic on.
 - Levels, uncalibrated (datasheet sensitivity only):
-  - Quiet room: 48.7 dBA, −81.2 dBFS, noise-like (crest factor about 4).
+  - Quiet room: 48.7 dBA, −81.2 dBFS, identical in every reading. **That was the firmware's floor, not the room**: the mean square was rounded to whole LSB², and the squares were of |y|/4. Fixed after `3856f71`; the floor is now about 28 dBA, set by the integer sample, and the rest of the chain goes down to −117 dBFS.
   - Room with talking: 62.8 dBA.
   - Judged realistic; no reference meter yet.
 - A-weighting removes the large unweighted low-frequency/DC content (`pcm_peak` 570 against a weighted peak of 15).

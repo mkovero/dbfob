@@ -65,7 +65,10 @@ static inline void sample(dsp_t *d, uint32_t cic)
 	if (ax > d->pcm_peak) d->pcm_peak = ax;
 	int32_t a = y < 0 ? -y : y;
 	if (a > d->peak) d->peak = a;
-	d->energy += square(((uint32_t)(y < 0 ? -y : y) + (1u << (DSP_SQ_SHIFT - 1))) >> DSP_SQ_SHIFT);   // rounded: truncation biases quiet rooms low
+	// Exact square below 2^16; above it (within ~4 dB of full scale) square |y| / 4, rounded.
+	// Squaring |y| >> 2 everywhere put the quiet-room floor at about -92 dBFS (38 dBA).
+	if (a < (1 << 16)) d->energy += square(a);
+	else d->energy += (uint64_t)square((a + 2) >> 2) << 4;
 	d->n++;
 }
 
@@ -129,9 +132,10 @@ int32_t dsp_db10_q8(uint64_t x)
 int32_t dsp_level_dbfs_q8(const dsp_t *d)
 {
 	if (!d->n) return INT32_MIN;
-	// mean square, and the full-scale sine's mean square in the same units:
-	// amplitude DSP_FS >> DSP_SQ_SHIFT = 2^14, mean square 2^27
-	uint64_t ms = d->energy / d->n;
+	// Mean square with DSP_MS_FRAC fraction bits, against a full-scale sine's: amplitude
+	// DSP_FS = 2^16, mean square 2^31. Without the fraction bits a mean square under 2 LSB^2,
+	// a quiet room, was pinned at -81.3 dBFS. energy < 2^51 over 3 s, so << 8 fits.
+	uint64_t ms = (d->energy << DSP_MS_FRAC) / d->n;
 	if (!ms) ms = 1;
-	return dsp_db10_q8(ms) - dsp_db10_q8(1ULL << 27);
+	return dsp_db10_q8(ms) - dsp_db10_q8(1ULL << (31 + DSP_MS_FRAC));
 }

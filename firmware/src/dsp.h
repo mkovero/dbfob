@@ -17,12 +17,12 @@ typedef struct {
 	// results
 	uint32_t skip;                // output samples still to discard (mic start-up, filter settling)
 	uint32_t n;                   // samples accumulated
-	uint64_t energy;              // sum of (y >> DSP_SQ_SHIFT)^2
+	uint64_t energy;              // sum of y^2
 	int32_t peak;                 // largest |y| seen while accumulating
 	int32_t pcm_peak;             // largest |x| straight after the CIC (before weighting)
 } dsp_t;
 
-#define DSP_SQ_SHIFT 2            // |y| is at most ~2^17; >> 2 keeps it under 2^16 for the table square
+#define DSP_MS_FRAC 8             // fraction bits of the mean square in the level calculation
 
 void dsp_reset(dsp_t *d, uint32_t skip_samples);
 // Feed PDM bytes, MSB first in time. Any length; state carries across calls.

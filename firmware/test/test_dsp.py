@@ -80,6 +80,12 @@ def main():
         q = lib.run_sine(f, amp, sec, skip, ctypes.byref(peak), ctypes.byref(pcm))
         return q / 256
 
+    # Digital silence (an idle 0101 stream) must read far below any room. The board's first
+    # quiet-room readings sat at exactly -81.3 dBFS: the mean square was rounded to whole LSB^2.
+    # (The simulated 2nd-order modulator's own noise is about -75 dBFS, so it can't test below that.)
+    floor = level(1000, 0.0)
+    check('silence floor', floor < -110, f'{floor:.1f} dBFS')
+
     amp = 0.25                                    # -12 dBFS
     print('\n  f/Hz   expect    got    err')
     worst_mid = worst_edge = 0
