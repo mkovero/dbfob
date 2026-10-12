@@ -22,7 +22,7 @@ Firmware for the rev A board: a CH32V003F4P6 with an IM69D130 PDM mic. It is bui
 7. It prints one line per reading on USART1 TX (PD5, J1 pin 4 "T", 115200 8N1), then returns to standby.
 
 **Dosimeter (long press, 2 s):**
-- **Timing:** the CH32V003's auto-wakeup timer (AWU, clocked by the LSI) wakes it about every 30 s. Every second wake it takes a 2 s sample with the LEDs off.
+- **Timing:** the CH32V003's auto-wakeup timer (AWU, clocked by the LSI) wakes it about every 30 s. Every second wake it takes a 1 s sample with the LEDs off. That averages about 165 µA, or about 2 mAh per 12 h night; 2 s samples measured about 300 µA.
   - The LSI is loosely trimmed, so at start the AWU period is timed against the 48 MHz clock (`tick_ms`).
 - **Dose:** NIOSH, 85 dBA for 8 h = 100 % with a 3 dB exchange: dose = (T / 8 h) · 10^((LAeq − 85) / 10).
   - LAeq is the energy average of the valid samples.

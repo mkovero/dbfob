@@ -48,7 +48,7 @@
 // ---- dosimeter -------------------------------------------------------------------------------
 #define DOSE_AWU_WINDOW   63             // AWU period = 61440 * 63 / LSI (128 kHz nominal) = ~30 s
 #define DOSE_TICKS_PER_SAMPLE 2          // one sample per ~60 s
-#define DOSE_SAMPLE_MS    2000
+#define DOSE_SAMPLE_MS    1000           // 1 s/min: ~165 uA average, ~2 mAh per 12 h night (34461A, board 1)
 #define DOSE_MAX_S        (12 * 3600UL)  // stops by itself after this
 
 #define SHOW_MS           2000

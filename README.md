@@ -56,7 +56,7 @@ The obvious alternative was a mode switch, but either default misleads someone. 
 - **Double click — spot check.** Measures the current level and shows a colour for a few seconds. This is the mode that is always trustworthy, because you are holding the device out in front of you.
 - **Long press (2 s) — dosimeter.** *Works on board 1 over short tests; not yet run through a whole night.*
   - **Start:** the LEDs light up and flash twice to confirm.
-  - **While running:** the fob wakes about every 30 s and samples for 2 s about once a minute, with the LEDs off.
+  - **While running:** the fob wakes about every 30 s and samples for 1 s about once a minute, with the LEDs off.
   - **Single click:** shows the dose so far as a share of the daily allowance, with the same steady / blinking display (bare ear / 12 dB plugs):
 
     | Colour | Share of the daily allowance |
