@@ -66,7 +66,7 @@ Still to show on hardware: the V003 has no multiplier and 2 KB of RAM, so it mus
 
 ## Power (unqualified)
 
-These are datasheet estimates. No board current has been measured yet (see the [bring-up log](#bring-up-log)).
+These were datasheet estimates. Measured values for board 1 are in the [bring-up log](#bring-up-log).
 
 - **Active.** The CH32V003 draws about 4–6 mA at 48 MHz (HSI), and the mic about 0.6 mA. A CR2032's internal resistance rises as it discharges and as it gets cold. With 50 Ω, 6 mA pulls a 3.0 V cell down to the V003's 2.7 V minimum, and the 10 µF cap bridges that for only about half a millisecond, not a 3 s measurement. The V003 can also run below its guaranteed range before its reset threshold trips.
   - Firmware runs the measurement at 24 MHz, and measures VDD under load against the internal reference throughout.
@@ -136,6 +136,14 @@ On 2026-09-27, DigiKey lists IM69D130V01XTSA1 as *Active*. The [hardware audit](
   - 2 s samples, n = 46,933.
   - The dose matches the formula: 49.0 dBA for 63 s gives −62.5 dB.
   - Not yet run for hours, nor checked for drift in `tick_ms` over temperature.
+- **Current** (Keysight 34461A, fixed 10 mA range, about 0.5 ms readings, 3.0 V supply, programmer disconnected):
+  - **Standby: 8.16 µA**, against the datasheet's 7.6. The first firmware left the ADC on in standby and drew 573 µA (fixed in `d1eae0f`).
+  - Dosimeter on, between wakes: 8.9 µA.
+  - Timer-only wake: about 2 ms at 6.7 mA (it was 20 ms before `b14d562`).
+  - Dose sample: 2.15 s at **8.45 mA**, i.e. 18.1 mC every 62.5 s.
+  - About 6.7 mA of the sample is the core busy-waiting at 48 MHz. Sleeping it between DMA interrupts (WFI) hung the capture: the DMA interrupt never woke the core. Reverted in `fc01444`; not understood yet.
+  - **Dosimeter average: about 300 µA**, so about 3.6 mAh per 12 h night. A CR2032 gives less than its rated 220 mAh at 8 mA pulses, so roughly 40–60 nights.
+  - The start sequence (2 s hold, acknowledgement with all LEDs on, LSI timing, first sample) briefly went over the 10 mA range. Not investigated; it happens once per session.
 - A-weighting removes the large unweighted low-frequency/DC content (`pcm_peak` 570 against a weighted peak of 15).
 
 ## Not verified yet
