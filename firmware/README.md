@@ -126,6 +126,12 @@ After each, a `_diag` line prints the A-weighted level below 8 kHz (`dBA_lt8k`) 
 - If the 3 MHz `dBA` is lower, the low mic clock causes it.
 - `cpu=` on the `dbfob3` line shows whether 3 MHz fits the CPU.
 
+After the verdict data, the fob dumps 8 frames of 512 raw samples at each clock, which takes a few seconds over SWIO. Log the monitor (`sudo make monitor | tee floor.log`), then run `python3 tools/floor_spectrum.py floor.log`. It prints:
+- the A-weighted and unweighted level per octave band;
+- the share of the A-weighted energy in each band;
+- the total rebuilt from the spectrum;
+- the strongest narrow tones, which is how electrical interference shows up.
+
 The extra filters cost CPU in both measurements. Run `make clean` before going back to a normal build.
 
 ## Bring-up checklist

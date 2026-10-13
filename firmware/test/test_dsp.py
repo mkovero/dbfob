@@ -134,6 +134,38 @@ def diag_tests():
             d = [v / 256 for v in diag]
             res[fs, f] = (a, *d)
             print(f'        {fs / 1e6:.1f} MHz {f:6d} {a:6.1f} {d[0]:6.1f} {d[1]:6.1f} {d[2]:6.1f}')
+    # raw dump -> tools/floor_spectrum.py: the spectrum must rebuild the firmware's own dBA
+    import floor_spectrum
+    N = 512 * 8
+    buf = (ctypes.c_int16 * N)()
+    lib.set_raw(buf, N)
+    for fs in (1.5e6, 3e6):
+        a = lib.run_sine_diag(1000, 0.01, 0.6, fs, 4000, diag) / 256 + 130
+        lines = [f'raw clk={fs / 1e6:.1f} f={k // 512} i={k % 512} ' +
+                 ''.join(f'{v & 0xffff:04x}' for v in buf[k:k + 32]) for k in range(0, N, 32)]
+        path = os.path.join(tempfile.mkdtemp(), 'raw.log')
+        open(path, 'w').write('\n'.join(lines) + '\n')
+        fr = floor_spectrum.frames(path)[f'{fs / 1e6:.1f}']
+        f, p = floor_spectrum.psd(fr)
+        f1 = np.maximum(f, 1.0)
+        pa = p / 10 ** (floor_spectrum.cic_db(f1) / 10) * 10 ** (floor_spectrum.a_weight_db(f1) / 10)
+        got = floor_spectrum.db(pa[1:].sum())
+        check(f'diag {fs / 1e6:.1f} MHz: spectrum rebuilds dBA', abs(got - a) < 0.5,
+              f'{len(fr)} frames, spectrum {got:.1f} vs dsp {a:.1f} dBA')
+    lib.set_raw(None, 0)
+
+    # A full-scale start-up transient (as the mic gives when powered) must not leave the band
+    # filters in overflow: on board 1 they stuck at 131.6 dBA. Feed all-ones, then idle 0x55.
+    lib.diag_level.restype = ctypes.c_int32
+    lib.feed_more.argtypes = [ctypes.c_char_p, ctypes.c_uint32, ctypes.c_uint32]
+    lib.run_bytes(b'\xff' * 4000, 4000, (ctypes.c_uint32 * 1)(), 0)   # transient through every filter
+    lib.feed_more(b'\x55' * 28000, 28000, 3500)                       # settle as the firmware does
+    lib.diag_restart()
+    lib.feed_more(b'\x55' * 40000, 40000, 0)                          # then measure silence
+    lv = [lib.diag_level(w) / 256 for w in range(3)]
+    check('diag: band filters recover from a full-scale start', max(lv) < -90,
+          f'A<8k {lv[0]:.1f} A<2k {lv[1]:.1f} dBZ {lv[2]:.1f} dBFS after it')
+
     for fs in (1.5e6, 3e6):
         a1k = res[fs, 1000]
         check(f'diag {fs / 1e6:.1f} MHz: 1 kHz in every band', max(abs(a1k[0] - v) for v in a1k[1:3]) < 0.5

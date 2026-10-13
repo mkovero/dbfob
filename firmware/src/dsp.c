@@ -54,9 +54,13 @@ static inline void add_sq(uint64_t *e, int32_t v)
 // Butterworth low-pass biquad, Q13, direct form I with the same wrap-around trick as below.
 static inline int32_t lp_bq(int32_t *s, int32_t x, int32_t b0, int32_t b1, int32_t b2, int32_t a1, int32_t a2)
 {
+	x = x > (1 << 16) ? (1 << 16) : x < -(1 << 16) ? -(1 << 16) : x;
 	uint32_t acc = (uint32_t)x * b0 + (uint32_t)s[0] * b1 + (uint32_t)s[1] * b2
 	             - (uint32_t)s[2] * a1 - (uint32_t)s[3] * a2 + (1u << (FILT_Q - 1));   // rounded:
 	int32_t y = (int32_t)acc >> FILT_Q;      // a plain shift's -0.5 LSB bias reads as a DC floor
+	// Saturate input and output so the true result always fits 32 bits. Without this the mic's
+	// start-up transient overflowed the filters on board 1 and they never recovered (131.6 dBA).
+	y = y > (1 << 16) ? (1 << 16) : y < -(1 << 16) ? -(1 << 16) : y;
 	s[1] = s[0]; s[0] = x; s[3] = s[2]; s[2] = y;
 	return y;
 }
@@ -75,9 +79,10 @@ static inline void sample(dsp_t *d, uint32_t cic)
 #endif
 	int32_t ax = x < 0 ? -x : x;
 #ifdef DSP_DIAG
-	// unweighted: x minus a slow DC estimate (~4 Hz). Not the HP sections' output: their truncation
-	// leaves ~90 LSB of DC that the later sections remove, which would read as -54 dBFS here.
-	d->dc += x - (d->dc >> 10);
+	// unweighted: x minus a DC estimate (Q10), fast (~60 Hz) while settling, then slow (~4 Hz).
+	// Not the HP sections' output: their truncation leaves ~90 LSB of DC that the later sections
+	// remove, which would read as -54 dBFS here.
+	d->dc += (x * 1024 - d->dc) >> (d->skip ? 6 : 10);
 	int32_t z = x - (d->dc >> 10);
 #endif
 	HP(0, HP_P0);
@@ -93,13 +98,15 @@ static inline void sample(dsp_t *d, uint32_t cic)
 	d->by2 = d->by1; d->by1 = y;
 #ifdef DSP_DIAG
 	// 4th-order Butterworth at 8 kHz, 2nd-order at 2 kHz (fs 23,437.5; tools/design_filters.py style)
-	// with 2 extra fraction bits: the filters' own rounding noise would otherwise sit at ~-95 dBFS
-	int32_t y8 = lp_bq(d->lp[0], y * 4, 2078, 4155, 2078, 5009, 1034);
+	// with 1 extra fraction bit: the filters' own rounding noise would otherwise sit at ~-95 dBFS
+	int32_t y8 = lp_bq(d->lp[0], y * 2, 2078, 4155, 2078, 5009, 1034);
 	y8 = lp_bq(d->lp[1], y8, 8192, 16384, 8192, 6731, 4207);
-	int32_t y2 = lp_bq(d->lp[2], y * 4, 422, 844, 422, -10347, 3844);
+	int32_t y2 = lp_bq(d->lp[2], y * 2, 422, 844, 422, -10347, 3844);
 #endif
 	if (d->skip) { d->skip--; return; }
 #ifdef DSP_DIAG
+	if (d->raw && d->raw_n < d->raw_max)
+		d->raw[d->raw_n++] = (int16_t)(z > 32767 ? 32767 : z < -32767 ? -32767 : z);
 	add_sq(&d->e_lp8, y8);
 	add_sq(&d->e_lp2, y2);
 	add_sq(&d->e_z, z);
@@ -199,7 +206,7 @@ int32_t dsp_diag_dbfs_q8(const dsp_t *d, int which)
 {
 	if (!d->n) return INT32_MIN;
 	if (which == DSP_DIAG_Z) return dsp_ms_dbfs_q8((d->e_z << DSP_MS_FRAC) / d->n);
-	uint64_t e = which == DSP_DIAG_LP8 ? d->e_lp8 : d->e_lp2;   // 2 fraction bits: energy x 16
-	return dsp_ms_dbfs_q8(((e << DSP_MS_FRAC) / d->n) >> 4);
+	uint64_t e = which == DSP_DIAG_LP8 ? d->e_lp8 : d->e_lp2;   // 1 fraction bit: energy x 4
+	return dsp_ms_dbfs_q8(((e << DSP_MS_FRAC) / d->n) >> 2);
 }
 #endif

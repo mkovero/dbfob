@@ -37,10 +37,18 @@ int32_t run_sine(double f, double amp, double seconds, uint32_t skip, int32_t *p
 #ifdef DSP_DIAG
 // As run_sine, at modulator clock fs (1.5e6 or 3e6, the latter with the R = 128 CIC); also returns
 // the diagnostic levels: A below 8 kHz, A below 2 kHz, unweighted.
+int32_t diag_level(int w) { return dsp_diag_dbfs_q8(&D, w); }
+void diag_restart(void) { D.n = 0; D.energy = D.e_lp8 = D.e_lp2 = D.e_z = 0; }
+void feed_more(const uint8_t *bytes, uint32_t n, uint32_t skip) { D.skip = skip; dsp_feed(&D, bytes, n); }
+
+static int16_t *raw_buf; static uint16_t raw_len;
+void set_raw(int16_t *buf, uint16_t n) { raw_buf = buf; raw_len = n; }
+
 int32_t run_sine_diag(double f, double amp, double seconds, double fs, uint32_t skip, int32_t *diag)
 {
 	dsp_reset(&D, skip);
 	D.r128 = fs > 2e6;
+	D.raw = raw_buf; D.raw_max = raw_len;
 	double v1 = 0, v2 = 0, y = 0, ph = 0, dph = 2 * M_PI * f / fs;
 	uint64_t nbytes = (uint64_t)(seconds * fs / 8);
 	uint8_t buf[64]; uint32_t k = 0;

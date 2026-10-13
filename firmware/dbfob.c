@@ -317,6 +317,36 @@ static reading_t measure(const char *tag, uint32_t measure_ms, uint32_t bar_duty
 	return r;
 }
 
+#ifdef DBFOB_DIAG
+// Raw dump for tools/floor_spectrum.py: RAW_FRAMES frames of RAW_N samples (DC removed, before
+// weighting) at one clock, printed as 4-digit hex. The capture keeps running while printing.
+#define RAW_N      512
+#define RAW_FRAMES 8
+static int16_t raw[RAW_N];
+static void raw_dump(int fast)
+{
+	mic_3mhz = fast;
+	dsp_reset((dsp_t *)&dsp, SETTLE_MS * FS_OUT_HZ_X2 / 2000);
+	dsp.r128 = fast;
+	capturing = 1;
+	mic_start();
+	for (int f = 0; f < RAW_FRAMES; f++) {
+		dsp.raw_n = 0; dsp.raw_max = RAW_N; dsp.raw = raw;
+		while (dsp.raw_n < RAW_N);
+		dsp.raw = 0;
+		for (int i = 0; i < RAW_N; i += 32) {
+			char line[32 * 4 + 1], *p = line;
+			for (int k = 0; k < 32; k++)
+				for (int sh = 12; sh >= 0; sh -= 4) *p++ = "0123456789abcdef"[((uint16_t)raw[i + k] >> sh) & 15];
+			*p = 0;
+			printf("raw clk=%s f=%d i=%d %s\n", fast ? "3.0" : "1.5", f, i, line);
+		}
+	}
+	mic_stop();
+	mic_3mhz = 0;
+}
+#endif
+
 // Two verdicts at once: steady = bare ear, blinking = with plugs (only if different)
 static void show_two(int bare, int plugs, uint32_t duty)
 {
@@ -339,6 +369,10 @@ static void spot_check(void)
 	reading_t r = measure("dbfob", MEASURE_MS, duty, light);
 	Delay_Ms(BAR_GAP_MS);                                     // dark gap: the verdict reads as separate
 	if (r.invalid) { show_invalid(duty); return; }
+#ifdef DBFOB_DIAG
+	raw_dump(0);                                              // spectra: tools/floor_spectrum.py
+	raw_dump(1);
+#endif
 	show_two(r.overload ? LED_R : band(r.dba), r.overload ? LED_R : band(r.dba - PLUG_DB * 256), duty);
 }
 

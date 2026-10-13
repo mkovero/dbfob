@@ -27,6 +27,8 @@ typedef struct {
 	int32_t dc;                   // DC estimate for the unweighted level, Q10
 	int32_t lp[3][4];             // low-pass biquads on the weighted signal: x1 x2 y1 y2
 	uint64_t e_lp8, e_lp2, e_z;   // energy of A below 8 kHz, A below 2 kHz, unweighted (> 20 Hz)
+	int16_t *raw;                 // if set: the next raw_max CIC outputs (centred, before weighting)
+	uint16_t raw_n, raw_max;
 #endif
 } dsp_t;
 
