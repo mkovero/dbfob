@@ -16,7 +16,7 @@ dbfob is an open-hardware sound level indicator sized for a keyring. It exists b
 |---|---|
 | [Hardware](hardware/README.md) | 5 assembled boards from JLCPCB, arrived 2026-10-12. Three are running, with no assembly faults so far. Standby measures 8.2 µA ([bring-up log](hardware/README.md#bring-up-log)). |
 | [Firmware](firmware/README.md) | Spot check and dosimeter both work: PDM capture, A-weighting, LAeq, dose, and a flash log of the last dosimeter run (40 % CPU, no overruns). At about 61 dBA it reads within 0.5 dB of a consumer meter. The quiet-room floor is about 48 dBA, which doesn't matter for the bands. |
-| [Case](hardware/case/README.md) | Two-shell case, in SLA and FDM builds. Printed; checking how the boards fit is next. |
+| [Case](hardware/case/README.md) | Two-shell case, in SLA and FDM builds. The FDM build is printed; a fit check with a board is due this week. |
 
 Next steps: confirm a full 12 h dosimeter night, then calibrate at 85–105 dBA against a reference meter. See [Next](#next).
 
