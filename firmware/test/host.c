@@ -34,6 +34,33 @@ int32_t run_sine(double f, double amp, double seconds, uint32_t skip, int32_t *p
 	return dsp_level_dbfs_q8(&D);
 }
 
+#ifdef DSP_DIAG
+// As run_sine, at modulator clock fs (1.5e6 or 3e6, the latter with the R = 128 CIC); also returns
+// the diagnostic levels: A below 8 kHz, A below 2 kHz, unweighted.
+int32_t run_sine_diag(double f, double amp, double seconds, double fs, uint32_t skip, int32_t *diag)
+{
+	dsp_reset(&D, skip);
+	D.r128 = fs > 2e6;
+	double v1 = 0, v2 = 0, y = 0, ph = 0, dph = 2 * M_PI * f / fs;
+	uint64_t nbytes = (uint64_t)(seconds * fs / 8);
+	uint8_t buf[64]; uint32_t k = 0;
+	for (uint64_t i = 0; i < nbytes; i++) {
+		uint8_t b = 0;
+		for (int j = 0; j < 8; j++) {
+			double u = amp * sin(ph); ph += dph;
+			v1 += u - y; v2 += v1 - y;
+			y = v2 >= 0 ? 1.0 : -1.0;
+			b = (b << 1) | (y > 0);
+		}
+		buf[k++] = b;
+		if (k == sizeof buf) { dsp_feed(&D, buf, k); k = 0; }
+	}
+	if (k) dsp_feed(&D, buf, k);
+	for (int w = 0; w < 3; w++) diag[w] = dsp_diag_dbfs_q8(&D, w);
+	return dsp_level_dbfs_q8(&D);
+}
+#endif
+
 // Feed arbitrary bytes in uneven chunks and capture raw CIC outputs, for comparison with a
 // bit-by-bit reference integrator in Python.
 uint32_t run_bytes(const uint8_t *bytes, uint32_t n, uint32_t *out, uint32_t out_max)

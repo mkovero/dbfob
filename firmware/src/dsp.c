@@ -42,14 +42,44 @@ static inline uint32_t square(uint32_t s)
 	return (SQ[a] << 16) + ((SQ[a + b] - SQ[m]) << 7) + SQ[b];
 }
 
+// Add v^2 to an energy sum: exact below 2^16, |v| / 4 squared above (as for the main sum).
+static inline void add_sq(uint64_t *e, int32_t v)
+{
+	uint32_t a = v < 0 ? -v : v;
+	if (a < (1 << 16)) *e += square(a);
+	else *e += (uint64_t)square(a < (1 << 18) ? (a + 2) >> 2 : 0xFFFF) << 4;
+}
+
+#ifdef DSP_DIAG
+// Butterworth low-pass biquad, Q13, direct form I with the same wrap-around trick as below.
+static inline int32_t lp_bq(int32_t *s, int32_t x, int32_t b0, int32_t b1, int32_t b2, int32_t a1, int32_t a2)
+{
+	uint32_t acc = (uint32_t)x * b0 + (uint32_t)s[0] * b1 + (uint32_t)s[1] * b2
+	             - (uint32_t)s[2] * a1 - (uint32_t)s[3] * a2 + (1u << (FILT_Q - 1));   // rounded:
+	int32_t y = (int32_t)acc >> FILT_Q;      // a plain shift's -0.5 LSB bias reads as a DC floor
+	s[1] = s[0]; s[0] = x; s[3] = s[2]; s[2] = y;
+	return y;
+}
+#endif
+
 static inline void sample(dsp_t *d, uint32_t cic)
 {
 #ifdef DSP_TEST_HOOK
 	dsp_test_cic(cic);
 #endif
 	// CIC output is 0..2^24 for 0..100 % ones; centre and scale to +-DSP_FS
+#ifdef DSP_DIAG
+	int32_t x = d->r128 ? ((int32_t)cic - (1L << 27)) >> 11 : ((int32_t)cic - (1L << 23)) >> 7;
+#else
 	int32_t x = ((int32_t)cic - (1L << 23)) >> 7;
+#endif
 	int32_t ax = x < 0 ? -x : x;
+#ifdef DSP_DIAG
+	// unweighted: x minus a slow DC estimate (~4 Hz). Not the HP sections' output: their truncation
+	// leaves ~90 LSB of DC that the later sections remove, which would read as -54 dBFS here.
+	d->dc += x - (d->dc >> 10);
+	int32_t z = x - (d->dc >> 10);
+#endif
 	HP(0, HP_P0);
 	HP(1, HP_P1);
 	HP(2, HP_P2);
@@ -61,14 +91,25 @@ static inline void sample(dsp_t *d, uint32_t cic)
 	int32_t y = (int32_t)acc >> FILT_Q;
 	d->bx2 = d->bx1; d->bx1 = x;
 	d->by2 = d->by1; d->by1 = y;
+#ifdef DSP_DIAG
+	// 4th-order Butterworth at 8 kHz, 2nd-order at 2 kHz (fs 23,437.5; tools/design_filters.py style)
+	// with 2 extra fraction bits: the filters' own rounding noise would otherwise sit at ~-95 dBFS
+	int32_t y8 = lp_bq(d->lp[0], y * 4, 2078, 4155, 2078, 5009, 1034);
+	y8 = lp_bq(d->lp[1], y8, 8192, 16384, 8192, 6731, 4207);
+	int32_t y2 = lp_bq(d->lp[2], y * 4, 422, 844, 422, -10347, 3844);
+#endif
 	if (d->skip) { d->skip--; return; }
+#ifdef DSP_DIAG
+	add_sq(&d->e_lp8, y8);
+	add_sq(&d->e_lp2, y2);
+	add_sq(&d->e_z, z);
+#endif
 	if (ax > d->pcm_peak) d->pcm_peak = ax;
 	int32_t a = y < 0 ? -y : y;
 	if (a > d->peak) d->peak = a;
 	// Exact square below 2^16; above it (within ~4 dB of full scale) square |y| / 4, rounded.
 	// Squaring |y| >> 2 everywhere put the quiet-room floor at about -92 dBFS (38 dBA).
-	if (a < (1 << 16)) d->energy += square(a);
-	else d->energy += (uint64_t)square((a + 2) >> 2) << 4;
+	add_sq(&d->energy, y);
 	d->n++;
 }
 
@@ -93,19 +134,24 @@ void dsp_feed(dsp_t *d, const uint8_t *buf, uint32_t len)
 	uint32_t i1 = d->i1, i2 = d->i2, i3 = d->i3, i4 = d->i4;
 	uint8_t phase = d->phase;
 	const uint8_t *end = buf + len;
+#ifdef DSP_DIAG
+	const int bps = d->r128 ? 16 : 8;        // bytes per output sample
+#else
+	const int bps = 8;
+#endif
 	// Fast path, which is every call from the DMA ISR (64-byte halves): whole output samples of
 	// 8 bytes each, no per-byte phase bookkeeping.
 	if (!phase) {
-		while (end - buf >= 8) {
-			for (int k = 0; k < 8; k++) { uint8_t b = buf[k]; CIC_BYTE(b); }
-			buf += 8;
+		while (end - buf >= bps) {
+			for (int k = 0; k < bps; k++) { uint8_t b = buf[k]; CIC_BYTE(b); }
+			buf += bps;
 			sample(d, comb(d, i4));
 		}
 	}
 	for (; buf < end; buf++) {               // anything else, byte by byte
 		uint8_t b = *buf;
 		CIC_BYTE(b);
-		if (++phase == 8) { phase = 0; sample(d, comb(d, i4)); }
+		if (++phase == bps) { phase = 0; sample(d, comb(d, i4)); }
 	}
 	d->i1 = i1; d->i2 = i2; d->i3 = i3; d->i4 = i4;
 	d->phase = phase;
@@ -147,3 +193,13 @@ int32_t dsp_level_dbfs_q8(const dsp_t *d)
 	if (!d->n) return INT32_MIN;
 	return dsp_ms_dbfs_q8(dsp_mean_square(d));
 }
+
+#ifdef DSP_DIAG
+int32_t dsp_diag_dbfs_q8(const dsp_t *d, int which)
+{
+	if (!d->n) return INT32_MIN;
+	if (which == DSP_DIAG_Z) return dsp_ms_dbfs_q8((d->e_z << DSP_MS_FRAC) / d->n);
+	uint64_t e = which == DSP_DIAG_LP8 ? d->e_lp8 : d->e_lp2;   // 2 fraction bits: energy x 16
+	return dsp_ms_dbfs_q8(((e << DSP_MS_FRAC) / d->n) >> 4);
+}
+#endif

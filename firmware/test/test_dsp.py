@@ -27,10 +27,10 @@ def check(name, ok, msg):
     if not ok: fails.append(name)
 
 
-def build():
+def build(extra=()):
     so = os.path.join(tempfile.mkdtemp(), 'libdsp.so')
     subprocess.run(['gcc', '-O2', '-Wall', '-Wextra', '-Werror', '-fsanitize=undefined',
-                    '-fno-sanitize-recover', '-shared', '-fPIC', '-DDSP_TEST_HOOK', '-I', SRC,
+                    '-fno-sanitize-recover', '-shared', '-fPIC', '-DDSP_TEST_HOOK', *extra, '-I', SRC,
                     os.path.join(SRC, 'dsp.c'), os.path.join(HERE, 'host.c'), '-lm', '-o', so], check=True)
     lib = ctypes.CDLL(so)
     lib.run_sine.restype = ctypes.c_int32
@@ -113,8 +113,34 @@ def main():
               f'err {e:+.2f} dB, peak |y| {peak.value} (int32 products need < 2^17 = 131072)')
         check(f'headroom margin {f} Hz', peak.value < 131072, f'{peak.value}')
 
+    diag_tests()
+
     print('\nFAILED: ' + ', '.join(fails) if fails else '\nall passed')
     return 1 if fails else 0
+
+
+def diag_tests():
+    """The diagnostic build (make DIAG=1): band levels and the 3 MHz clock path."""
+    lib = build(['-DDSP_DIAG'])
+    lib.run_sine_diag.restype = ctypes.c_int32
+    lib.run_sine_diag.argtypes = [ctypes.c_double, ctypes.c_double, ctypes.c_double, ctypes.c_double,
+                                  ctypes.c_uint32, ctypes.POINTER(ctypes.c_int32)]
+    diag = (ctypes.c_int32 * 3)()
+    print('\n  diag: clock    f/Hz      A   A<8k   A<2k      Z   (dBFS)')
+    res = {}
+    for fs in (1.5e6, 3e6):
+        for f in (0, 1000, 5000, 10000):
+            a = lib.run_sine_diag(f, 0.25 if f else 0.0, 0.6, fs, 4000, diag) / 256
+            d = [v / 256 for v in diag]
+            res[fs, f] = (a, *d)
+            print(f'        {fs / 1e6:.1f} MHz {f:6d} {a:6.1f} {d[0]:6.1f} {d[1]:6.1f} {d[2]:6.1f}')
+    for fs in (1.5e6, 3e6):
+        a1k = res[fs, 1000]
+        check(f'diag {fs / 1e6:.1f} MHz: 1 kHz in every band', max(abs(a1k[0] - v) for v in a1k[1:3]) < 0.5
+              and abs(a1k[0] - (-12)) < 0.5, f'A {a1k[0]:.1f} A<8k {a1k[1]:.1f} A<2k {a1k[2]:.1f}')
+        a10 = res[fs, 10000]
+        check(f'diag {fs / 1e6:.1f} MHz: 10 kHz cut below 8 kHz', a10[0] - a10[1] > 6,
+              f'A {a10[0]:.1f} A<8k {a10[1]:.1f}')
 
 
 if __name__ == '__main__':

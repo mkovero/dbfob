@@ -20,6 +20,14 @@ typedef struct {
 	uint64_t energy;              // sum of y^2
 	int32_t peak;                 // largest |y| seen while accumulating
 	int32_t pcm_peak;             // largest |x| straight after the CIC (before weighting)
+#ifdef DSP_DIAG
+	// Diagnostic build (make DIAG=1): where the quiet-room floor lives. Set r128 after
+	// dsp_reset for a 3 MHz PDM clock (R = 128, same output rate).
+	uint8_t r128;
+	int32_t dc;                   // DC estimate for the unweighted level, Q10
+	int32_t lp[3][4];             // low-pass biquads on the weighted signal: x1 x2 y1 y2
+	uint64_t e_lp8, e_lp2, e_z;   // energy of A below 8 kHz, A below 2 kHz, unweighted (> 20 Hz)
+#endif
 } dsp_t;
 
 #define DSP_MS_FRAC 8             // fraction bits of the mean square in the level calculation
@@ -36,6 +44,11 @@ int32_t dsp_level_dbfs_q8(const dsp_t *d);
 #define DSP_MS_FS (1ULL << (31 + DSP_MS_FRAC))   // a full-scale sine's mean square
 uint64_t dsp_mean_square(const dsp_t *d);
 int32_t dsp_ms_dbfs_q8(uint64_t ms);
+
+#ifdef DSP_DIAG
+enum { DSP_DIAG_LP8, DSP_DIAG_LP2, DSP_DIAG_Z };
+int32_t dsp_diag_dbfs_q8(const dsp_t *d, int which);
+#endif
 
 // Exposed for the test: 10*log10(x) in Q8 for x >= 1
 int32_t dsp_db10_q8(uint64_t x);

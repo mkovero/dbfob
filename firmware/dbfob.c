@@ -67,6 +67,9 @@ static volatile dsp_t dsp;
 static uint8_t pdm[128];                 // DMA ring: two halves of 64 bytes = 8 output samples each
 static volatile uint32_t isr_cycles, overruns;
 static volatile uint8_t capturing;
+#ifdef DBFOB_DIAG
+static uint8_t mic_3mhz;                 // diagnostics: clock the mic at 3 MHz (48 MHz / 16, R = 128)
+#endif
 
 // ---- PDM capture: SPI1 RX-only master + DMA1 channel 2 ---------------------------------------
 void DMA1_Channel2_IRQHandler(void) __attribute__((interrupt));
@@ -105,7 +108,12 @@ static void mic_start(void)
 	SPI1->CTLR2 = SPI_CTLR2_RXDMAEN;
 	// software NSS held high (SSI), or the master sees a mode fault and drops to slave
 	SPI1->CTLR1 = SPI_NSS_Soft | SPI_NSSInternalSoft_Set | SPI_CPHA_1Edge | SPI_CPOL_Low | SPI_DataSize_8b | SPI_FirstBit_MSB |
-	              SPI_Mode_Master | SPI_Direction_2Lines_RxOnly | SPI_BaudRatePrescaler_32;
+	              SPI_Mode_Master | SPI_Direction_2Lines_RxOnly |
+#ifdef DBFOB_DIAG
+	              (mic_3mhz ? SPI_BaudRatePrescaler_16 : SPI_BaudRatePrescaler_32);
+#else
+	              SPI_BaudRatePrescaler_32;
+#endif
 	SPI1->CTLR1 |= CTLR1_SPE_Set;
 }
 
@@ -261,6 +269,9 @@ static reading_t measure(const char *tag, uint32_t measure_ms, uint32_t bar_duty
 	uint32_t v_idle = vdd_mv(), v_min = v_idle;
 
 	dsp_reset((dsp_t *)&dsp, SETTLE_MS * FS_OUT_HZ_X2 / 2000);
+#ifdef DBFOB_DIAG
+	dsp.r128 = mic_3mhz;
+#endif
 	isr_cycles = 0; overruns = 0;
 	capturing = 1;
 	uint32_t t0 = SysTick->CNT;
@@ -291,6 +302,18 @@ static reading_t measure(const char *tag, uint32_t measure_ms, uint32_t bar_duty
 	       (unsigned long)v_min, (unsigned long)light, (unsigned long)bar_duty,
 	       (unsigned long)(total ? (uint64_t)isr_cycles * 100 / total : 0), (unsigned long)overruns,
 	       r.invalid ? " INVALID" : "");
+#ifdef DBFOB_DIAG
+	// where the level lives: A-weighted below 8 kHz and below 2 kHz, and unweighted (dB re the
+	// same calibration, so dBZ is only approximate)
+	printf("%s_diag clk=%s", tag, mic_3mhz ? "3.0MHz" : "1.5MHz");
+	print_q8("dBA", r.dba);
+	static const char *const names[] = { "dBA_lt8k", "dBA_lt2k", "dBZ" };
+	for (int w = 0; w < 3; w++) {
+		int32_t q = dsp_diag_dbfs_q8((dsp_t *)&dsp, w);
+		print_q8(names[w], q == INT32_MIN ? q : q + CAL_DB_Q8);
+	}
+	printf("\n");
+#endif
 	return r;
 }
 
@@ -308,6 +331,11 @@ static void spot_check(void)
 {
 	uint32_t light = light_us();
 	uint32_t duty = duty_for_light(light);
+#ifdef DBFOB_DIAG
+	mic_3mhz = 1;                                             // first at 3 MHz, LEDs off ...
+	measure("dbfob3", MEASURE_MS, 0, light);
+	mic_3mhz = 0;                                             // ... then the normal 1.5 MHz one
+#endif
 	reading_t r = measure("dbfob", MEASURE_MS, duty, light);
 	Delay_Ms(BAR_GAP_MS);                                     // dark gap: the verdict reads as separate
 	if (r.invalid) { show_invalid(duty); return; }

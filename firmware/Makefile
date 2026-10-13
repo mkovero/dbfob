@@ -8,6 +8,7 @@
 #   make check   - build, verify no software multiply in the hot path, run the host tests
 #   make bench   - DSP instruction count per second of audio, under qemu-riscv32
 #   make filters - regenerate src/filters.h and src/cic_tables.h
+#   make flash DIAG=1 - noise-floor diagnostics (see the DIAG note below); `make clean` between builds
 #   make dose-log - read the last dosimeter run from flash and decode it (cell out, programmer on)
 all : build
 
@@ -18,6 +19,11 @@ EXTRA_CFLAGS := -Isrc
 # PRINTF=swio: printf over the programming wire instead of the TX pad (see funconfig.h)
 ifeq ($(PRINTF),swio)
 EXTRA_CFLAGS += -DDBFOB_SWIO_PRINTF
+endif
+# DIAG=1: noise-floor diagnostics. Each double click measures at 1.5 MHz and then at 3 MHz, and
+# prints A-weighted levels below 8 kHz and 2 kHz and the unweighted level as well.
+ifeq ($(DIAG),1)
+EXTRA_CFLAGS += -DDSP_DIAG -DDBFOB_DIAG
 endif
 
 include ch32fun/ch32fun/ch32fun.mk

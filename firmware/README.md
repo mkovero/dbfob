@@ -115,6 +115,19 @@ Then `make flash`. The firmware stays awake for 3 s after reset, sweeping the LE
 
 In the SWIO build, each `printf` waits up to about 200 ms when nothing is listening, so use it for bench work, not on a fob running from its cell.
 
+### Noise-floor diagnostics (`DIAG=1`)
+
+`make clean && make flash DIAG=1 PRINTF=swio && make monitor` builds the diagnostic version. Each double click then makes two measurements:
+- a silent one with the mic at 3 MHz (`dbfob3`);
+- the normal 1.5 MHz one, which also drives the LEDs (`dbfob`).
+
+After each, a `_diag` line prints the A-weighted level below 8 kHz (`dBA_lt8k`) and below 2 kHz (`dBA_lt2k`), and the unweighted level (`dBZ`). This shows where the quiet-room floor of about 48 dBA comes from:
+- If `dBA_lt8k` is far below `dBA`, the floor is hiss at the top of the band.
+- If the 3 MHz `dBA` is lower, the low mic clock causes it.
+- `cpu=` on the `dbfob3` line shows whether 3 MHz fits the CPU.
+
+The extra filters cost CPU in both measurements. Run `make clean` before going back to a normal build.
+
 ## Bring-up checklist
 
 Work down this list in order and record the numbers in `hardware/README.md`.
