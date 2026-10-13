@@ -10,15 +10,15 @@ dbfob is an open-hardware sound level indicator sized for a keyring. It exists b
 
 ## Status
 
-**Rev A prototype: first board up, measuring, not yet calibrated.**
+**Rev A prototype: boards up and measuring. Calibration at loud levels is not done yet.**
 
 | Part | State |
 |---|---|
-| [Hardware](hardware/README.md) | 5 assembled boards from JLCPCB, arrived 2026-10-12. Board 1 is up with no assembly faults ([bring-up log](hardware/README.md#bring-up-log)). |
-| [Firmware](firmware/README.md) | Runs on board 1: PDM capture, A-weighting and the level reading work (40 % CPU, no overruns). Not yet calibrated against a reference meter. |
+| [Hardware](hardware/README.md) | 5 assembled boards from JLCPCB, arrived 2026-10-12. Three are running, with no assembly faults so far. Standby measures 8.2 µA ([bring-up log](hardware/README.md#bring-up-log)). |
+| [Firmware](firmware/README.md) | Spot check and dosimeter both work: PDM capture, A-weighting, LAeq, dose, and a flash log of the last dosimeter run (40 % CPU, no overruns). At about 61 dBA it reads within 0.5 dB of a consumer meter. The quiet-room floor is about 48 dBA, which doesn't matter for the bands. |
 | [Case](hardware/case/README.md) | Two-shell case modelled, fit-checked and exported, in SLA and FDM builds. Not yet printed. |
 
-Next step is calibration against a reference meter. See [Next](#next).
+Next steps: confirm a full 12 h dosimeter night, then calibrate at 85–105 dBA against a reference meter. See [Next](#next).
 
 ## How it works
 
@@ -27,7 +27,7 @@ Next step is calibration against a reference meter. See [Next](#next).
 3. The firmware A-weights the signal and computes the equivalent continuous level (LAeq).
 4. A four-LED bar shows two verdicts for 2 seconds: a steady LED for a bare ear and a blinking LED for ear plugs. See below.
 
-The LEDs are deliberately dim, since clubs are dark, and they auto-dim using one LED as a light sensor. Each reading is also printed on a UART pad for calibration.
+The LEDs are deliberately dim, since clubs are dark, and they auto-dim using one LED as a light sensor. The light thresholds are not tuned yet. Each reading is also printed on a UART pad for calibration.
 
 ### Colour bands
 
@@ -56,7 +56,7 @@ The obvious alternative was a mode switch, but either default misleads someone. 
 ### Modes
 
 - **Double click — spot check.** Measures the current level and shows a colour for a few seconds. This is the mode that is always trustworthy, because you are holding the device out in front of you.
-- **Long press (2 s) — dosimeter.** *Works on board 1 over short tests; not yet run through a whole night.*
+- **Long press (2 s) — dosimeter.** *Works on the bench. A 9 h run averaged 165 µA at 3.0 V: about 2 mAh per 12 h night, or roughly 80 nights on a CR2032. The first full 12 h runs, ending in auto-off, are in progress.*
   - **Start:** the LEDs light up and flash twice to confirm.
   - **While running:** the fob wakes about every 30 s and samples for 1 s about once a minute, with the LEDs off.
   - **Single click:** shows the dose so far as a share of the daily allowance, with the same steady / blinking display (bare ear / 12 dB plugs):
@@ -84,7 +84,7 @@ No radio, no display, no app. The design goal was **under €2 all-in**. The rev
 | Microphone | Infineon **IM69D130**, PDM | **Acoustic overload ≥ 130 dB SPL.** Hobby-favourite digital mics clip at about 120 dB, which a club sub stack exceeds. It is digital, with ±1 dB sensitivity, so a batch can be calibrated rather than each unit, and the reading doesn't drift with battery voltage. |
 | MCU | WCH **CH32V003F4P6** | The CH32V002/V006 are pin-compatible drop-ins, but were out of stock. The V003 has no hardware multiplier (handled in firmware) and needs at least 2.7 V. |
 | LEDs | 4 × 0603 low-Vf LEDs as a bar: yellow-green, yellow, orange, red | InGaN green and blue LEDs need about 3 V and fade on a coin cell. The bar position also encodes the level for colour-blind users. D4 doubles as the light sensor. |
-| Power | CR2032 in a Keystone 3034 | Standby is about 7.6 µA, so an idle fob lasts about 3 years. The mic is powered only while measuring. |
+| Power | CR2032 in a Keystone 3034 | Standby measures 8.2 µA, so an idle fob lasts about 3 years. The mic is powered only while measuring. The dosimeter averages about 165 µA. |
 | Input | 1 × tactile switch | Wakes the MCU. |
 | Case | 3D-printed two-part shell, one M2 screw | Mic and LEDs at one end, keyring at the other. |
 
@@ -105,20 +105,22 @@ A 94 dB pistonphone won't couple to a MEMS port. Calibrate by substitution inste
 ```
 hardware/        KiCad project, generated from the tables in hardware/tools/ (schematic, PCB, JLC outputs)
 hardware/case/   FreeCAD case script, STEP/STL for printing, board geometry it is built from
-firmware/        CH32V003 firmware on ch32fun: PDM capture, A-weighting, LAeq, LEDs, standby; host tests
+firmware/        CH32V003 firmware on ch32fun: PDM capture, A-weighting, LAeq, LEDs, standby, dosimeter and its
+                 flash log (tools/dose_log.py decodes it); host tests
 docs/            part selection, hardware audit
 ```
 
 ## Next
 
 - [x] First bring-up: power, programming, mic capture, CPU load.
-- [ ] Standby current, VDD reference trim, light-sense thresholds. See [firmware/README.md](firmware/README.md#bring-up-checklist).
-- [ ] Calibrate against a reference meter, in the case: the level offset and the hand-held offset.
-- [ ] Qualify the battery: the supply voltage under load across cell charge and temperature, then set the cutoff.
+- [x] Standby current (8.2 µA) and the dosimeter current profile.
+- [ ] VDD reference trim, light-sense thresholds. See [firmware/README.md](firmware/README.md#bring-up-checklist).
+- [ ] Calibrate against a reference meter at 85–105 dBA, in the case: the level offset and the hand-held offset. So far it has only been compared with a consumer meter at about 61 dBA.
+- [ ] Qualify the battery: the supply voltage under load across cell charge and temperature, then set the cutoff. At 2.8 V the sample wakes read 25 % more current than at 3.0 V. Re-measure on a range with a smaller burden voltage.
 - [ ] Print the case and check the tolerances, the button flexure and the mic seal.
 - [ ] A calibration procedure anyone can repeat with a known-good meter.
 - [ ] Rev B board: centre the mic port, add UART RX for a bootloader, CH32V002/V006 if in stock, possibly a power latch for shelf life.
-- [ ] Dosimeter: a full-night test, then occlusion (pocket) detection.
+- [ ] Dosimeter: confirm the 12 h auto-off and the flash log over a full night, then occlusion (pocket) detection.
 - [ ] Get a batch into a venue and see if people use them.
 
 ## Non-goals
