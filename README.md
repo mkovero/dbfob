@@ -6,6 +6,8 @@ Double-click the button, look at the colour. Green means you're fine. Red means 
 
 dbfob is an open-hardware sound level indicator sized for a keyring. It exists because nobody pulls out a phone on a dark dance floor to run a sound level meter, but everybody can glance at an LED. It is meant to be cheap enough that a venue, a festival or a hearing-health campaign can hand them out at the door next to the free earplugs.
 
+> **Disclaimer:** dbfob is a hobby project, not a calibrated sound level meter or a medical device. Its readings and dose estimates can be wrong, so don't rely on it to protect your hearing. Use your own judgement: if it feels loud, wear earplugs or step away. If you're worried about your hearing, see a professional.
+
 ## Status
 
 **Rev A prototype: first board up, measuring, not yet calibrated.**
