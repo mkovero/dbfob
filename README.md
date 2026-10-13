@@ -16,7 +16,7 @@ dbfob is an open-hardware sound level indicator sized for a keyring. It exists b
 |---|---|
 | [Hardware](hardware/README.md) | 5 assembled boards from JLCPCB, arrived 2026-10-12. Three are running, with no assembly faults so far. Standby measures 8.2 µA ([bring-up log](hardware/README.md#bring-up-log)). |
 | [Firmware](firmware/README.md) | Spot check and dosimeter both work: PDM capture, A-weighting, LAeq, dose, and a flash log of the last dosimeter run (40 % CPU, no overruns). At about 61 dBA it reads within 0.5 dB of a consumer meter. The quiet-room floor is about 48 dBA, which doesn't matter for the bands. |
-| [Case](hardware/case/README.md) | Two-shell case modelled, fit-checked and exported, in SLA and FDM builds. Not yet printed. |
+| [Case](hardware/case/README.md) | Two-shell case, in SLA and FDM builds. Printed; checking how the boards fit is next. |
 
 Next steps: confirm a full 12 h dosimeter night, then calibrate at 85–105 dBA against a reference meter. See [Next](#next).
 
@@ -117,7 +117,8 @@ docs/            part selection, hardware audit
 - [ ] VDD reference trim, light-sense thresholds. See [firmware/README.md](firmware/README.md#bring-up-checklist).
 - [ ] Calibrate against a reference meter at 85–105 dBA, in the case: the level offset and the hand-held offset. So far it has only been compared with a consumer meter at about 61 dBA.
 - [ ] Qualify the battery: the supply voltage under load across cell charge and temperature, then set the cutoff. At 2.8 V the sample wakes read 25 % more current than at 3.0 V. Re-measure on a range with a smaller burden voltage.
-- [ ] Print the case and check the tolerances, the button flexure and the mic seal.
+- [x] Print the case.
+- [ ] Check the printed case: the tolerances, the button flexure and the mic seal.
 - [ ] A calibration procedure anyone can repeat with a known-good meter.
 - [ ] Rev B board: centre the mic port, add UART RX for a bootloader, CH32V002/V006 if in stock, possibly a power latch for shelf life.
 - [ ] Dosimeter: confirm the 12 h auto-off and the flash log over a full night, then occlusion (pocket) detection.
