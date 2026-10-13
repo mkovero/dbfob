@@ -24,13 +24,20 @@ void dsp_reset(dsp_t *d, uint32_t skip_samples)
 	d->skip = skip_samples;
 }
 
-// One first-order high-pass section: zero at DC, pole P (Q13).
+// One first-order high-pass section: zero at DC, pole P (Q13), as y = y1 + (x - x1) - y1 (1 - P):
+// the product y1 * (8192 - P) is small (k = 45..1470), so it fits 32 bits at the 2^18 scale.
+// Error feedback: the shift's remainder is carried into the next sample. A plain shift left a
+// -0.5 LSB bias per section (a DC of ~-3 LSB at the output, 4 dB of the quiet-room floor) and its
+// noise is amplified ~90x by the 20.6 Hz poles; rounding instead gets stuck at +-1 LSB on idle input.
 #define HP(k, P) do { \
-	int32_t y_ = x - d->hx[k] + ((d->hy[k] * (P)) >> FILT_Q); \
+	int32_t t_ = d->hy[k] * (8192 - (P)) + d->he[k]; \
+	d->he[k] = t_ & ((1 << FILT_Q) - 1); \
+	int32_t y_ = d->hy[k] + x - d->hx[k] - (t_ >> FILT_Q); \
 	d->hx[k] = x; d->hy[k] = y_; x = y_; } while (0)
 
 #ifdef DSP_TEST_HOOK
 void dsp_test_cic(uint32_t cic);          // host test: sees every raw CIC output
+void dsp_test_sample(dsp_t *d, uint32_t cic);   // host test: one CIC output straight into the filters
 #endif
 
 // s^2 for s < 2^16 without a multiplier: s = 256 a + b, 2ab = ((a + b)^2 - (a - b)^2) / 2.
@@ -42,25 +49,27 @@ static inline uint32_t square(uint32_t s)
 	return (SQ[a] << 16) + ((SQ[a + b] - SQ[m]) << 7) + SQ[b];
 }
 
-// Add v^2 to an energy sum: exact below 2^16, |v| / 4 squared above (as for the main sum).
+// Add v^2 to an energy sum: exact below 2^16 (everything up to ~-12 dBFS), then |v| / 4 or
+// |v| / 16 squared (rounded); |v| is clamped below 2^20.
 static inline void add_sq(uint64_t *e, int32_t v)
 {
 	uint32_t a = v < 0 ? -v : v;
 	if (a < (1 << 16)) *e += square(a);
-	else *e += (uint64_t)square(a < (1 << 18) ? (a + 2) >> 2 : 0xFFFF) << 4;
+	else if (a < (1 << 18)) *e += (uint64_t)square((a + 2) >> 2) << 4;
+	else *e += (uint64_t)square(a < (1 << 20) ? (a + 8) >> 4 : 0xFFFF) << 8;
 }
 
 #ifdef DSP_DIAG
-// Butterworth low-pass biquad, Q13, direct form I with the same wrap-around trick as below.
+// Butterworth low-pass biquad, Q12, direct form I, plain shift as for the main biquad. s: x1 x2 y1 y2.
 static inline int32_t lp_bq(int32_t *s, int32_t x, int32_t b0, int32_t b1, int32_t b2, int32_t a1, int32_t a2)
 {
-	x = x > (1 << 16) ? (1 << 16) : x < -(1 << 16) ? -(1 << 16) : x;
-	uint32_t acc = (uint32_t)x * b0 + (uint32_t)s[0] * b1 + (uint32_t)s[1] * b2
-	             - (uint32_t)s[2] * a1 - (uint32_t)s[3] * a2 + (1u << (FILT_Q - 1));   // rounded:
-	int32_t y = (int32_t)acc >> FILT_Q;      // a plain shift's -0.5 LSB bias reads as a DC floor
 	// Saturate input and output so the true result always fits 32 bits. Without this the mic's
 	// start-up transient overflowed the filters on board 1 and they never recovered (131.6 dBA).
-	y = y > (1 << 16) ? (1 << 16) : y < -(1 << 16) ? -(1 << 16) : y;
+	x = x > (1 << 18) ? (1 << 18) : x < -(1 << 18) ? -(1 << 18) : x;
+	uint32_t acc = (uint32_t)x * b0 + (uint32_t)s[0] * b1 + (uint32_t)s[1] * b2
+	             - (uint32_t)s[2] * a1 - (uint32_t)s[3] * a2;
+	int32_t y = (int32_t)acc >> 12;
+	y = y > (1 << 18) ? (1 << 18) : y < -(1 << 18) ? -(1 << 18) : y;
 	s[1] = s[0]; s[0] = x; s[3] = s[2]; s[2] = y;
 	return y;
 }
@@ -71,11 +80,12 @@ static inline void sample(dsp_t *d, uint32_t cic)
 #ifdef DSP_TEST_HOOK
 	dsp_test_cic(cic);
 #endif
-	// CIC output is 0..2^24 for 0..100 % ones; centre and scale to +-DSP_FS
+	// CIC output is 0..2^24 for 0..100 % ones; centre and scale to +-DSP_FS (2^18). The quiet-room
+	// signal is only a few LSB at this scale, so every bit kept here counts (>> 7 cost ~5 dB of floor).
 #ifdef DSP_DIAG
-	int32_t x = d->r128 ? ((int32_t)cic - (1L << 27)) >> 11 : ((int32_t)cic - (1L << 23)) >> 7;
+	int32_t x = d->r128 ? ((int32_t)cic - (1L << 27)) >> 9 : ((int32_t)cic - (1L << 23)) >> 5;
 #else
-	int32_t x = ((int32_t)cic - (1L << 23)) >> 7;
+	int32_t x = ((int32_t)cic - (1L << 23)) >> 5;
 #endif
 	int32_t ax = x < 0 ? -x : x;
 #ifdef DSP_DIAG
@@ -89,19 +99,21 @@ static inline void sample(dsp_t *d, uint32_t cic)
 	HP(1, HP_P1);
 	HP(2, HP_P2);
 	HP(3, HP_P3);
-	// Correction biquad, direct form I. Products can exceed 31 bits, but the true result
-	// (y << FILT_Q) fits: unsigned wrap-around makes the intermediate overflow harmless.
+	// Correction biquad, direct form I, Q12. Products can exceed 31 bits, but the true result
+	// (y << BQ_Q, |y| < 2^19) fits: unsigned wrap-around makes the intermediate overflow harmless.
+	// A plain shift here, no error feedback: its poles sit near z = -0.86, where feedback's noise
+	// zero at DC doubles the noise instead, and it held a +-1 LSB Nyquist limit cycle on constant
+	// input. The shift's bias is only -0.2 LSB through this section.
 	uint32_t acc = (uint32_t)x * BQ_B0 + (uint32_t)d->bx1 * BQ_B1 + (uint32_t)d->bx2 * BQ_B2
 	             - (uint32_t)d->by1 * BQ_A1 - (uint32_t)d->by2 * BQ_A2;
-	int32_t y = (int32_t)acc >> FILT_Q;
+	int32_t y = (int32_t)acc >> BQ_Q;
 	d->bx2 = d->bx1; d->bx1 = x;
 	d->by2 = d->by1; d->by1 = y;
 #ifdef DSP_DIAG
-	// 4th-order Butterworth at 8 kHz, 2nd-order at 2 kHz (fs 23,437.5; tools/design_filters.py style)
-	// with 1 extra fraction bit: the filters' own rounding noise would otherwise sit at ~-95 dBFS
-	int32_t y8 = lp_bq(d->lp[0], y * 2, 2078, 4155, 2078, 5009, 1034);
-	y8 = lp_bq(d->lp[1], y8, 8192, 16384, 8192, 6731, 4207);
-	int32_t y2 = lp_bq(d->lp[2], y * 2, 422, 844, 422, -10347, 3844);
+	// 4th-order Butterworth at 8 kHz, 2nd-order at 2 kHz (fs 23,437.5, scipy butter, Q12)
+	int32_t y8 = lp_bq(d->lp[0], y, 1039, 2078, 1039, 2504, 517);
+	y8 = lp_bq(d->lp[1], y8, 4096, 8192, 4096, 3366, 2104);
+	int32_t y2 = lp_bq(d->lp[2], y, 211, 422, 211, -5174, 1922);
 #endif
 	if (d->skip) { d->skip--; return; }
 #ifdef DSP_DIAG
@@ -114,11 +126,15 @@ static inline void sample(dsp_t *d, uint32_t cic)
 	if (ax > d->pcm_peak) d->pcm_peak = ax;
 	int32_t a = y < 0 ? -y : y;
 	if (a > d->peak) d->peak = a;
-	// Exact square below 2^16; above it (within ~4 dB of full scale) square |y| / 4, rounded.
-	// Squaring |y| >> 2 everywhere put the quiet-room floor at about -92 dBFS (38 dBA).
+	// Exact squares up to ~-12 dBFS (see add_sq): squaring |y| >> 2 everywhere put the quiet-room
+	// floor at about -92 dBFS.
 	add_sq(&d->energy, y);
 	d->n++;
 }
+
+#ifdef DSP_TEST_HOOK
+void dsp_test_sample(dsp_t *d, uint32_t cic) { sample(d, cic); }
+#endif
 
 // One byte of the order-4 CIC in closed form (see the tables above).
 #define CIC_BYTE(b) do { \
@@ -185,13 +201,13 @@ int32_t dsp_db10_q8(uint64_t x)
 uint64_t dsp_mean_square(const dsp_t *d)
 {
 	// With DSP_MS_FRAC fraction bits: without them a mean square under 2 LSB^2, a quiet room,
-	// was pinned at -81.3 dBFS. energy < 2^51 over 3 s, so << 8 fits.
+	// was pinned at -81.3 dBFS. energy < 2^55 over 3 s (|y| < 2^20), so << 8 fits.
 	return d->n ? (d->energy << DSP_MS_FRAC) / d->n : 0;
 }
 
 int32_t dsp_ms_dbfs_q8(uint64_t ms)
 {
-	// against a full-scale sine's mean square: amplitude DSP_FS = 2^16, mean square 2^31
+	// against a full-scale sine's mean square: amplitude DSP_FS = 2^18, mean square 2^35
 	return dsp_db10_q8(ms ? ms : 1) - dsp_db10_q8(DSP_MS_FS);
 }
 
@@ -206,7 +222,7 @@ int32_t dsp_diag_dbfs_q8(const dsp_t *d, int which)
 {
 	if (!d->n) return INT32_MIN;
 	if (which == DSP_DIAG_Z) return dsp_ms_dbfs_q8((d->e_z << DSP_MS_FRAC) / d->n);
-	uint64_t e = which == DSP_DIAG_LP8 ? d->e_lp8 : d->e_lp2;   // 1 fraction bit: energy x 4
-	return dsp_ms_dbfs_q8(((e << DSP_MS_FRAC) / d->n) >> 2);
+	uint64_t e = which == DSP_DIAG_LP8 ? d->e_lp8 : d->e_lp2;
+	return dsp_ms_dbfs_q8((e << DSP_MS_FRAC) / d->n);
 }
 #endif

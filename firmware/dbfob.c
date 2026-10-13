@@ -339,7 +339,7 @@ static void raw_dump(int fast)
 			for (int k = 0; k < 32; k++)
 				for (int sh = 12; sh >= 0; sh -= 4) *p++ = "0123456789abcdef"[((uint16_t)raw[i + k] >> sh) & 15];
 			*p = 0;
-			printf("raw clk=%s f=%d i=%d %s\n", fast ? "3.0" : "1.5", f, i, line);
+			printf("raw clk=%s fsb=18 f=%d i=%d %s\n", fast ? "3.0" : "1.5", f, i, line);
 		}
 	}
 	mic_stop();

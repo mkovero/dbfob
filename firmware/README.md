@@ -144,7 +144,7 @@ Work down this list in order and record the numbers in `hardware/README.md`.
    - `n` is about 70,300 (3 s × 23,437.5).
    - `overruns=0`.
    - `cpu=` is recorded. The estimate is 28–35 %, and anything under about 70 % is fine.
-   - `pcm_peak` is well below 58,982 (the overload flag).
+   - `pcm_peak` is well below 235,929 (the overload flag: 90 % of the 2^18 full scale).
 4. **Level calibration.** Put pink noise at 85, 95 and 105 dBA from a reference meter at the same spot. Set `CAL_DB_Q8` from the mean difference, then repeat hand-held to get the hand-held offset.
 5. **VDD reference.** Compare `vdd_idle` with a multimeter on VBAT and trim `VREFINT_MV`.
 6. **Battery.** Feed J1 from a bench supply through about 30–50 Ω, to mimic a tired cell. Step down from 3.0 V and note where `vdd_min` crosses the V003's 2.7 V. Set `VBAT_MIN_MV` with margin and confirm the invalid pattern appears. Then repeat with real cells at different charge levels ([hardware/README.md § Power](../hardware/README.md#power-unqualified)).

@@ -15,17 +15,19 @@ sys.path.insert(0, __import__('os').path.dirname(__file__))
 from design_filters import FS, a_weight_db, cic_db
 
 CAL_DB = 130.0                                   # CAL_DB_Q8: 0 dBFS = 130 dB SPL
-MS_FS = 2.0 ** 31                                # a full-scale sine's mean square (amplitude 2^16)
+FSB = 18                                         # full-scale bits (DSP_FS); raw lines say fsb=, old logs 16
 OCTAVES = [31.5, 63, 125, 250, 500, 1000, 2000, 4000, 8000]
 
 
 def frames(path):
-    rx = re.compile(r'raw clk=(\S+) f=(\d+) i=(\d+) ([0-9a-f]+)')
+    global FSB
+    rx = re.compile(r'raw clk=(\S+)(?: fsb=(\d+))? f=(\d+) i=(\d+) ([0-9a-f]+)')
     acc = collections.defaultdict(dict)
     for line in open(path, errors='replace'):
         m = rx.search(line)
         if m:
-            clk, f, i, hx = m.group(1), int(m.group(2)), int(m.group(3)), m.group(4)
+            clk, f, i, hx = m.group(1), int(m.group(3)), int(m.group(4)), m.group(5)
+            FSB = int(m.group(2) or 16)
             v = [int(hx[k:k + 4], 16) for k in range(0, len(hx) - 3, 4)]
             acc[clk, f][i] = [x - 65536 if x >= 32768 else x for x in v]
     out = collections.defaultdict(list)
@@ -51,7 +53,7 @@ def psd(fr):
 
 
 def db(ms):
-    return 10 * math.log10(max(ms, 1e-30) / MS_FS) + CAL_DB
+    return 10 * math.log10(max(ms, 1e-30) / 2.0 ** (2 * FSB - 1)) + CAL_DB   # vs a full-scale sine
 
 
 def main():

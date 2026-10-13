@@ -3,8 +3,9 @@
 #pragma once
 #include <stdint.h>
 
-// Full scale: an all-ones PDM stream decimates to +DSP_FS (and all-zeros to -DSP_FS).
-#define DSP_FS (1L << 16)
+// Full scale: an all-ones PDM stream decimates to +DSP_FS (and all-zeros to -DSP_FS). 2^18, the
+// CIC's top 19 bits: the quiet-room signal is only a few LSB, so the low bits matter.
+#define DSP_FS (1L << 18)
 
 typedef struct {
 	// CIC order 4: integrators run at the bit rate (8 bits per call of the byte step)
@@ -12,7 +13,7 @@ typedef struct {
 	uint32_t d1, d2, d3, d4;      // comb delays
 	uint8_t phase;                // bytes into the current output sample (0..7)
 	// A-weighting: four first-order high-pass sections, then one correction biquad
-	int32_t hx[4], hy[4];
+	int32_t hx[4], hy[4], he[4];  // he: fed-back quantisation remainders (dsp.c)
 	int32_t bx1, bx2, by1, by2;
 	// results
 	uint32_t skip;                // output samples still to discard (mic start-up, filter settling)
@@ -43,7 +44,7 @@ int32_t dsp_level_dbfs_q8(const dsp_t *d);
 
 // Mean square of the weighted signal, with DSP_MS_FRAC fraction bits (0 if nothing accumulated),
 // and its level in dBFS Q8. Mean squares can be averaged (the dosimeter) before taking the level.
-#define DSP_MS_FS (1ULL << (31 + DSP_MS_FRAC))   // a full-scale sine's mean square
+#define DSP_MS_FS (1ULL << (35 + DSP_MS_FRAC))   // a full-scale sine's mean square
 uint64_t dsp_mean_square(const dsp_t *d);
 int32_t dsp_ms_dbfs_q8(uint64_t ms);
 

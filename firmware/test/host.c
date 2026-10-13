@@ -85,4 +85,22 @@ uint32_t run_bytes(const uint8_t *bytes, uint32_t n, uint32_t *out, uint32_t out
 	return cap_n;
 }
 
+void dsp_test_sample(dsp_t *d, uint32_t cic);
+
+// Filter input x (at the DSP_FS = 2^18 scale) fed straight to the filters, bypassing the CIC.
+int32_t run_x(const int32_t *xs, uint32_t n, uint32_t skip)
+{
+	dsp_reset(&D, skip);
+	for (uint32_t i = 0; i < n; i++) dsp_test_sample(&D, (uint32_t)(xs[i] * 32 + (1L << 23)));
+	return dsp_level_dbfs_q8(&D);
+}
+
+// A constant input for n samples (idle and DC must not leave a limit cycle).
+int32_t run_const(int32_t x, uint32_t n, uint32_t skip)
+{
+	dsp_reset(&D, skip);
+	for (uint32_t i = 0; i < n; i++) dsp_test_sample(&D, (uint32_t)(x * 32 + (1L << 23)));
+	return dsp_level_dbfs_q8(&D);
+}
+
 int32_t db10_q8(uint64_t x) { return dsp_db10_q8(x); }

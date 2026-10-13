@@ -110,13 +110,52 @@ def main():
         a = 10 ** (-3 / 20)
         e = level(f, a) - (-3 + float(a_weight_db(f)))
         check(f'headroom -3 dBFS {f} Hz', abs(e) < 0.5,
-              f'err {e:+.2f} dB, peak |y| {peak.value} (int32 products need < 2^17 = 131072)')
-        check(f'headroom margin {f} Hz', peak.value < 131072, f'{peak.value}')
+              f'err {e:+.2f} dB, peak |y| {peak.value} (y << BQ_Q needs |y| < 2^19 = 524288)')
+        check(f'headroom margin {f} Hz', peak.value < 524288, f'{peak.value}')
+
+    precision_tests(lib)
 
     diag_tests()
 
     print('\nFAILED: ' + ', '.join(fails) if fails else '\nall passed')
     return 1 if fails else 0
+
+
+def filter_float(x):
+    """The same high-pass sections and biquad as dsp.c, with the same quantised coefficients, in
+    float: what the integer filters would give without any arithmetic noise."""
+    from scipy.signal import lfilter
+    h = {}
+    for line in open(os.path.join(SRC, 'filters.h')):
+        if line.startswith('#define'):
+            p = line.split()
+            if len(p) >= 3 and p[2].lstrip('-').isdigit(): h[p[1]] = int(p[2])
+    y = np.asarray(x, float)
+    for k in range(4):
+        pk = h[f'HP_P{k}'] / 2 ** h['FILT_Q']
+        y = lfilter([1, -1], [1, -pk], y)
+    q = 2 ** h['BQ_Q']
+    return lfilter([h['BQ_B0'] / q, h['BQ_B1'] / q, h['BQ_B2'] / q], [1, h['BQ_A1'] / q, h['BQ_A2'] / q], y)
+
+
+def precision_tests(lib):
+    """Quiet-room precision: board 1 read 48 dBA where the same samples filtered in float gave
+    ~39, from the filters' own rounding (bias and noise). Now the integer filters must match float."""
+    lib.run_x.restype = lib.run_const.restype = ctypes.c_int32
+    lib.run_x.argtypes = [ctypes.POINTER(ctypes.c_int32), ctypes.c_uint32, ctypes.c_uint32]
+    lib.run_const.argtypes = [ctypes.c_int32, ctypes.c_uint32, ctypes.c_uint32]
+    rng = np.random.default_rng(2)
+    n, skip = 70000, 4000
+    for rms in (4, 20, 300):                       # LSB at 2^18 full scale; a quiet room is ~20
+        x = np.round(rng.normal(0, rms, n)).astype(np.int32)
+        got = lib.run_x(x.ctypes.data_as(ctypes.POINTER(ctypes.c_int32)), n, skip) / 256
+        y = filter_float(x)[skip:]
+        ref = 10 * math.log10(np.mean(y ** 2) / 2 ** 35)
+        check(f'precision, noise {rms} LSB rms', abs(got - ref) < 0.3,
+              f'{got:.1f} dBFS vs {ref:.1f} float (old chain: about +9 dB at a quiet room)')
+    for c in (0, 1, -1, 12345, -100000):           # idle and DC: no stuck limit cycle
+        lv = lib.run_const(c, 1_000_000, skip) / 256
+        check(f'constant input {c}, 1 M samples', lv < -110, f'{lv:.1f} dBFS')
 
 
 def diag_tests():
@@ -141,7 +180,7 @@ def diag_tests():
     lib.set_raw(buf, N)
     for fs in (1.5e6, 3e6):
         a = lib.run_sine_diag(1000, 0.01, 0.6, fs, 4000, diag) / 256 + 130
-        lines = [f'raw clk={fs / 1e6:.1f} f={k // 512} i={k % 512} ' +
+        lines = [f'raw clk={fs / 1e6:.1f} fsb=18 f={k // 512} i={k % 512} ' +
                  ''.join(f'{v & 0xffff:04x}' for v in buf[k:k + 32]) for k in range(0, N, 32)]
         path = os.path.join(tempfile.mkdtemp(), 'raw.log')
         open(path, 'w').write('\n'.join(lines) + '\n')
