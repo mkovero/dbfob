@@ -75,6 +75,18 @@ The obvious alternative was a mode switch, but either default misleads someone. 
 
 The catch is that a keyfob lives in a pocket. A pocket reads 10–20 dB low with the high end rolled off, so a dose collected in a pocket is a comforting lie. The dosimeter doesn't yet detect this. It would need to from the spectrum, since the high-band to low-band energy ratio collapses in a pocket, and then refuse to count those samples and flag the dose as incomplete. For now, clip it to your shoulder or a bag strap, with the mic port uncovered.
 
+#### Example night
+
+This is the flash log from one fob over a full 12 h run that ended in auto-off. The fob took 643 samples, all valid. It read with `make dose-log`, and the graph was drawn with `tools/dose_log.py --svg`:
+
+![dBA and running dose over a 12 h dosimeter run](docs/dose-example.svg)
+
+- **Quiet room, 0–2.3 h:** the fob reads its own floor, about 48 dBA.
+- **Music, 2.3–6.3 h:** 55–75 dBA. Hours of this barely move the dose.
+- **Drums, 6.4 h:** ten minutes at 85–89.5 dBA. That alone takes the dose from about 0.5 % to 2.9 %, because each 3 dB doubles the rate.
+- **Walk home, 9.8 h:** up to 80 dBA, with the fob in a pocket. Street noise would have read louder in the open, so this part of the dose is understated: the pocket problem described above.
+- **Total:** LAeq 68.1 dBA over 12 h, which is 3.1 % of the daily allowance. A single click would have shown green.
+
 ## Hardware
 
 No radio, no display, no app. The design goal was **under €2 all-in**. The rev A parts come to about $1.85 per board at 1,000 units. A 130 dB-capable mic alone is about €1.2, so sub-€1 is out unless mic prices drop.
