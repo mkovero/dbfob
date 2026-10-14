@@ -43,6 +43,7 @@
 #define CLICK_MAX_MS      500            // a click held longer than this is not a click
 #define CLICK_GAP_MS      400            // the second click must start within this of the first release
 #define DEBOUNCE_MS       20
+#define RELEASE_QUIET_MS  300            // after letting go of a long press, before the first dose sample
 #define LONG_PRESS_MS     2000           // starts / stops the dosimeter; long enough not to happen in a pocket by chance
 
 // ---- dosimeter -------------------------------------------------------------------------------
@@ -534,6 +535,7 @@ static void dose_sample(void)
 	if (!r.invalid) { dose.sum_ms += r.ms; dose.valid++; }
 }
 
+static int pressed(void);
 static void dose_start(void)
 {
 	leds_bar(4, DUTY_MIN * 4);                                // acknowledge: all on while the LSI is timed
@@ -543,6 +545,10 @@ static void dose_start(void)
 	for (int i = 0; i < 2; i++) { leds_bar(0, 0); Delay_Ms(150); leds_bar(4, DUTY_MIN * 4); Delay_Ms(150); }
 	leds_bar(0, 0);
 	dose_print("start");
+	// The long press is reported with the button still held: let go of it first, or the release
+	// click lands in the first sample, right at the mic (one read 101.5 dBA = 10 % of a dose)
+	while (pressed()) Delay_Ms(10);
+	Delay_Ms(RELEASE_QUIET_MS);
 	dose_sample();                                            // the first sample stands for the first period
 }
 
