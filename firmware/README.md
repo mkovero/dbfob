@@ -7,7 +7,8 @@ Firmware for the rev A board: a CH32V003F4P6 with an IM69D130 PDM mic. It is bui
 ## What it does
 
 1. The board sits in standby until the button (PC0) is pressed.
-   - A **double click** starts a measurement: the first click is under 500 ms, and the second starts within 400 ms of releasing it.
+   - A **double click** starts a measurement: each click is under 500 ms, and the next starts within 400 ms of releasing the last. The measurement starts 400 ms after the second release, once no third click came, so the release click is not in it.
+   - A **triple click** shows the dose while the dosimeter runs.
    - Anything else goes straight back to standby: a single press, or a long squeeze in a pocket.
 2. It senses ambient light through D4 to set LED brightness.
 3. It powers the mic from PC6 and clocks it at **1.5 MHz**: SPI1 SCK on PC5, 48 MHz / 32.
@@ -29,9 +30,9 @@ Firmware for the rev A board: a CH32V003F4P6 with an IM69D130 PDM mic. It is bui
   - T is the elapsed AWU time.
   - With plugs, the dose is 12 dB lower, i.e. 1/16.
 - **States:**
-  - A single click shows the dose (G < 25 %, Y < 50 %, O < 100 %, R ≥ 100 %).
+  - A triple click shows the dose: the whole bar blinks for 3 s with a period linear in the dose, 1 s at 0 % down to 0 at 100 %, so it stays lit from 100 % on. Bare ear only.
   - A long press stops it.
-  - After 12 h it stops by itself. A click then still shows the last dose.
+  - After 12 h it stops by itself. A triple click then still shows the last dose.
   - If fewer than half the samples were valid (low battery), it shows the invalid pattern instead.
 - **Output:** each sample prints a `dose_sample` line, and start / show / stop print a `dose` summary.
 - **Flash log:** each run is also kept in the last 1 KB of flash (0x08003C00), so it can be read without a live UART. A start erases it. It holds a 12-byte header, then one byte per sample (0.5 dB steps, 0 = invalid) and an end marker (stopped / auto-off). That is about 1000 samples, about 17 h. To read it: take the cell out, connect the programmer and run `sudo make dose-log`. That runs `minichlink -r dose.bin 0x08003C00 1024`, then `tools/dose_log.py dose.bin`, which prints the run length, LAeq, the dose and a 10-minute table (`--all` for every sample; `--svg night.svg --note 6.4=drums` draws a graph). Reflashing keeps the log, as long as the firmware stays below 0x3C00 (`make check` tests this).

@@ -59,17 +59,10 @@ The obvious alternative was a mode switch, but either default misleads someone. 
 - **Long press (2 s) — dosimeter.** *Works on the bench. A 9 h run averaged 165 µA at 3.0 V: about 2 mAh per 12 h night, or roughly 80 nights on a CR2032. The first full 12 h runs, ending in auto-off, are in progress.*
   - **Start:** the LEDs light up and flash twice to confirm.
   - **While running:** the fob wakes about every 30 s and samples for 1 s about once a minute, with the LEDs off.
-  - **Single click:** shows the dose so far as a share of the daily allowance, with the same steady / blinking display (bare ear / 12 dB plugs):
-
-    | Colour | Share of the daily allowance |
-    |---|---|
-    | Green | under 25 % |
-    | Yellow | 25–50 % |
-    | Orange | 50–100 % |
-    | Red | used up |
+  - **Triple click:** shows the dose so far, bare ear, as a share of the daily allowance. The whole bar blinks for 3 s, and the faster it blinks, the more of the allowance is used: once a second at 0 %, twice a second at 50 %, and steadily lit at 100 %. A single click does nothing, so a press in a pocket doesn't light the fob.
 
   - **Stop:** another long press. The bar empties from red to green.
-  - **Auto-off:** after 12 h it stops by itself. A single click still shows the final dose until the next start.
+  - **Auto-off:** after 12 h it stops by itself. A triple click still shows the final dose until the next start.
   - **Double click:** a spot check, which works as usual while the dosimeter runs.
   - **Log:** the latest run, with about one level per minute, stays in flash after the cell is removed. You can read it later through the programmer with `make dose-log` (see [firmware/README.md](firmware/README.md)).
 
@@ -85,7 +78,7 @@ This is the flash log from one fob over a full 12 h run that ended in auto-off. 
 - **Music, 2.3–6.3 h:** 55–75 dBA. Hours of this barely move the dose.
 - **Drums, 6.4 h:** ten minutes at 85–89.5 dBA. That alone takes the dose from about 0.5 % to 2.9 %, because each 3 dB doubles the rate.
 - **Walk home, 9.8 h:** up to 80 dBA, with the fob in a pocket. Street noise would have read louder in the open, so this part of the dose is understated: the pocket problem described above.
-- **Total:** LAeq 68.1 dBA over 12 h, which is 3.1 % of the daily allowance. A single click would have shown green.
+- **Total:** LAeq 68.1 dBA over 12 h, which is 3.1 % of the daily allowance. A triple click would have shown the slowest blink, about once a second.
 
 ## Hardware
 

@@ -10,7 +10,7 @@ Written 2026-10-13. The numbers below were measured on [dose-example.bin](dose-e
 
 ### 0. The dose on the LEDs
 
-A gesture after a run, say a triple click, shows the result on the bar: the colour band of the dose, then the percentage as a blink count. No tools needed, and it answers "how was my night" for most people. A small firmware change.
+Done on rev A, more simply: a triple click blinks the whole bar with a period of 1 s at 0 % of the allowance, shrinking linearly to lit at 100 % (see the [README](../README.md#modes)). A blink count for the exact percentage would be the next step.
 
 ### 1. A phone camera reads the bar
 

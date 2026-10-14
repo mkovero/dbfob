@@ -3,7 +3,8 @@
 // Double click: spot check. The fob wakes from standby, powers the mic, captures 3 s of PDM over
 // SPI1+DMA while the LED bar fills as a progress bar, A-weights it (src/dsp.c), and shows two
 // verdicts on the LED bar for ~2 s: steady LED = bare ear, blinking LED = with plugs giving 12 dB.
-// Long press: dosimeter on / off; single click while on shows the dose the same way.
+// Long press: dosimeter on / off; triple click shows the dose so far: the whole bar blinks with a
+// period of 1 s at 0 % of the daily allowance, shrinking linearly to lit at 100 %.
 // Every reading is also printed on USART1 TX (PD5, J1 "T") for calibration against a reference meter.
 //
 // Pins (hardware/README.md):
@@ -38,10 +39,11 @@
 
 // ---- display ---------------------------------------------------------------------------------
 // ---- button ----------------------------------------------------------------------------------
-// A double click starts a measurement; a single press, or a short squeeze in a pocket, does not.
+// A double click starts a measurement, a triple click shows the dose; a single press, or a short
+// squeeze in a pocket, does nothing.
 // BRINGUP: tune by feel.
 #define CLICK_MAX_MS      500            // a click held longer than this is not a click
-#define CLICK_GAP_MS      400            // the second click must start within this of the first release
+#define CLICK_GAP_MS      400            // the next click must start within this of the last release
 #define DEBOUNCE_MS       20
 #define RELEASE_QUIET_MS  300            // after letting go of a long press, before the first dose sample
 #define LONG_PRESS_MS     2000           // starts / stops the dosimeter; long enough not to happen in a pocket by chance
@@ -54,6 +56,8 @@
 
 #define SHOW_MS           2000
 #define BLINK_MS          250
+#define DOSE_SHOW_MS      3000
+#define DOSE_BLINK_SLOW_MS 1000          // blink period at 0 % of the daily allowance, shrinking linearly to 0 at 100 %
 #define BAR_GAP_MS        200            // dark pause between the full progress bar and the verdict
 #define PWM_TOP           999            // 48 kHz PWM
 // light sense: D4 discharge time -> brightness. BRINGUP: both thresholds from bench readings.
@@ -436,14 +440,6 @@ static int32_t dose_db_q8(void)
 	return laeq - 85 * 256 + dsp_db10_q8(t ? t : 1) - dsp_db10_q8(8 * 3600);
 }
 
-static int dose_band(int32_t db_q8)
-{
-	if (db_q8 < -6 * 256) return LED_G;                       // < 25 % of the daily allowance
-	if (db_q8 < -3 * 256) return LED_Y;                       // 25-50 %
-	if (db_q8 < 0) return LED_O;                              // 50-100 %
-	return LED_R;                                             // used up
-}
-
 static void dose_print(const char *what)
 {
 	int32_t db = dose_db_q8();
@@ -560,13 +556,30 @@ static void dose_stop(int state)
 	dose_print(state == DOSE_DONE ? "auto_off" : "stop");
 }
 
+// Dose as a fraction of the allowance, in permille (capped at 1000), from dose_db_q8
+static uint32_t dose_permille(int32_t db_q8)
+{
+	if (db_q8 >= 0) return 1000;
+	uint32_t n = -db_q8, f = 1000 << 16;                      // permille, Q16
+	for (; n >= 10 * 256; n -= 10 * 256) f /= 10;             // whole 10 dB steps
+	for (; n >= 256; n -= 256) f = (uint64_t)f * 52057 >> 16; // whole 1 dB steps: x 10^-0.1
+	f -= (uint64_t)f * (n * 13481 >> 8) >> 16;                // the rest, linearly: < 1 % off
+	return f >> 16;
+}
+
 static void dose_show(void)
 {
 	uint32_t duty = duty_for_light(light_us());
 	int32_t db = dose_db_q8();
 	dose_print("show");
 	if (db == INT32_MIN || dose.valid * 2 < dose.samples) { show_invalid(duty); return; }
-	show_two(dose_band(db), dose_band(db - PLUG_DB * 256), duty);
+	// Blink period linear in the dose: 1 s at 0 %, 0.5 s at 50 %, 0.1 s at 90 %, lit at 100 %
+	uint32_t period = DOSE_BLINK_SLOW_MS - DOSE_BLINK_SLOW_MS * dose_permille(db) / 1000;
+	if (!period) { leds_bar(4, duty); Delay_Ms(DOSE_SHOW_MS); leds_bar(0, 0); return; }
+	for (uint32_t ms = 0; ms < DOSE_SHOW_MS; ms += period) {
+		leds_bar(4, duty); Delay_Ms(period / 2);
+		leds_bar(0, 0); Delay_Ms(period - period / 2);
+	}
 }
 
 // Woken by the AWU with the button up
@@ -578,28 +591,28 @@ static void dose_tick(void)
 }
 
 // ---- button ----------------------------------------------------------------------------------
-enum { EV_NONE, EV_SINGLE, EV_DOUBLE, EV_LONG };
+enum { EV_NONE, EV_SINGLE, EV_DOUBLE, EV_TRIPLE, EV_LONG };
 static int pressed(void) { return !funDigitalRead(PC0); }
 
 // Called with the button down. A long press is reported as soon as it is long enough, while
-// still held, so the LEDs can acknowledge it under the finger.
+// still held, so the LEDs can acknowledge it under the finger. Clicks are counted up to three; a
+// double click is reported only once no third one follows, so its measurement starts with the
+// button already released.
 static int button_event(void)
 {
-	uint32_t ms = 0;
-	for (; pressed(); ms += 5) {
-		if (ms >= LONG_PRESS_MS) return EV_LONG;
-		Delay_Ms(5);
-	}
-	if (ms > CLICK_MAX_MS) return EV_NONE;                    // neither a click nor a long press
-	Delay_Ms(DEBOUNCE_MS);
-	for (ms = 0; ms < CLICK_GAP_MS; ms += 5) {                // a second click?
-		if (pressed()) {
-			Delay_Ms(DEBOUNCE_MS);
-			return pressed() ? EV_DOUBLE : EV_SINGLE;
+	for (int clicks = 1;; clicks++) {
+		uint32_t ms = 0;
+		for (; pressed(); ms += 5) {
+			if (ms >= LONG_PRESS_MS) return clicks == 1 ? EV_LONG : EV_NONE;
+			Delay_Ms(5);
 		}
-		Delay_Ms(5);
+		if (ms > CLICK_MAX_MS) return EV_NONE;                // neither a click nor a long press
+		if (clicks == 3) return EV_TRIPLE;
+		Delay_Ms(DEBOUNCE_MS);
+		for (ms = 0; ms < CLICK_GAP_MS && !pressed(); ms += 5) Delay_Ms(5);   // another click?
+		if (pressed()) Delay_Ms(DEBOUNCE_MS);
+		if (!pressed()) return clicks == 1 ? EV_SINGLE : EV_DOUBLE;
 	}
-	return EV_SINGLE;
 }
 
 // ---- power -----------------------------------------------------------------------------------
@@ -660,7 +673,7 @@ int main(void)
 		if (!pressed()) continue;                             // a bounce
 		switch (button_event()) {
 		case EV_DOUBLE: spot_check(); break;
-		case EV_SINGLE: if (dose.state != DOSE_OFF) dose_show(); break;   // otherwise ignored (pocket)
+		case EV_TRIPLE: if (dose.state != DOSE_OFF) dose_show(); break;
 		case EV_LONG:
 			if (dose.state == DOSE_ON) {
 				// stop: the bar empties R -> G
