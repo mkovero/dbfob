@@ -119,7 +119,7 @@ hardware/        KiCad project, generated from the tables in hardware/tools/ (sc
 hardware/case/   FreeCAD case script, STEP/STL for printing, board geometry it is built from
 firmware/        CH32V003 firmware on ch32fun: PDM capture, A-weighting, LAeq, LEDs, standby, dosimeter and its
                  flash log (tools/dose_log.py decodes it); host tests
-docs/            part selection, hardware audit
+docs/            part selection, hardware audit, log readout ideas
 ```
 
 ## Next
@@ -132,7 +132,7 @@ docs/            part selection, hardware audit
 - [x] Print the case.
 - [ ] Check the printed case: the tolerances, the button flexure and the mic seal.
 - [ ] A calibration procedure anyone can repeat with a known-good meter.
-- [ ] Rev B board: centre the mic port, add UART RX for a bootloader, CH32V002/V006 if in stock, possibly a power latch for shelf life.
+- [ ] Rev B board: centre the mic port, add UART RX for a bootloader, CH32V002/V006 if in stock, possibly a power latch for shelf life, a way to read the dose log without a programmer ([ideas](docs/log-readout.md)).
 - [ ] Dosimeter: confirm the 12 h auto-off and the flash log over a full night, then occlusion (pocket) detection.
 - [ ] Get a batch into a venue and see if people use them.
 
