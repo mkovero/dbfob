@@ -47,6 +47,7 @@
 #define DEBOUNCE_MS       20
 #define RELEASE_QUIET_MS  300            // after letting go of a long press, before the first dose sample
 #define LONG_PRESS_MS     2000           // starts / stops the dosimeter; long enough not to happen in a pocket by chance
+#define HELD_MAX_MS       5000           // a button still held after this (squeezed in a pocket): go back to standby
 
 // ---- dosimeter -------------------------------------------------------------------------------
 #define DOSE_AWU_WINDOW   63             // AWU period = 61440 * 63 / LSI (128 kHz nominal) = ~30 s
@@ -135,6 +136,8 @@ static void mic_stop(void)
 	funPinMode(PC5, GPIO_CFGLR_OUT_2Mhz_PP);
 	funDigitalWrite(PC5, FUN_LOW);
 	funDigitalWrite(PC6, FUN_LOW);                           // mic off: no standby current
+	funPinMode(PC7, GPIO_CFGLR_IN_PUPD);                     // data pulled down again, as in pins_init:
+	funDigitalWrite(PC7, FUN_LOW);                           // no floating input through standby
 }
 
 // ---- VDD from the internal reference ---------------------------------------------------------
@@ -531,7 +534,7 @@ static void dose_sample(void)
 	if (!r.invalid) { dose.sum_ms += r.ms; dose.valid++; }
 }
 
-static int pressed(void);
+static void wait_release(void);
 static void dose_start(void)
 {
 	leds_bar(4, DUTY_MIN * 4);                                // acknowledge: all on while the LSI is timed
@@ -543,7 +546,7 @@ static void dose_start(void)
 	dose_print("start");
 	// The long press is reported with the button still held: let go of it first, or the release
 	// click lands in the first sample, right at the mic (one read 101.5 dBA = 10 % of a dose)
-	while (pressed()) Delay_Ms(10);
+	wait_release();
 	Delay_Ms(RELEASE_QUIET_MS);
 	dose_sample();                                            // the first sample stands for the first period
 }
@@ -593,6 +596,14 @@ static void dose_tick(void)
 // ---- button ----------------------------------------------------------------------------------
 enum { EV_NONE, EV_SINGLE, EV_DOUBLE, EV_TRIPLE, EV_LONG };
 static int pressed(void) { return !funDigitalRead(PC0); }
+
+// Wait for the button to be let go, but not for ever: awake, the core draws ~3 mA, so a button held
+// down in a pocket would drain the cell in days. Standby with the button still down is safe, since
+// only a new falling edge wakes the fob.
+static void wait_release(void)
+{
+	for (uint32_t ms = 0; pressed() && ms < HELD_MAX_MS; ms += 10) Delay_Ms(10);
+}
 
 // Called with the button down. A long press is reported as soon as it is long enough, while
 // still held, so the LEDs can acknowledge it under the finger. Clicks are counted up to three; a
@@ -682,6 +693,6 @@ int main(void)
 			} else dose_start();
 			break;
 		}
-		while (pressed()) Delay_Ms(10);                       // wait for release
+		wait_release();
 	}
 }
