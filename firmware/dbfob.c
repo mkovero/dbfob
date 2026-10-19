@@ -32,9 +32,10 @@
 #define OVERLOAD_PCM      ((DSP_FS * 9) / 10)
 
 // ---- battery ---------------------------------------------------------------------------------
-// The V003 is specified from 2.7 V. Below this under load the reading is refused. BRINGUP: set
-// from the qualification in hardware/README.md "Power".
-#define VBAT_MIN_MV       2800
+// The V003 is specified from 2.7 V. Below this under load the reading is refused. The audio path
+// is digital, so above it a reading is good. 2.8 V refused every reading on a 2.8 V bench supply
+// (the load sags it ~60 mV). BRINGUP: set from the qualification in hardware/README.md "Power".
+#define VBAT_MIN_MV       2700
 // Low-battery lockout, checked at power-on and at every wake before anything else. The CH32V003
 // needs 2.7 V; below that a tired cell sagging under a wake hangs or resets it and the fob burns
 // the rest of the cell at 3-4 mA (bench: 2.8 V through 47 ohm). Locked out, it only sleeps.
