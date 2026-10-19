@@ -609,11 +609,14 @@ static void wait_release(void)
 // still held, so the LEDs can acknowledge it under the finger. Clicks are counted up to three; a
 // double click is reported only once no third one follows, so its measurement starts with the
 // button already released.
+static uint16_t btn_ms[6];                                    // press, gap, press, ... (printed)
 static int button_event(void)
 {
+	for (int i = 0; i < 6; i++) btn_ms[i] = 0;
 	for (int clicks = 1;; clicks++) {
 		uint32_t ms = 0;
 		for (; pressed(); ms += 5) {
+			btn_ms[2 * clicks - 2] = ms + 5;
 			if (ms >= LONG_PRESS_MS) return clicks == 1 ? EV_LONG : EV_NONE;
 			Delay_Ms(5);
 		}
@@ -621,6 +624,7 @@ static int button_event(void)
 		if (clicks == 3) return EV_TRIPLE;
 		Delay_Ms(DEBOUNCE_MS);
 		for (ms = 0; ms < CLICK_GAP_MS && !pressed(); ms += 5) Delay_Ms(5);   // another click?
+		btn_ms[2 * clicks - 1] = DEBOUNCE_MS + ms;
 		if (pressed()) Delay_Ms(DEBOUNCE_MS);
 		if (!pressed()) return clicks == 1 ? EV_SINGLE : EV_DOUBLE;
 	}
@@ -682,7 +686,9 @@ int main(void)
 		}
 		Delay_Ms(DEBOUNCE_MS);
 		if (!pressed()) continue;                             // a bounce
-		switch (button_event()) {
+		int ev = button_event();
+		printf("button ev=%d ms=%u/%u/%u/%u/%u\n", ev, btn_ms[0], btn_ms[1], btn_ms[2], btn_ms[3], btn_ms[4]);
+		switch (ev) {
 		case EV_DOUBLE: spot_check(); break;
 		case EV_TRIPLE: if (dose.state != DOSE_OFF) dose_show(); break;
 		case EV_LONG:
