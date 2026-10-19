@@ -152,7 +152,7 @@ static void adc_init(void)
 	ADC1->RSQR1 = 0; ADC1->RSQR2 = 0;
 	ADC1->RSQR3 = 8;                                         // channel 8: Vrefint
 	ADC1->SAMPTR2 = 7 << (3 * 8);                            // longest sample time for Vrefint
-	ADC1->CTLR2 = ADC_ADON | ADC_EXTSEL;
+	ADC1->CTLR2 = ADC_ADON | ADC_EXTSEL | ADC_TSVREFE;
 	for (volatile int i = 0; i < 100; i++);                  // >= 10 us; no SysTick yet at power-on
 	ADC1->CTLR2 |= ADC_RSTCAL; while (ADC1->CTLR2 & ADC_RSTCAL);
 	ADC1->CTLR2 |= ADC_CAL; while (ADC1->CTLR2 & ADC_CAL);
@@ -164,6 +164,18 @@ static uint32_t vdd_mv(void)
 	while (!(ADC1->STATR & ADC_EOC));
 	uint32_t raw = ADC1->RDATAR;
 	return raw ? VREFINT_MV * 1023 / raw : 0;
+}
+
+// For the lockout, right after power-on or a wake from standby: give Vrefint ~1 ms to settle (a
+// plain loop: no SysTick yet at power-on), drop the first conversion and average four. Reading it
+// at once locked out a fob on a 3.2 V bench supply.
+static uint32_t vdd_settled_mv(void)
+{
+	for (volatile uint32_t i = 0; i < 4000; i++);
+	vdd_mv();
+	uint32_t sum = 0;
+	for (int i = 0; i < 4; i++) sum += vdd_mv();
+	return sum / 4;
 }
 
 // ---- LEDs: TIM1 CH1/3/4 + TIM2 CH2 PWM -------------------------------------------------------
@@ -670,7 +682,7 @@ static int standby(void)
 	ADC1->CTLR2 &= ~ADC_ADON;
 	__WFE();
 	adc_init();                                               // power up and recalibrate (~20 us)
-	if (vdd_mv() < VBAT_LOCKOUT_MV) return 0;
+	if (vdd_settled_mv() < VBAT_LOCKOUT_MV) return 0;
 	SystemInit();                                             // back to 48 MHz after wake
 	adc_init();                                               // again, for the 48 MHz ADC clock
 	return 1;
@@ -699,10 +711,11 @@ int main(void)
 	pins_init();
 	adc_init();
 	leds_init();
-	if (vdd_mv() >= VBAT_LOCKOUT_MV) {
+	uint32_t v_hsi = vdd_settled_mv();
+	if (v_hsi >= VBAT_LOCKOUT_MV) {
 		SystemInit();
 		adc_init();
-		printf("\ndbfob rev A fw " __DATE__ " vdd=%lu\n", (unsigned long)vdd_mv());
+		printf("\ndbfob rev A fw " __DATE__ " vdd=%lu vdd_hsi=%lu\n", (unsigned long)vdd_mv(), (unsigned long)v_hsi);
 		// Stay awake 3 s after reset so a programmer can attach before the first standby. Cut it
 		// short if the cell sags under it: a reset loop here would drain it.
 		for (int i = 0; i < 4 && vdd_mv() >= VBAT_LOCKOUT_MV; i++) { led_set(i, DUTY_MIN * 4); Delay_Ms(750); }
