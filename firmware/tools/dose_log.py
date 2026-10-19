@@ -11,7 +11,7 @@ Prints the run length, LAeq, the noise dose (NIOSH, 85 dBA / 8 h, 3 dB exchange)
 import argparse, math, struct, sys
 
 MAGIC, HDR = 0xDB01, 12
-STOPPED, AUTO_OFF, EMPTY = 0xFD, 0xFE, 0xFF
+LOW_BATT, STOPPED, AUTO_OFF, EMPTY = 0xFC, 0xFD, 0xFE, 0xFF
 PLUG_DB = 12
 BANDS = ((40, 84, '#e3f4e1'), (84, 91, '#fdf6d3'), (91, 97, '#fde6d0'), (97, 110, '#fad9d9'))  # dBA
 
@@ -84,6 +84,7 @@ def main():
     levels, end = [], 'still running (or the cell was pulled)'
     for b in data[HDR:]:
         if b == EMPTY: break
+        if b == LOW_BATT: end = 'stopped: low battery'; break
         if b == STOPPED: end = 'stopped by long press'; break
         if b == AUTO_OFF: end = 'auto-off at 12 h'; break
         levels.append(None if b == 0 else b / 2 + 20)

@@ -13,7 +13,7 @@ def load(path):
     _, _, tick_ms, tps, _ = struct.unpack_from('<HHIHH', d)
     codes = []
     for b in d[12:]:
-        if b >= 0xFD:
+        if b >= 0xFC:
             codes.append(b)                      # end marker: part of what would be sent
             break
         codes.append(b)
@@ -55,7 +55,7 @@ def compression(codes):
 
 def main():
     codes, period = load(sys.argv[1])
-    lv = [c / 2 + 20 for c in codes if 0 < c < 0xFD]
+    lv = [c / 2 + 20 for c in codes if 0 < c < 0xFC]
     raw = len(codes) + 12
     print(f'{len(lv)} samples {period:.1f} s apart, {raw} B raw with the header, dose {dose(lv, period):.2f} %')
 

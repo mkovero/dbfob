@@ -121,7 +121,7 @@ docs/            part selection, hardware audit, log readout ideas
 - [x] Standby current (8.2 µA) and the dosimeter current profile.
 - [ ] VDD reference trim, light-sense thresholds. See [firmware/README.md](firmware/README.md#bring-up-checklist).
 - [ ] Calibrate against a reference meter at 85–105 dBA, in the case: the level offset and the hand-held offset. So far it has only been compared with a consumer meter at about 61 dBA.
-- [ ] Qualify the battery: the supply voltage under load across cell charge and temperature, then set the cutoff. At 2.8 V the sample wakes read 25 % more current than at 3.0 V. Re-measure on a range with a smaller burden voltage.
+- [ ] Qualify the battery: the supply voltage under load across cell charge and temperature, then set the cutoff. At 2.8 V the sample wakes read 25 % more current than at 3.0 V. Re-measure on a range with a smaller burden voltage. A low-battery lockout (2.75 V) now keeps a tired cell from hanging the V003; test it with real cells. Wakes peak at over 10 mA with the LEDs on, which is hard on a CR2032.
 - [x] Print the case.
 - [ ] Check the printed case: the tolerances, the button flexure and the mic seal.
 - [ ] A calibration procedure anyone can repeat with a known-good meter.

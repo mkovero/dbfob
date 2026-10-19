@@ -35,6 +35,10 @@
 // The V003 is specified from 2.7 V. Below this under load the reading is refused. BRINGUP: set
 // from the qualification in hardware/README.md "Power".
 #define VBAT_MIN_MV       2800
+// Low-battery lockout, checked at power-on and at every wake before anything else. The CH32V003
+// needs 2.7 V; below that a tired cell sagging under a wake hangs or resets it and the fob burns
+// the rest of the cell at 3-4 mA (bench: 2.8 V through 47 ohm). Locked out, it only sleeps.
+#define VBAT_LOCKOUT_MV   2750
 #define VREFINT_MV        1200           // datasheet 1.17-1.23 V; BRINGUP: calibrate per board
 
 // ---- display ---------------------------------------------------------------------------------
@@ -149,7 +153,7 @@ static void adc_init(void)
 	ADC1->RSQR3 = 8;                                         // channel 8: Vrefint
 	ADC1->SAMPTR2 = 7 << (3 * 8);                            // longest sample time for Vrefint
 	ADC1->CTLR2 = ADC_ADON | ADC_EXTSEL;
-	Delay_Us(10);
+	for (volatile int i = 0; i < 100; i++);                  // >= 10 us; no SysTick yet at power-on
 	ADC1->CTLR2 |= ADC_RSTCAL; while (ADC1->CTLR2 & ADC_RSTCAL);
 	ADC1->CTLR2 |= ADC_CAL; while (ADC1->CTLR2 & ADC_CAL);
 }
@@ -458,13 +462,15 @@ static void dose_print(const char *what)
 // read later with the programmer (`make dose-log`, tools/dose_log.py). Layout, little endian:
 //   0x00 u16 DOSE_LOG_MAGIC   0x02 u16 CAL_DB_Q8   0x04 u32 tick_ms
 //   0x08 u16 ticks per sample 0x0A u16 sample ms   0x0C... one byte per sample:
-//   1-250 = dBA (code / 2 + 20, 0.5 dB steps), 0 = invalid, 0xFD = stopped, 0xFE = auto-off,
+//   1-250 = dBA (code / 2 + 20, 0.5 dB steps), 0 = invalid, 0xFC = low battery, 0xFD = stopped,
+//   0xFE = auto-off,
 //   0xFF = not written. The 1 KB is erased once per run and written a half-word (two samples) at a
 //   time, so a run costs one erase of each 64-byte page.
 #define DOSE_LOG_ADDR     0x08003C00     // the firmware must stay below this: `make check` tests it
 #define DOSE_LOG_SIZE     1024
 #define DOSE_LOG_MAGIC    0xDB01
 #define DOSE_LOG_HDR      12
+#define LOG_LOW_BATT      0xFC
 #define LOG_STOPPED       0xFD
 #define LOG_AUTO_OFF      0xFE
 
@@ -653,7 +659,9 @@ static void pins_init(void)
 	leds_pins();
 }
 
-static void standby(void)
+// Standby until the button or the AWU. Returns 0 when the cell is too weak to go on: checked on
+// the 24 MHz HSI the core wakes on, before the PLL and anything else that draws current.
+static int standby(void)
 {
 	RCC->APB1PCENR |= RCC_APB1Periph_PWR;
 	PWR->CTLR |= PWR_CTLR_PDDS;
@@ -661,22 +669,47 @@ static void standby(void)
 	// The ADC keeps its analog block powered through standby: ~0.57 mA measured on board 1.
 	ADC1->CTLR2 &= ~ADC_ADON;
 	__WFE();
-	SystemInit();                                             // back to 48 MHz after wake
 	adc_init();                                               // power up and recalibrate (~20 us)
+	if (vdd_mv() < VBAT_LOCKOUT_MV) return 0;
+	SystemInit();                                             // back to 48 MHz after wake
+	adc_init();                                               // again, for the 48 MHz ADC clock
+	return 1;
+}
+
+// A weak cell: stop the dosimeter (the log ends with a low-battery mark; a triple click still
+// shows the dose so far) and, if the button woke the fob, answer with one short dim red blink.
+// Still on the HSI: no printf (the UART may not even be clocked after a power-on lockout, and
+// would wait for ever) and no SysTick delays, so the blink is a plain loop of ~30 ms.
+static void low_battery(void)
+{
+	if (dose.state == DOSE_ON) {
+		awu_stop();
+		dose_log_end(LOG_LOW_BATT);
+		dose.state = DOSE_DONE;
+	}
+	if (!pressed()) return;
+	led_set(LED_R, DUTY_MIN);
+	for (volatile uint32_t i = 0; i < 100000; i++);
+	led_set(LED_NONE, 0);
 }
 
 int main(void)
 {
-	SystemInit();
+	// Power-on: still on the 24 MHz HSI. A cell too weak to run goes straight to standby.
 	pins_init();
 	adc_init();
 	leds_init();
-	printf("\ndbfob rev A fw " __DATE__ " vdd=%lu\n", (unsigned long)vdd_mv());
-	// Stay awake 3 s after reset so a programmer can attach before the first standby.
-	for (int i = 0; i < 4; i++) { led_set(i, DUTY_MIN * 4); Delay_Ms(750); }
-	led_set(LED_NONE, 0);
+	if (vdd_mv() >= VBAT_LOCKOUT_MV) {
+		SystemInit();
+		adc_init();
+		printf("\ndbfob rev A fw " __DATE__ " vdd=%lu\n", (unsigned long)vdd_mv());
+		// Stay awake 3 s after reset so a programmer can attach before the first standby. Cut it
+		// short if the cell sags under it: a reset loop here would drain it.
+		for (int i = 0; i < 4 && vdd_mv() >= VBAT_LOCKOUT_MV; i++) { led_set(i, DUTY_MIN * 4); Delay_Ms(750); }
+		led_set(LED_NONE, 0);
+	}
 	for (;;) {
-		standby();
+		if (!standby()) { low_battery(); continue; }
 		// A press reads low within 1 ms of its wake edge. Checking that early keeps the dosimeter's
 		// timer-only wakes short: at 6.7 mA, a 20 ms wake every 30 s was ~4 uA of average current.
 		Delay_Ms(1);
