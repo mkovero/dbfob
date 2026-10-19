@@ -170,16 +170,28 @@ static uint32_t vdd_mv(void)
 	return raw ? VREFINT_MV * 1023 / raw : 0;
 }
 
-// For the lockout, right after power-on or a wake from standby: give Vrefint ~1 ms to settle (a
-// plain loop: no SysTick yet at power-on), drop the first conversion and average four. Reading it
-// at once locked out a fob on a 3.2 V bench supply.
+// For the lockout, right after power-on or a wake from standby, when Vrefint is still settling
+// and reads VDD low: wait ~1 ms (a plain loop: no SysTick yet at power-on), drop a conversion and
+// average four. If that is under the limit, keep reading for up to ~10 ms more before believing
+// it. Reading at once locked out a fob on a 3.2 V supply, and the 1 ms alone (shorter at 24 MHz
+// with no flash wait state) one on 3.0 V through 47 ohm that then measured fine.
+static uint32_t vdd_avg_mv(void)
+{
+	uint32_t sum = 0;
+	for (int i = 0; i < 4; i++) sum += vdd_mv();
+	return sum / 4;
+}
+
 static uint32_t vdd_settled_mv(void)
 {
 	for (volatile uint32_t i = 0; i < 4000; i++);
 	vdd_mv();
-	uint32_t sum = 0;
-	for (int i = 0; i < 4; i++) sum += vdd_mv();
-	return sum / 4;
+	uint32_t v = vdd_avg_mv();
+	for (int n = 0; n < 20 && v < VBAT_LOCKOUT_MV; n++) {
+		for (volatile uint32_t i = 0; i < 2000; i++);
+		v = vdd_avg_mv();
+	}
+	return v;
 }
 
 // ---- LEDs: TIM1 CH1/3/4 + TIM2 CH2 PWM -------------------------------------------------------
