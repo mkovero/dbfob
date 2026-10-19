@@ -687,6 +687,8 @@ static void pins_init(void)
 	leds_pins();
 }
 
+static uint32_t lockout_mv;                                   // the last lockout reading (RAM survives standby)
+
 // Standby until the button or the AWU. Returns 0 when the cell is too weak to go on: checked on
 // the 24 MHz HSI the core wakes on, before the PLL and anything else that draws current.
 static int standby(void)
@@ -698,7 +700,8 @@ static int standby(void)
 	ADC1->CTLR2 &= ~ADC_ADON;
 	__WFE();
 	adc_init();                                               // power up and recalibrate (~20 us)
-	if (vdd_settled_mv() < VBAT_LOCKOUT_MV) return 0;
+	uint32_t v = vdd_settled_mv();
+	if (v < VBAT_LOCKOUT_MV) { lockout_mv = v; return 0; }
 	SystemInit();                                             // clocks as configured (PLL in DIAG builds)
 	adc_init();
 	return 1;
@@ -749,7 +752,8 @@ int main(void)
 		Delay_Ms(DEBOUNCE_MS);
 		if (!pressed()) continue;                             // a bounce
 		int ev = button_event();
-		printf("button ev=%d ms=%u/%u/%u/%u/%u\n", ev, btn_ms[0], btn_ms[1], btn_ms[2], btn_ms[3], btn_ms[4]);
+		printf("button ev=%d ms=%u/%u/%u/%u/%u last_lockout_mv=%lu\n", ev, btn_ms[0], btn_ms[1], btn_ms[2], btn_ms[3],
+		       btn_ms[4], (unsigned long)lockout_mv);
 		switch (ev) {
 		case EV_DOUBLE: spot_check(); break;
 		case EV_TRIPLE: if (dose.state != DOSE_OFF) dose_show(); break;
