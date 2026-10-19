@@ -1,9 +1,15 @@
 #ifndef _FUNCONFIG_H
 #define _FUNCONFIG_H
 
-// 48 MHz from the HSI PLL (ch32fun default for the CH32V003)
+// 24 MHz straight from the HSI, no PLL: the capture draws less (a CR2032 sags under >10 mA), and
+// the DSP fits (about 41 % of 48 MHz). DIAG builds keep 48 MHz: their extra filters and the 3 MHz
+// mic clock need it.
 #define FUNCONF_USE_HSI 1
+#ifdef DBFOB_DIAG
 #define FUNCONF_USE_PLL 1
+#else
+#define FUNCONF_USE_PLL 0
+#endif
 // SysTick at the core clock: Delay_* and the ISR cycle counter share it
 #define FUNCONF_SYSTICK_USE_HCLK 1
 #ifdef DBFOB_SWIO_PRINTF

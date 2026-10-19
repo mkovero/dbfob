@@ -8,7 +8,7 @@
 // Every reading is also printed on USART1 TX (PD5, J1 "T") for calibration against a reference meter.
 //
 // Pins (hardware/README.md):
-//   PC5 SPI1 SCK  -> MIC_CLK   1.5 MHz (48 MHz / 32)
+//   PC5 SPI1 SCK  -> MIC_CLK   1.5 MHz (24 MHz / 16; 48 MHz / 32 in DIAG builds)
 //   PC7 SPI1 MISO <- MIC_DATA  sampled on the rising edge (SELECT = GND: data valid while CLK low)
 //   PC6 GPIO      -> MIC_VDD   mic powered only while measuring
 //   PD3 TIM2_CH2 D1 G, PD2 TIM1_CH1 D2 Y, PC4 TIM1_CH4 D3 O, PC3 TIM1_CH3 D4 R (anodes via R)
@@ -79,7 +79,7 @@ static uint8_t pdm[128];                 // DMA ring: two halves of 64 bytes = 8
 static volatile uint32_t isr_cycles, overruns;
 static volatile uint8_t capturing;
 #ifdef DBFOB_DIAG
-static uint8_t mic_3mhz;                 // diagnostics: clock the mic at 3 MHz (48 MHz / 16, R = 128)
+static uint8_t mic_3mhz;                 // diagnostics: clock the mic at 3 MHz (core clock / 16, R = 128)
 #endif
 
 // ---- PDM capture: SPI1 RX-only master + DMA1 channel 2 ---------------------------------------
@@ -96,6 +96,9 @@ void DMA1_Channel2_IRQHandler(void)
 	}
 	isr_cycles += SysTick->CNT - t0;
 }
+
+// 1.5 MHz mic clock from either core clock
+#define MIC_SPI_PSC (FUNCONF_SYSTEM_CORE_CLOCK == 48000000 ? SPI_BaudRatePrescaler_32 : SPI_BaudRatePrescaler_16)
 
 static void mic_start(void)
 {
@@ -121,9 +124,9 @@ static void mic_start(void)
 	SPI1->CTLR1 = SPI_NSS_Soft | SPI_NSSInternalSoft_Set | SPI_CPHA_1Edge | SPI_CPOL_Low | SPI_DataSize_8b | SPI_FirstBit_MSB |
 	              SPI_Mode_Master | SPI_Direction_2Lines_RxOnly |
 #ifdef DBFOB_DIAG
-	              (mic_3mhz ? SPI_BaudRatePrescaler_16 : SPI_BaudRatePrescaler_32);
+	              (mic_3mhz ? SPI_BaudRatePrescaler_16 : MIC_SPI_PSC);
 #else
-	              SPI_BaudRatePrescaler_32;
+	              MIC_SPI_PSC;
 #endif
 	SPI1->CTLR1 |= CTLR1_SPE_Set;
 }
@@ -435,7 +438,7 @@ static void awu_stop(void)
 	RCC->RSTSCKR &= ~RCC_LSION;                               // no LSI current when not dosing
 }
 
-// The LSI is only loosely trimmed, so time one short AWU period against the 48 MHz clock (in
+// The LSI is only loosely trimmed, so time one short AWU period against the core clock (in
 // sleep, where SysTick keeps running) and scale it to the dosimeter's period.
 static uint32_t awu_tick_ms(void)
 {
@@ -684,8 +687,8 @@ static int standby(void)
 	__WFE();
 	adc_init();                                               // power up and recalibrate (~20 us)
 	if (vdd_settled_mv() < VBAT_LOCKOUT_MV) return 0;
-	SystemInit();                                             // back to 48 MHz after wake
-	adc_init();                                               // again, for the 48 MHz ADC clock
+	SystemInit();                                             // clocks as configured (PLL in DIAG builds)
+	adc_init();
 	return 1;
 }
 

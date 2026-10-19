@@ -11,7 +11,7 @@ Firmware for the rev A board: a CH32V003F4P6 with an IM69D130 PDM mic. It is bui
    - A **triple click** shows the dose while the dosimeter runs.
    - Anything else goes straight back to standby: a single press, or a long squeeze in a pocket.
 2. It senses ambient light through D4 to set LED brightness.
-3. It powers the mic from PC6 and clocks it at **1.5 MHz**: SPI1 SCK on PC5, 48 MHz / 32.
+3. It powers the mic from PC6 and clocks it at **1.5 MHz**: SPI1 SCK on PC5, 24 MHz / 16. The core runs at 24 MHz straight from the HSI, without the PLL, to keep the capture current down for a CR2032; `DIAG=1` builds keep 48 MHz (48 MHz / 32) for their extra filters.
 4. It captures PDM from MISO (PC7) by DMA into a 128-byte ring. Each 64-byte half is processed in the DMA interrupt.
 5. It discards 150 ms of mic start-up and filter settling, then integrates **3 s** of A-weighted energy. VDD is read under load every 50 ms throughout.
    - Meanwhile the LED bar fills G → Y → O → R as a progress bar. It confirms the press and shows when the verdict is due.
@@ -24,7 +24,7 @@ Firmware for the rev A board: a CH32V003F4P6 with an IM69D130 PDM mic. It is bui
 
 **Dosimeter (long press, 2 s):**
 - **Timing:** the CH32V003's auto-wakeup timer (AWU, clocked by the LSI) wakes it about every 30 s. Every second wake it takes a 1 s sample with the LEDs off. That averages about 165 µA, or about 2 mAh per 12 h night; 2 s samples measured about 300 µA.
-  - The LSI is loosely trimmed, so at start the AWU period is timed against the 48 MHz clock (`tick_ms`).
+  - The LSI is loosely trimmed, so at start the AWU period is timed against the core clock (`tick_ms`).
 - **Dose:** NIOSH, 85 dBA for 8 h = 100 % with a 3 dB exchange: dose = (T / 8 h) · 10^((LAeq − 85) / 10).
   - LAeq is the energy average of the valid samples.
   - T is the elapsed AWU time.
@@ -65,7 +65,7 @@ Everything below is in `src/dsp.c`. The same file is compiled into the firmware 
 - At −3 dBFS it has headroom: the peak intermediate uses 53k of the 131k that the 32-bit products allow.
 - The simulated mic is a 2nd-order sigma-delta modulator.
 
-**CPU**, from `make bench`: **11.3 M RV32EC instructions per second of audio** (about 39 per byte, about 168 per sample). The V2A core needs roughly 1.2–1.5 cycles per instruction, so this estimates **28–35 % of 48 MHz**. The firmware measures the real ISR share and prints it as `cpu=`.
+**CPU**, from `make bench`: **11.3 M RV32EC instructions per second of audio** (about 39 per byte, about 168 per sample). The V2A core needs roughly 1.2–1.5 cycles per instruction, so this estimates **28–35 % of 48 MHz**. Measured at 48 MHz after the floor fix: 40–41 %. At 24 MHz, with no flash wait state, expect roughly 70–80 %. The firmware measures the real ISR share and prints it as `cpu=`.
 
 **Resources:** flash 10.1 KB of 16 KB, static RAM 256 B of 2 KB.
 
