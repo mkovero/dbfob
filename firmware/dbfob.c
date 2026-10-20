@@ -419,7 +419,7 @@ static void spot_check(void)
 // ---- dosimeter -------------------------------------------------------------------------------
 // Long press starts it: the fob then wakes on the auto-wakeup timer (AWU, from the LSI) every
 // ~30 s and samples DOSE_SAMPLE_MS every DOSE_TICKS_PER_SAMPLE ticks, with the LEDs off. Each
-// sample stands for the time since the last one. A single click shows the dose so far, a long
+// sample stands for the time since the last one. A triple click shows the dose so far, a long
 // press stops it, and it stops by itself after DOSE_MAX_S. The dose is the NIOSH one: 85 dBA for
 // 8 h = 100 %, 3 dB exchange, so dose = (T / 8 h) * 10^((LAeq - 85) / 10), within 0.05 dB of 2^(x/3).
 enum { DOSE_OFF, DOSE_ON, DOSE_DONE };

@@ -19,7 +19,7 @@ Firmware for the rev A board: a CH32V003F4P6 with an IM69D130 PDM mic. It is bui
 6. It shows two verdicts for 2 s (see the [top-level README](../README.md#colour-bands)):
    - **Steady LED:** bare ear.
    - **Blinking LED:** with plugs giving 12 dB.
-   - **Alternating G/R:** invalid reading (battery below the cutoff, no samples, or DMA overrun).
+   - **Alternating G/R:** invalid reading. Almost always a weak cell: VDD was fine at wake but sagged under 2.7 V (`VBAT_MIN_MV`) while measuring, so the reading was refused. It is the "replace the cell soon" warning, between a good cell and the lockout (one dim red blink, VDD under 2.75 V before measuring). Bench, 47 Ω in series: 3.1 V is right at this edge and gives G/R or a reading; 3.0 V locks out. Rarer causes: no samples, or a DMA overrun.
 7. It prints one line per reading on USART1 TX (PD5, J1 pin 4 "T", 115200 8N1), then returns to standby.
 
 **Dosimeter (long press, 2 s):**
