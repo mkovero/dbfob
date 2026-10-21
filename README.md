@@ -125,7 +125,7 @@ docs/            part selection, hardware audit, log readout ideas
 - [x] Print the case.
 - [ ] Check the printed case: the tolerances, the button flexure and the mic seal.
 - [ ] A calibration procedure anyone can repeat with a known-good meter.
-- [ ] Rev B board: centre the mic port, add UART RX for a bootloader, CH32V002/V006 if in stock, possibly a power latch for shelf life, a way to read the dose log without a programmer ([ideas](docs/log-readout.md)).
+- [ ] Rev B board: centre the mic port, add UART RX for a bootloader, CH32V002/V006 if in stock, possibly a power latch for shelf life, a way to read the dose log without a programmer ([ideas](docs/log-readout.md)). Full-band A-weighting to 20 kHz: rev A stops at 11.7 kHz, which reads only ~0.2–0.9 dB low on broadband noise, but high-frequency content is exactly what a listener stops noticing after a few drinks at a club. Needs ~47 kHz samples, so an MCU with PDM hardware or the headroom for the 3 MHz mic clock without a battery penalty ([band limit](firmware/README.md#signal-chain)).
 - [ ] Dosimeter: confirm the 12 h auto-off and the flash log over a full night, then occlusion (pocket) detection.
 - [ ] Get a batch into a venue and see if people use them.
 

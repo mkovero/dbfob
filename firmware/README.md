@@ -61,6 +61,7 @@ Everything below is in `src/dsp.c`. The same file is compiled into the firmware 
 **Verified on the host** (`make test`, with UBSan on):
 - The CIC matches a bit-by-bit reference exactly.
 - The chain is within **0.02 dB of IEC 61672 A-weighting from 50 Hz to 8 kHz**, and 0.09 dB at 31.5 Hz and 10 kHz.
+- **Band limit:** at 23.4 kHz samples nothing above 11.7 kHz is measured. A-weighting still counts the 12.5–20 kHz bands (−4 to −9 dB), so the fob reads low on sound with energy up there: about 0.2 dB on pink noise, 0.9 dB on white noise (hiss, air jets), less on music, whose spectrum falls faster. That is under the mic's ±1 dB tolerance, and the mic's own response is loose above 8 kHz anyway (datasheet +4/−2 dB at 8 kHz, +9/−2 dB at 15 kHz). Going to 20 kHz needs ~47 kHz samples: the 3 MHz mic clock (620 → 980 µA) and twice the CIC and filter work, about 130 % CPU at 24 MHz, so 48 MHz with the PLL and the higher capture current a weak cell cannot hold. Left for rev B.
 - It is linear to within 0.12 dB from −60 to −6 dBFS.
 - At −3 dBFS it has headroom: the peak intermediate uses 53k of the 131k that the 32-bit products allow.
 - The simulated mic is a 2nd-order sigma-delta modulator.
