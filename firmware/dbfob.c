@@ -490,14 +490,15 @@ static void dose_print(const char *what)
 // read later with the programmer (`make dose-log`, tools/dose_log.py). Layout, little endian:
 //   0x00 u16 DOSE_LOG_MAGIC   0x02 u16 CAL_DB_Q8   0x04 u32 tick_ms
 //   0x08 u16 ticks per sample 0x0A u16 sample ms   0x0C... one byte per sample:
-//   1-250 = dBA (code / 2 + 20, 0.5 dB steps), 0 = invalid, 0xFC = low battery, 0xFD = stopped,
-//   0xFE = auto-off,
+//   1-250 = dBA (code / 2 + 20, 0.5 dB steps), 0 = invalid, 0xFB = the next sample overloaded
+//   (its level follows and is a lower bound), 0xFC = low battery, 0xFD = stopped, 0xFE = auto-off,
 //   0xFF = not written. The 1 KB is erased once per run and written a half-word (two samples) at a
 //   time, so a run costs one erase of each 64-byte page.
 #define DOSE_LOG_ADDR     0x08003C00     // the firmware must stay below this: `make check` tests it
 #define DOSE_LOG_SIZE     1024
 #define DOSE_LOG_MAGIC    0xDB01
 #define DOSE_LOG_HDR      12
+#define LOG_OVERLOAD      0xFB
 #define LOG_LOW_BATT      0xFC
 #define LOG_STOPPED       0xFD
 #define LOG_AUTO_OFF      0xFE
@@ -563,7 +564,9 @@ static uint8_t dose_log_code(const reading_t *r)
 static void dose_sample(void)
 {
 	reading_t r = measure("dose_sample", DOSE_SAMPLE_MS, 0, 0);
-	dose_log_byte(dose_log_code(&r));
+	uint8_t c = dose_log_code(&r);
+	if (c && r.overload) dose_log_byte(LOG_OVERLOAD);
+	dose_log_byte(c);
 	dose.samples++;
 	if (!r.invalid) { dose.sum_ms += r.ms; dose.valid++; }
 }

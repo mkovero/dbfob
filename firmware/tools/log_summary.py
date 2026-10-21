@@ -13,6 +13,8 @@ def load(path):
     _, _, tick_ms, tps, _ = struct.unpack_from('<HHIHH', d)
     codes = []
     for b in d[12:]:
+        if b == 0xFB:                            # overload flag for the next sample: not a level
+            continue
         if b >= 0xFC:
             codes.append(b)                      # end marker: part of what would be sent
             break

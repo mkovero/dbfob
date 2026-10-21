@@ -11,7 +11,7 @@ Prints the run length, LAeq, the noise dose (NIOSH, 85 dBA / 8 h, 3 dB exchange)
 import argparse, math, struct, sys
 
 MAGIC, HDR = 0xDB01, 12
-LOW_BATT, STOPPED, AUTO_OFF, EMPTY = 0xFC, 0xFD, 0xFE, 0xFF
+OVERLOAD, LOW_BATT, STOPPED, AUTO_OFF, EMPTY = 0xFB, 0xFC, 0xFD, 0xFE, 0xFF
 PLUG_DB = 12
 BANDS = ((40, 84, '#e3f4e1'), (84, 91, '#fdf6d3'), (91, 97, '#fde6d0'), (97, 200, '#fad9d9'))  # dBA
 
@@ -20,7 +20,7 @@ def leq(levels):
     return 10 * math.log10(sum(10 ** (l / 10) for l in levels) / len(levels))
 
 
-def svg(path, levels, period, notes):
+def svg(path, levels, period, notes, ovl=()):
     W, H, L, R, T, B = 820, 340, 52, 62, 36, 40          # size and margins
     hours = len(levels) * period / 3600
     xmax = max(1, math.ceil(hours - 0.05))                 # 12.01 h -> 12
@@ -71,11 +71,14 @@ def svg(path, levels, period, notes):
                  for i, d in enumerate(ds)) + f'" fill="none" stroke="#1f5fbf" stroke-width="2"{style}/>')
         o.append(f'<text x="{x(len(ds) * period / 3600) + 4:.1f}" y="{min(yd(ds[-1]) - 4, H - B - 4):.1f}" '
                  f'text-anchor="end" fill="#1f5fbf">{name} {ds[-1]:.0f} %</text>')
+    for i in ovl:                                          # overloaded: the level is a lower bound
+        o.append(f'<circle cx="{x((i + 0.5) * period / 3600):.1f}" cy="{y(levels[i]):.1f}" r="3.5" '
+                 f'fill="#d22"/>')
     for h, text in notes:
         o.append(f'<line x1="{x(h):.1f}" x2="{x(h):.1f}" y1="{T}" y2="{H - B}" stroke="#888" '
                  f'stroke-dasharray="3,3"/><text x="{x(h) + 4:.1f}" y="{T + 12}">{text}</text>')
-    o.append(f'<text x="{L}" y="{T - 14}" font-weight="bold">dBA, one 1 s sample a minute '
-             f'(black)  ·  running dose, % of the daily allowance: bare ear (blue), with plugs (dashed)</text>')
+    o.append(f'<text x="{L}" y="{T - 14}" font-weight="bold">dBA, a 1 s sample a minute (red dot = overload)  ·  '
+             f'running dose, % of a day: bare ear (solid), with plugs (dashed)</text>')
     o.append(f'<text x="{(L + W - R) / 2}" y="{H - 8}" text-anchor="middle">hours since start</text>')
     o.append('</svg>')
     open(path, 'w').write('\n'.join(o) + '\n')
@@ -93,8 +96,9 @@ def main():
     if magic != MAGIC:
         sys.exit(f'no dose log (magic {magic:#06x}): no run since this firmware was flashed?')
     period = tick_ms * tps / 1000
-    levels, end = [], 'still running (or the cell was pulled)'
+    levels, ovl, end = [], set(), 'still running (or the cell was pulled)'
     for b in data[HDR:]:
+        if b == OVERLOAD: ovl.add(len(levels)); continue  # flags the sample that follows
         if b == EMPTY: break
         if b == LOW_BATT: end = 'stopped: low battery'; break
         if b == STOPPED: end = 'stopped by long press'; break
@@ -111,9 +115,11 @@ def main():
         dose = 100 * 10 ** ((laeq - off - 85) / 10) * hours / 8
         print(f'LAeq {laeq - off:.1f} dBA  dose {dose:.1f} %  ({name})')
     print(f'min {min(valid):.1f}  max {max(valid):.1f} dBA')
+    ovl = {i for i in ovl if i < len(levels)}
+    print(f'{len(ovl)} overloaded samples' + (' (their levels, and so the dose, are lower bounds)' if ovl else ''))
     if a.svg:
         notes = [(float(h), t) for h, t in (n.split('=', 1) for n in a.note)]
-        svg(a.svg, levels, period, notes)
+        svg(a.svg, levels, period, notes, sorted(ovl))
         print(f'wrote {a.svg}')
     step = 1 if a.all else max(1, round(600 / period))   # else ~10 min rows
     print('\n  time    LAeq over the row (dBA)')
@@ -121,7 +127,8 @@ def main():
         row = [l for l in levels[i:i + step] if l is not None]
         t = i * period
         lv = f'{leq(row):5.1f}' if row else '  -'
-        print(f'{int(t // 3600):3d}:{int(t % 3600 // 60):02d}  {lv}')
+        n = sum(1 for j in range(i, i + step) if j in ovl)
+        print(f'{int(t // 3600):3d}:{int(t % 3600 // 60):02d}  {lv}' + (f'  overload x{n}' if n else ''))
 
 
 if __name__ == '__main__':
