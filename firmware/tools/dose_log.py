@@ -31,10 +31,11 @@ def svg(path, levels, period, notes):
     ymax = max(100, math.ceil(max((l for l in levels if l is not None), default=0) / 10) * 10)
     x = lambda h: L + (W - L - R) * h / xmax
     y = lambda db: T + (H - T - B) * (ymax - min(max(db, ymin), ymax)) / (ymax - ymin)
-    dose, run = [], 0.0
+    dose, plug, run, run_p = [], [], 0.0, 0.0             # running dose, bare ear and with plugs
     for l in levels:
         run += 0 if l is None else 100 * 10 ** ((l - 85) / 10) * period / (8 * 3600)
-        dose.append(run)
+        run_p += 0 if l is None else 100 * 10 ** ((l - PLUG_DB - 85) / 10) * period / (8 * 3600)
+        dose.append(run); plug.append(run_p)
     dstep = next(s for s in (1, 2, 5, 10, 20, 25, 50, 100, 200, 250, 500, 1000) if 4 * s >= run)
     dmax = 4 * dstep                                       # four round ticks
     yd = lambda d: T + (H - T - B) * (1 - d / dmax)
@@ -65,13 +66,16 @@ def svg(path, levels, period, notes):
     for s in segs:
         if s:
             o.append(f'<polyline points="{" ".join(s)}" fill="none" stroke="#333" stroke-width="1"/>')
-    o.append('<polyline points="' + ' '.join(f'{x((i + 1) * period / 3600):.1f},{yd(d):.1f}'
-             for i, d in enumerate(dose)) + '" fill="none" stroke="#1f5fbf" stroke-width="2"/>')
+    for ds, style, name in ((dose, '', 'bare ear'), (plug, ' stroke-dasharray="6,3"', f'plugs -{PLUG_DB} dB')):
+        o.append('<polyline points="' + ' '.join(f'{x((i + 1) * period / 3600):.1f},{yd(d):.1f}'
+                 for i, d in enumerate(ds)) + f'" fill="none" stroke="#1f5fbf" stroke-width="2"{style}/>')
+        o.append(f'<text x="{x(len(ds) * period / 3600) + 4:.1f}" y="{min(yd(ds[-1]) - 4, H - B - 4):.1f}" '
+                 f'text-anchor="end" fill="#1f5fbf">{name} {ds[-1]:.0f} %</text>')
     for h, text in notes:
         o.append(f'<line x1="{x(h):.1f}" x2="{x(h):.1f}" y1="{T}" y2="{H - B}" stroke="#888" '
                  f'stroke-dasharray="3,3"/><text x="{x(h) + 4:.1f}" y="{T + 12}">{text}</text>')
     o.append(f'<text x="{L}" y="{T - 14}" font-weight="bold">dBA, one 1 s sample a minute '
-             f'(black)  ·  running dose, % of the daily allowance (blue)</text>')
+             f'(black)  ·  running dose, % of the daily allowance: bare ear (blue), with plugs (dashed)</text>')
     o.append(f'<text x="{(L + W - R) / 2}" y="{H - 8}" text-anchor="middle">hours since start</text>')
     o.append('</svg>')
     open(path, 'w').write('\n'.join(o) + '\n')
