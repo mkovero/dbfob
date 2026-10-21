@@ -13,7 +13,7 @@ import argparse, math, struct, sys
 MAGIC, HDR = 0xDB01, 12
 LOW_BATT, STOPPED, AUTO_OFF, EMPTY = 0xFC, 0xFD, 0xFE, 0xFF
 PLUG_DB = 12
-BANDS = ((40, 84, '#e3f4e1'), (84, 91, '#fdf6d3'), (91, 97, '#fde6d0'), (97, 110, '#fad9d9'))  # dBA
+BANDS = ((40, 84, '#e3f4e1'), (84, 91, '#fdf6d3'), (91, 97, '#fde6d0'), (97, 200, '#fad9d9'))  # dBA
 
 
 def leq(levels):
@@ -24,14 +24,19 @@ def svg(path, levels, period, notes):
     W, H, L, R, T, B = 820, 340, 52, 62, 36, 40          # size and margins
     hours = len(levels) * period / 3600
     xmax = max(1, math.ceil(hours - 0.05))                 # 12.01 h -> 12
-    ymin, ymax = 40, 100
+    xstep = 0.5 if xmax <= 3 else 1 if xmax <= 12 else 2
+    if xstep < 1:
+        xmax = max(1, math.ceil(hours / xstep - 0.05) * xstep)  # 2.25 h -> 2.5
+    ymin = 40
+    ymax = max(100, math.ceil(max((l for l in levels if l is not None), default=0) / 10) * 10)
     x = lambda h: L + (W - L - R) * h / xmax
     y = lambda db: T + (H - T - B) * (ymax - min(max(db, ymin), ymax)) / (ymax - ymin)
     dose, run = [], 0.0
     for l in levels:
         run += 0 if l is None else 100 * 10 ** ((l - 85) / 10) * period / (8 * 3600)
         dose.append(run)
-    dmax = max(1, math.ceil(run))
+    dstep = next(s for s in (1, 2, 5, 10, 20, 25, 50, 100, 200, 250, 500, 1000) if 4 * s >= run)
+    dmax = 4 * dstep                                       # four round ticks
     yd = lambda d: T + (H - T - B) * (1 - d / dmax)
     o = [f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {W} {H}" font-family="sans-serif" '
          f'font-size="12">', f'<rect width="{W}" height="{H}" fill="#fff"/>']
@@ -42,11 +47,14 @@ def svg(path, levels, period, notes):
     for db in range(ymin, ymax + 1, 10):
         o.append(f'<line x1="{L}" x2="{W - R}" y1="{y(db):.1f}" y2="{y(db):.1f}" stroke="#ccc" '
                  f'stroke-width="0.5"/><text x="{L - 6}" y="{y(db) + 4:.1f}" text-anchor="end">{db}</text>')
-    for h in range(0, xmax + 1, 1 if xmax <= 12 else 2):
-        o.append(f'<text x="{x(h):.1f}" y="{H - B + 16}" text-anchor="middle">{h}</text>')
+    for i in range(int(xmax / xstep) + 1):
+        o.append(f'<text x="{x(i * xstep):.1f}" y="{H - B + 16}" text-anchor="middle">{i * xstep:g}</text>')
     for i in range(5):
-        d = dmax * i / 4
+        d = dstep * i
         o.append(f'<text x="{W - R + 6}" y="{yd(d) + 4:.1f}" fill="#1f5fbf">{d:g} %</text>')
+    if dmax >= 100:                                        # the daily allowance
+        o.append(f'<line x1="{L}" x2="{W - R}" y1="{yd(100):.1f}" y2="{yd(100):.1f}" stroke="#1f5fbf" '
+                 f'stroke-width="0.8" stroke-dasharray="5,4"/>')
     pts, segs = [], []
     for i, l in enumerate(levels):                        # break the line at invalid samples
         if l is None:
