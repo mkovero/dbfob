@@ -18,7 +18,7 @@ Two directions are on the table:
 | | **B1: "rev A done properly"** | **B2: BLE "pro" fob** |
 |---|---|---|
 | Idea | Same architecture: coin cell, LEDs, button. Adds NFC tap-to-read, calibration stored in flash, a bootloader, a centred mic port and a clip variant. | nRF54L module, rechargeable cell, live levels and spectrum on a phone. |
-| Parts | about $3 (+ about $0.6 NFC) | about $12–20 |
+| Parts | about $3 (+ about $0.4 NFC, + ferrite sheet) | about $12–20 |
 | Retail | give-away / €5 | €50–80 |
 | Main risks | few | wearing position, iOS, LiPo shelf life, EU removability rule, Qi coupling, certification |
 
@@ -44,17 +44,41 @@ Two directions are on the table:
 - **Keyring hole or clip** in one corner.
 - The mic port is centred, and stays clear of fingers and the clip.
 
-**NFC readout.**
-- **The chip:** a dynamic NFC tag chip with I2C and a PCB coil antenna.
-  - ST25DV04K: about $0.5–0.7, price not checked.
-  - Alternative: NXP NTAG I2C plus (NT3H2111).
-  - Package: UFDFPN8, 2 × 3 mm.
-- **What the fob writes:** at the end of a run, or every 10 minutes, a URL record (NDEF) that carries the dose summary. LAeq and Lmax per 10 minutes is about 156 B, see [log-readout.md](log-readout.md).
-- **On the phone:** tapping opens a web page that decodes the URL and draws the graph. No app and no pairing. iPhone reads such tags in the background, and so does Android.
-- **Readable with the cell dead:** the tag's memory is read over the air, powered by the phone's field.
-- **Writing:** the I2C writes cost tens of µA-ms each. The tag's own write endurance (about 1M cycles per block on ST25DV, not checked) covers years of 10-minute updates.
-- **The coin cell is a problem for the antenna.** Its metal under the board detunes and damps the coil. A thin ferrite sheet between the antenna and the cell, as phones use, plus antenna tuning on the real stack-up. **Experiment 4 must test this with the cell fitted**, not on a bare breakout.
-- **What the fob can't do:** stream live levels. That stays the UART's job on the bench.
+**NFC readout.** Survey on 2026-10-29. Stock and prices are from JLC's parts library.
+
+| # | Part (LCSC) | Memory / type | Field detect | VCC current | Package | Stock, price | Lifecycle |
+|---|---|---|---|---|---|---|---|
+| 1 | **NXP NT3H2111W0FHKH**, NTAG I2C plus 1k (C710403) | 888 B + 64 B SRAM, **Type 2** | FD pin, open drain, works from RF with VCC off | 185–240 µA, no standby mode: power it from a GPIO | **XQFN8 1.6 × 1.6** | **48,188; $0.35 @100** | active, NXP longevity program |
+| 2 | ST ST25DV04KC-IE8C3 (C5221756) | 512 B, Type 5, 256 B mailbox | GPO, works from RF | standby 72–76 µA; low-power-down (LPD) pin only on the 12-pin / WLCSP versions | UFDFPN8 2 × 3 | 36; $2.11 @100 | current; the older ST25DV04K is NRND |
+| 3 | NXP NTP5332, NTAG 5 link (C3301642) | 2 KB + 256 B SRAM, Type 5 | event pin | standby 6 µA, power-down 0.25 µA | XQFN16 1.8 × 2.6 | 89; $1.32 @100 | active |
+| 4 | NXP NT3H2211W0FHKH, NTAG I2C plus 2k (C2905792) | 1912 B, Type 2 | as #1 | as #1 | XQFN8 1.6 × 1.6, same footprint as #1 | 50; $1.15 @100 | active |
+
+- **Recommended: NT3H2111.** Smallest, cheapest, deep stock, and Type 2 is the safest tag type for iPhone background reading.
+  - 888 B holds the 156 B summary URL easily.
+  - VCC comes from an MCU GPIO. Keep SDA/SCL low or floating while it is off, so the chip isn't powered through them.
+  - Its FD pin can wake the MCU from the phone's field alone.
+  - The NT3H2211 (2 KB) fits the same footprint, for the full log.
+  - Specs ([datasheet](https://www.farnell.com/datasheets/2148700.pdf)): VCC 1.67–3.6 V, I2C writes 4.5 ms per 16 B block, ≥500k write cycles, 20-year retention.
+  - The first draft's "ST25DV04K about $0.5–0.7" was wrong: the 04K is NRND, and the 04KC in 2 × 3 is about $2 with thin stock.
+- **Write on a schedule, not on tap.**
+  - A refresh is about 10–16 blocks, roughly 70 ms at 0.2 mA, about 4 nAh. Every 10 minutes that is about 0.6 µAh a day, which is negligible.
+  - Make the encoding append-friendly so an update rewrites only 1–2 blocks. Then 144 writes a day stays within endurance for about 9.5 years.
+  - Writing just in time on a tap won't work: the phone reads tens of ms after its field comes up, a cold write takes 50–80 ms, and RF access blocks I2C. Use FD to wake the MCU for a "phone was here" event instead.
+- **Antenna.**
+  - NTAG I2C plus wants about 2.75 µH (50 pF internal), roughly 8–10 turns around a 20–24 mm area (Wheeler estimate, 0.2 mm trace and gap). Confirm with NXP AN11276 and tune on the bench.
+  - **The CR2032 behind the coil is the main risk.** Eddy currents in the cell drop inductance and add loss; read range may collapse ([Würth ANP022](https://www.we-online.com/components/media/o109046v410%20ANP022c%20EN.pdf)).
+  - Fix: a 0.1–0.2 mm NFC-grade ferrite sheet between the board and the cell (Würth WE-FSFS, 364 material, [ANP016](https://www.we-online.com/components/media/o109045v410%20ANP016c%20EN.pdf)). Not stocked at JLC, so it's a hand-assembly step. Tune with the ferrite and cell in place.
+  - No app note found for coin cells specifically, so **prototype this first** (experiment 4).
+- **Phones.**
+  - **iPhone** ([Apple](https://developer.apple.com/documentation/corenfc/adding-support-for-background-tag-reading)):
+    - Needs an XS or later, with the screen on and the phone unlocked at least once since boot.
+    - Doesn't read while the camera, Wallet or airplane mode is active.
+    - Uses the first URI record, https only. The user taps a notification and Safari opens.
+    - Type 2 is the safe choice; Type 5 background reading is reported to work but can be slow.
+  - **Android:** reads Type 2 and Type 5 with the screen on and unlocked, and opens the browser.
+  - Put the data in the URL's `#fragment`, so it never reaches the web server.
+- **Readable with the cell dead:** yes. The tag is read over the air, powered by the phone's field.
+- **What it can't do:** stream live levels. That stays the UART's job on the bench.
 
 **Mic.** The IM69D130 (`IM69D130V01XTSA1`) is "not for new design" at Infineon, with no named replacement. Survey on 2026-10-29, requiring PDM, ≥130 dB SPL AOP, ±1 dB and running from a CR2032 without an LDO:
 
@@ -307,8 +331,8 @@ If B2 happens, BLE is enough, as long as the fob computes the spectrum and sends
    - Measure the 1/3-octave response from 100 Hz to 20 kHz against the reference.
    - This decides whether a sealed case and full band are compatible, and whether 20 kHz is worth anything.
 4. **NFC readout in one evening.**
-   - An ST25DV breakout (or an nRF54L DK) with the dose summary in a tag URL.
-   - Tap with an iPhone and an Android, and confirm the page opens with no app.
+   - An NTAG I2C plus (NT3H2111) breakout with the dose summary in a tag URL, **over a CR2032, with and without a ferrite sheet**.
+   - Tap with an iPhone (screen on, and locked) and an Android, and confirm the page opens with no app.
    - This decides the readout for both directions.
 5. **Only if Qi stays:**
    - A cheap receiver module with a 20 mm coil, on three common pads, inside a closed printed box with a thermocouple on the cell.
