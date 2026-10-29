@@ -1,127 +1,201 @@
-# Rev B: a BLE fob on a rechargeable cell
+# Rev B: directions, checked facts, experiments
 
-Ideas, not a design. Rev A proves that simple metering works on a €2 coin-cell board. Rev B is the "medium" version of the same idea: a smaller fob, a rechargeable cell, a radio, and continuous full-band metering. Rev A stays as the cheap tier.
+Ideas, not a design. Rev A proves that simple metering works on a €2 coin-cell board. This doc collects what rev B could be.
 
-Written 2026-10-29 from a design discussion. **Every price here is from memory, about 1k-unit pricing, and not checked.** Verify on LCSC / Mouser / Digi-Key before using any number for a decision.
+History:
+- **2026-10-29:** written as a BLE / LiPo / wireless-charging "medium" fob.
+- **Same day, reworked** after three checks:
+  - a search of prices and datasheets for the MCU and radio;
+  - the same for power and charging;
+  - an independent design review (Claude Fable).
 
-## Goals
+The checks corrected several claims of the first draft, including the main reason for picking the nRF52833. Prices are web snapshots from 2026-10-29, in USD unless noted. Many come from aggregator pages, not distributor pages read directly. Re-check before ordering.
 
-- **BLE** for live levels, a live spectrum and the dose log on a phone.
-- **About half rev A's size.** Rev A is 30 × 52.5 mm, mostly the CR2032 holder. Target about 30 × 26 mm or 20 × 35 mm.
-- **A small rechargeable Li-ion / LiPo cell** instead of the CR2032.
-- **Wireless charging** if at all possible, so the case can be sealed.
-- **Continuous metering.** Rev A takes one 1 s sample a minute. In a club log ([test3](#why-continuous)) the song gaps are hit or missed by luck.
-- **Full-band A-weighting to 20 kHz.** Rev A stops at 11.7 kHz (see [firmware/README.md § Signal chain](../firmware/README.md#signal-chain)). High-frequency content is exactly what a listener stops noticing after a few drinks, and loud exposure itself first dulls the high frequencies.
+## Summary
 
-## MCU: nRF52833
+Two directions are on the table:
 
-| Option | Price (unverified) | Notes |
+| | **B1: "rev A done properly"** | **B2: BLE "pro" fob** |
 |---|---|---|
-| **nRF52833** | $2–3 | Hardware PDM interface. VDDH input up to 5.5 V: runs straight from a LiPo, and its internal regulator can feed the mic. NFC tag. M4F with FPU. **Preferred.** |
-| nRF52820 | ~$2 | Also has VDDH. Check PDM and NFC. |
-| nRF52810 | $1.5–2 | Has PDM, no VDDH: needs a regulator. |
-| nRF54L05 / L10 | check | Newer and lower power. Check PDM support and stock. |
-| TI CC2340 | $0.6–1 | Cheapest serious BLE chip. No PDM hardware as far as known. |
-| WCH CH592 | ~$0.5 | Same vendor family as rev A. No PDM: the SPI trick again. Weaker SDK and radio. |
-| ESP32-H2 / C3 | ~$1 chip, ~$2–2.5 certified module | Cheapest certified modules and a good toolchain. But BLE transmit draws tens of mA, against 5–7 mA on the nRF52. Keeping BLE alive in light sleep costs 0.1–1 mA, against a few µA. Deep sleep wakes are a full reboot (100+ ms). Wrong for a 25–60 mAh cell. The H2 (BLE, no Wi-Fi) is the fallback if a bigger cell is accepted. Skip the C3/C6: Wi-Fi is useless on a fob. Check which ESP32s can receive PDM in hardware: the S3 can. |
+| Idea | Same architecture: coin cell, LEDs, button. Adds NFC tap-to-read, calibration stored in flash, a bootloader, a centred mic port and a clip variant. | nRF54L module, rechargeable cell, live levels and spectrum on a phone. |
+| Parts | about $3 | about $12–20 |
+| Retail | give-away / €5 | €50–80 |
+| Main risks | few | wearing position, iOS, LiPo shelf life, EU removability rule, Qi coupling, certification |
 
-What the nRF52833's PDM peripheral solves at once:
-- **Full band.** A 3.072 MHz mic clock decimated by 64 in hardware gives 48 kHz samples, so A-weighting runs to 20 kHz. The mic's own response is loose up there (+9/−2 dB at 15 kHz), so it needs a calibration.
-- **CPU load.** EasyDMA collects the samples while the CPU sleeps. Rev A uses 65 % of 24 MHz on a software CIC.
-- **The clock trade-off.** No 24 vs 48 MHz choice against cell sag as on rev A.
+**The review's recommendation, which this doc follows for now:**
+- Build B1 next.
+- Park B2 until a specific buyer asks for it, such as a venue study, a festival or a band.
+- If BLE happens anyway: a certified nRF54L module, a coin cell (CR2450), advertising only, and the live spectrum as a developer tool.
+- Run the [experiments](#experiments-before-any-board) first. Most of them run on rev A hardware.
 
-Radio support parts: a 32 MHz crystal ($0.15–0.3); a PCB-trace antenna (free, but needs a 5–10 mm keep-out at an edge) or a chip antenna ($0.1–0.3); matching parts ($0.1); a DC-DC inductor.
+## The design review's main points
 
-**Certification.** Putting the chip on our own board needs our own radio approval (CE RED / FCC), several k€ of testing. A pre-certified module ($5–10 for nRF, for example Raytac, Insight SiP, Fanstel) avoids most of it. At small volumes the module wins despite the price, and small modules exist (Insight ISP1807, about 8 × 8 mm).
+1. **B2 contradicts the project's founding sentence.** The README says "nobody pulls out a phone on a dark dance floor". A live spectrum, a web page and phone graphs all need the phone. What carries over without a phone: with continuous or adaptive metering, the LEDs can show **tonight's running dose** at a glance instead of the room right now.
+2. **The buyer changes.** A clubgoer doesn't buy a €60 device that tells them to leave. People who would pay mostly own an Apple Watch, whose Noise app does continuous dBA with alerts for free. Certified personal dosimeters (Casella dBadge2, 3M Edge, IEC 61252) cost €600+ and are bought by employers. Etymotic's €50–100 consumer dosimeter (ER-200D) did not survive. The realistic B2 buyer is a venue, festival or study handing out a fleet. They want bulk log readout, not a spectrum.
+3. **Wearing position matters more than the MCU.** A pocket reads 10–20 dB low (README, "comforting lie"). Continuous metering in a pocket is meaningless. Real dosimeters clip to the shoulder. A worn fob also hears clothing rub and handling noise. Decide clip vs keyfob first.
+4. **A sealed case and a mic port conflict.** Sealing needs an acoustic membrane (Gore, Saati Acoustex): about 0.5–1 dB loss mid-band, more above 8 kHz. The port tube also has its own resonance in the top octaves. Together with the mic's +9/−2 dB at 15 kHz, **full band to 20 kHz is a nice-to-have, not a goal.** Rev A's band limit costs 0.2–0.9 dB on broadband noise and less on music, and A-weighting already discounts the high bands.
+5. **The case for continuous metering is weaker than the first draft claimed.** In the test3 club log the dips to 55–75 dBA carry about 0.1 % of the energy. Missing them makes the graph prettier but barely changes the dose. With about 100 samples in 105 min, the sampling error on LAeq is a fraction of a dB. **Adaptive sampling** (continuous above about 80 dBA, 1 s a minute below) should give the same dose on rev A's power budget. Experiment 2 tests this.
+6. **LiPo + Qi solve a problem rev A doesn't have.** Rev A has no USB opening either. What the LiPo brings instead: shelf discharge (a 40 mAh pouch behind protection is flat in 6–12 months in a drawer, against 3 years idle on a CR2032), swelling inside a sealed case, transport and safety certification, cold-night capacity loss, and a charging chore. See [Power](#power-checked) for the EU rule and the Qi coupling evidence.
+7. **The phone side:**
+   - Web Bluetooth doesn't work on iOS, half the audience.
+   - A BLE device advertising a fixed address is trackable: use resolvable private addresses.
+   - The log is a timeline of where the wearer was, so say what the page stores.
+   - Over-the-air updates are one more thing to build.
+8. **Claims.** A MEMS mic behind a printed port, with batch calibration and no windscreen, is not IEC 61672 class 2 or IEC 61252. Keep the disclaimer and keep hearing-safety claims modest.
 
-## Battery
+## Alternatives that came out of the review
 
-- **Not salvaged e-cig cells.** Disposable vapes use 13300 / 13350 cylinders: 13 mm across, 30–35 mm long, 300–550 mAh. That makes the fob bigger, not smaller. Their health and cycle count are also unknown: fine on the bench, not in a product.
-- **A LiPo pouch.** 301012 (3 × 10 × 12 mm, about 25 mAh) up to 401020 (about 60 mAh), $0.8–1.5. It sits under the board.
-- **Charger and protection.** A Li-ion charger IC ($0.1–0.2, unless the wireless receiver includes one) and protection (DW01 + FS8205, about $0.1), or a cell with built-in protection.
-- **The mic needs ≤ 3.6 V.** The IM69D130's maximum is 3.6 V, and a LiPo reaches 4.2 V. On the nRF52833, VDDH plus the internal REG0 gives a regulated VDD that can feed the mic from a GPIO, as on rev A.
-- A LIR2032 (rechargeable coin cell, 3.6–4.2 V, about 40 mAh) is the same size as a CR2032, so it does not help with the size.
+- **NFC readout without BLE.** An ST25DV dynamic NFC tag chip (I2C, about $0.6, PCB antenna) works with any MCU. The fob writes a dose summary into a URL the tag serves (NDEF record). The 10-minute summary from [log-readout.md](log-readout.md) is about 156 B. iPhone (background tag reading) and Android open the web page with no app and no pairing, **even with the fob's cell dead.** This replaces most of log-readout.md and the BLE readout for both directions.
+- **A primary cell, continuous.** A CR2450 (620 mAh, 24.5 mm) is about the footprint of a 30 × 26 mm board. At about 1 mA continuous for 12 h nights that is about 50 nights on a €0.40 cell; a CR2032 gives about 15. All unmeasured.
+- **nRF + coin cell, advertising only**, if BLE is wanted for bulk readout. A module plus CR2450 at 10–20 µA advertising keeps rev A's duty cycle and shelf life.
+- **Clip, not fob.** Mic on the top edge facing up, spring clip on the back, lanyard hole. The keyfob stays as the spot-check tier.
 
-### Runtime estimates (unmeasured)
+## MCU and radio (checked)
 
-| Mode | Average | On 40 mAh |
-|---|---|---|
-| Rev A-style sampling, 1 s a minute, plus BLE advertising every 1 s | 50–100 µA mic and capture, plus 10–20 µA advertising | about 2 weeks of nights |
-| Continuous metering, BLE idle | about 1–1.5 mA | about 30 h |
-| Live streaming to a phone (mic, PDM, FFT, BLE at 15–30 ms interval) | about 2–3 mA | 15–20 h |
+**First-draft errors corrected here.** The nRF52833's PDM block cannot give 48 kHz, and its REG0 regulator cannot officially power external parts such as the mic. That removes the main reason for choosing it.
 
-### Why continuous
+| Option | Price | Full-band PDM | LiPo direct | Notes |
+|---|---|---|---|---|
+| **nRF54L05 / L10 / L15** | L05 $2.12 @1k (Future); L10 $2.29–2.33 @1k; L15 $4.15 @1, $2.73 @100 (Mouser) | **Yes**: 8/16/32/48 kHz listed, ratios 32–128. From 32 MHz the nearest rates are about 47.6 or 50 kHz, fine with matching filters. | No: 1.7–3.6 V, needs an external buck or LDO, which can also feed the mic. | NFC, I2S. TX 0 dBm 4.8 mA, RX 3.4 mA, sleep 0.7–2.9 µA. CSP 2.45 × 2.25 mm, QFN40 5 × 5. **Best nRF choice.** 16-week lead time. |
+| nRF52833 | $3.91 @1k (Mouser), $3.25 @1k (Arrow), $2.39 @1k (LCSC, thin stock) | **No**: PDM clock 1.000–1.333 MHz, ratio 64/80, so max 16 kHz output and a band ending near 8 kHz, worse than rev A. Undocumented faster settings are unsupported. | VDDH 1.7–5.5 V, but REG0 is LDO-only, and Nordic and Ezurio say external loads on VDD are not supported. | NFC, FPU. TX 4.8 mA, RX 4.6 mA. System ON with RTC 2.6 µA. |
+| nRF52820 | €1.96 @1k (Farnell) | No PDM | VDDH | No PDM, I2S, NFC or FPU. **Not usable.** |
+| nRF52810 | about $1.40 @1k (LCSC) | 16 kHz max | No | No NFC or FPU (not checked). |
+| TI CC2340R5 / R2 | not found | **No I2S or PDM** | 1.71–3.8 V | Only SPI, UART, I2C. Out. |
+| ESP32-H2 / C3 | H2-MINI-1 module $4.08 @1 (Mouser); C3-MINI-1 $5.77 @1, about $4 in volume | **Raw PDM only**: no PDM-to-PCM in hardware (only ESP32, S3, P4 have it). The C6 was not checked. | No: H2 needs 3.0–3.6 V | H2: BLE TX 0 dBm 36 mA, RX 24 mA, light sleep 25–85 µA, deep sleep 7 µA. **Out for a small cell.** |
+| WCH CH592 | about $0.5 (not checked) | No PDM: the SPI trick again | | Same vendor family as rev A. Weaker SDK and radio. |
 
-The test3 club log (2026-10-21, LAeq 95 dBA over about 1 h 45 min) jumps between about 96 dBA and 55–75 dBA. A dip shows only when the one 1 s sample a minute happens to land in a song gap. Continuous metering with a rechargeable cell removes that sampling luck, at the cost of charging every night or two. Possible middle ground: continuous while loud, sampled while quiet.
+Sources:
+- nRF52833 PDM: [nRF52833 PDM spec](https://docs.nordicsemi.com/r/bundle/ps_nrf52833/page/pdm.html), [forum: PDM at higher rates](https://devzone.nordicsemi.com/f/nordic-q-a/15150/single-pdm-microphone-at-higher-pcm-sampling-rate/57839).
+- nRF52833 VDD: [forum: external power on VDD](https://devzone.nordicsemi.com/f/nordic-q-a/55545/nrf52833-vdd-external-power/238326), [Ezurio BL653 FAQ](https://www.ezurio.com/support/faqs/does-the-bl653-support-external-circuitry-on-vdd-using-high-voltage-mode).
+- [nRF54L15 PDM spec](https://docs.nordicsemi.com/r/bundle/ps_nrf54l15/page/pdm.html), [nRF54L15 product page](https://www.nordicsemi.com/Products/nRF54L15), [nRF52820](https://www.nordicsemi.com/Products/nRF52820), [CC2340R5](https://www.ti.com/product/CC2340R5).
+- [ESP-IDF I2S PDM support](https://docs.espressif.com/projects/esp-idf/en/stable/esp32c3/api-reference/peripherals/i2s.html), [ESP32-H2 datasheet](https://documentation.espressif.com/esp32-h2_datasheet_en.html).
 
-## Wireless charging
+### Modules
 
-**Qi receiver.** Charges on any phone charging pad.
-- TI BQ51050B: a Qi receiver plus Li-ion charger in one, $2–3, a small chip-scale (WCSP) package.
-- A 20–25 mm receiver coil with ferrite backing, 0.5–1 mm thick, $0.5–1. It fits on the back of a 30 × 26 mm board, under the cell.
-- Pad coils are about 40 mm, so a 20 mm coil couples poorly and charges slowly. That is fine here: a 40 mAh cell needs about 40 mA, a full charge in about an hour.
-- The ferrite shield between coil and cell is mandatory. Watch the cell temperature while charging.
-- Earbud cases do this at this scale. About +$3–4.
+- **nRF54L15 modules** ([Nordic list](https://www.nordicsemi.com/Products/nRF54L15/Modules)):
+  - u-blox ANNA-B505, 6.5 × 6.5 mm, chip antenna
+  - Ezurio BL54L15µ, 6.3 × 7.9 mm
+  - Raytac AN54LV-15, 6.4 × 8.4 mm
+  - Murata Type2NR, 7.0 × 7.4 mm
+  - Insight ISP2454, 8 × 8 mm
+  - Only one price found: BL54L15 (the 10 × 14 mm version), about AUD 8.6 at qty 1, AUD 7.1 at 100.
+- **nRF52833 modules:**
+  - Ezurio BL653µ 453-00059, 6.3 × 8.6 × 1.6 mm with PCB antenna, $8.24 @1k
+  - u-blox ANNA-B402, 6.5 × 6.5 mm
+  - Insight ISP1907-HT, 8 × 8 × 1 mm, $5.89 at reel
+  - Raytac MDBT50Q
+  - Ezurio BL653, 10 × 15 mm
+- **Module $5–10 holds.** Vendors claim FCC/CE/IC for each module; not checked one by one.
 
-**NFC wireless charging (NFC Forum WLC).**
-- NXP PTX30W listener, $1–2. A 10–15 mm coil, possibly on the PCB. Up to about 250 mW.
-- Used in smart rings and styluses.
-- Few phones and pads support it yet, so it needs its own charger.
+### Certification
 
-**Fallback.** Magnetic pogo pins like a smartwatch, about $0.5 plus a cable. Still a sealed case.
+- **Chip on our own board:** TI estimates about $30k for certification plus RF equipment and design time, and puts the break-even above 200k units ([TI SLYP865](https://www.ti.com/lit/SLYP865)). Other sources give $10k–100k+. **Realistic: about €10–30k for CE RED and FCC.** The first draft's "several k€" was too low.
+- **With a module:**
+  - the host still needs RED 3.1(a) safety/EMF and 3.1(b) EMC, plus FCC Part 15B;
+  - the antenna must stay within the module grant's conditions;
+  - a Bluetooth SIG listing is needed.
+  - Typically a few k€; no lab quotes yet ([module vs chip-down](https://punchthrough.com/ble-module-vs-chip-down/)).
+- **Conclusion:** module, unless volume runs into the hundreds of thousands.
 
-**The win in every case: no USB opening.** A sealed case survives pockets, rain and spilled drinks at the club.
+## Power (checked)
+
+### The EU removability rule
+
+**EU Battery Regulation, Article 11, from 18 Feb 2027:** portable batteries in products must be removable and replaceable by the end user ([summary](https://www.compliancegate.com/removable-and-replaceable-battery-requirements-european-union/)).
+- There are exemptions, for example for wet environments.
+- A July 2026 delegated act reportedly covers wearables such as smartwatches. Even then, replacement by an independent professional must stay possible ([report](https://en.reach24h.com/news/industry-news/sustainability/eu-portable-battery-removability-exemptions-2026)). Not confirmed in the Official Journal.
+- **A sealed case with a built-in LiPo is legally awkward in the EU. A coin cell behind a hatch is not.**
+
+### LiPo pouch cells
+
+The size code is thickness × width × length in mm.
+
+| Cell | Capacity | Price | Notes |
+|---|---|---|---|
+| 301012 (3 × 10 × 12) | 30 mAh | about $0.85 each in 10-packs (generic) | |
+| 401120 (4.2 × 11.5 × 20) | 60 mAh | generic | 30 mA charge (0.5C), protection 4.28 / 3.0 V |
+| **402025 (4 × 20 × 25)** | **140 mAh** (Jauch LP402025JU) | branded | **Fits a 30 × 26 mm footprint: 2–3× the first draft's 40 mAh at the same height** |
+| Jauch LP501218JH+PCM (5.4 × 12.5 × 20) | 60 mAh | $10.77 @1, $6.38 @720 (Digi-Key) | |
+
+- Branded cells (Jauch, EEMB) cost **5–10× generic** ones. Only branded suppliers reliably provide a **UN 38.3 test summary**, which shipping needs.
+- **IATA, from 1 Jan 2026:** cells packed *with* equipment must ship at ≤30 % charge. Cells installed in the equipment are exempt ([Jauch](https://www.jauch.com/blog/en/un-38-3-new-regulations-for-the-air-transport-of-lithium-batteries-from-2026/)).
+- A protection board (PCM) adds about 3–5 mm of length.
+
+### Charger and protection
+
+- **TP4054:** about $0.02 (LCSC). Check that a ≤30 mA charge setting is within spec.
+- **MCP73831:** 15–500 mA.
+- **BQ25100:** suits tiny cells (1 mA termination) but costs about $1.21 (LCSC), and TI shows a newer version.
+- **XB5353A:** single-chip protection, $0.046 @3k. Its over-current trip is in the amps, so for a small cell it gives voltage protection only.
+- **DW01A + FS8205A:** about $0.1.
+
+### Mic supply
+
+IM69D130: operating 1.62–3.6 V, **absolute maximum 4 V on any pin** (datasheet, Table 3). A LiPo at 4.2 V must never reach the mic. It needs a regulated rail; on the nRF54L, the external regulator gives one.
+
+### Wireless charging
+
+**Qi.**
+- **BQ51050B** (TI): Active, Qi 1.2, includes the Li-ion charger. $2.86 @500, $2.61 @3k (Digi-Key). DSBGA-28 or 4.5 × 3.5 mm VQFN. Still **the only verified single-chip Qi receiver plus charger**. Its matching transmitter (bq500212A) is not recommended for new designs, so the platform is ageing.
+- **Receiver-only alternatives:** BQ51003 (2.5 W), STWLC38 ($2.35 @2.5k), P9222-R (5 W, not 2.5 W as first written).
+- **Coils:**
+  - TDK WR202010-18M8-ID: 20 × 0.8 mm, $3.38 @1.
+  - Würth 760308101214: 19 × 0.8 mm, about $8 @1.
+  - Generic coils at volume may reach $0.5–1.
+- **Coupling is the problem.** ST AN4900 says the transmitter coil's outer diameter should be about 1.8–2× the receiver's, with the windings at least partly overlapping. TI notes that small coils lose coupling fast when misaligned ([TI SLYT570](https://ti.com/lit/pdf/slyt570), [ST AN4900](https://www.st.com/resource/en/application_note/an4900-how-to-tune-stevalisb038v1-wireless-charging-evaluation-kit-for-wearable-applications-stmicroelectronics.pdf)).
+  - A 20 mm receiver on a standard pad is **marginal**: the pad may not detect it, may treat it as a foreign object, or may charge only when it's centred. No data found showing it works.
+  - The first draft's earbud comparison was wrong: earbud *cases* use a 30 mm+ coil, and the buds charge through contacts.
+- **Heat:** at 50–60 % efficiency, about 100 mW turns into heat inside a sealed block, next to a cell that must stay under 45 °C while charging.
+
+**NFC wireless charging.**
+- **PTX30W is Renesas** (they bought Panthronics), not NXP. Up to **1 W**, with a Li-ion charger at 5–250 mA, WLCSP 1.78 × 1.78 mm ([Renesas](https://www.renesas.com/en/products/ptx30w)). No distributor price found.
+- **No phone or pad ships as an NFC wireless charger**; only USI styluses use the NFC Forum standard. So it needs its own charger.
+
+**Fallback:** magnetic pogo pins like a smartwatch, about $0.5 plus a cable.
 
 ## Live spectrum over BLE
 
-BLE is the right link as long as the fob computes the spectrum and sends results, not audio.
+If B2 happens, BLE is enough, as long as the fob computes the spectrum and sends results.
 
-| What is sent | Rate | Over BLE |
-|---|---|---|
-| 1/3-octave bands, 31 × 1 B × 10 fps | about 0.3 kB/s | trivial |
-| FFT, 256 bins × 1 B × 10 fps | about 2.5 kB/s | easy |
-| FFT, 512 bins × 2 B × 20 fps | about 20 kB/s | fine |
-| Raw audio, 16 kHz × 16 bit | 32 kB/s | works |
-| Raw audio, 48 kHz × 16 bit | 96 kB/s | at the limit: use BLE Audio (LC3) on an nRF5340 instead |
-
-- BLE 5 with the 2M PHY and data length extension realistically carries 50–100 kB/s on an nRF52833.
-- A 512-point FFT in CMSIS-DSP on the M4F takes a fraction of a millisecond at 64 MHz. Feed it the same 48 kHz PDM stream as the A-weighting, so the spectrum is full band.
-- 1/3-octave bands are the classic sound-level-meter display and the cheapest to send. An FFT gives the analyser look.
-- Streaming is for minutes at a time. Normal use stays at dosimeter current and switches to streaming only while a phone is connected.
-- Wi-Fi is not needed. It would only matter for streaming raw audio to a PC, and its power rules it out on a fob.
-
-## Phone side
-
-- **Web Bluetooth.** A plain web page connects to the fob and draws levels, the spectrum and the dose log, with no app to install. It works in Chrome on Android and desktop, not in Safari on iOS (Bluefy, or a native app, there).
-- **NFC tap.** The nRF52833's NFC tag holds a URL. Tapping the fob opens the web page, which then connects over BLE. A quick dose check could even be in the NFC record itself, with no BLE at all. This replaces rev A's log readout ideas ([log-readout.md](log-readout.md)).
-- **Why not the phone's own mic?** Phone mics are uncalibrated, use automatic gain and filtering, sit in a pocket or hand, and clip far below 130 dB SPL. The fob's mic is calibrated, worn on the body, and good to 130 dB SPL.
-
-## Size
-
-- The LiPo pouch goes under the board; parts go on both sides; 0402 passives.
-- The antenna keep-out shares a corner with the keyring hole.
-- Thickness is about the same as rev A: a 3–4 mm pouch against about 4.5 mm for the coin cell in its holder. Add 0.5–1 mm for a Qi coil.
-- The LEDs, button and mic port stay. The four-LED bar still answers "am I fine" without a phone.
-
-## Cost (all unverified)
-
-| Block | nRF52833 on our board + Qi |
+| What is sent | Rate |
 |---|---|
-| nRF52833, crystal, antenna, matching, DC-DC | $3–4 |
-| IM69D130 mic | about $1.3 |
-| LiPo, charger, protection | $1.2–1.8 |
-| Qi receiver and coil | $3–4 |
-| LEDs, button, passives | about $0.5 |
-| **Total** | **about $9–13** |
+| 1/3-octave bands, 31 × 1 B × 10 fps | about 0.3 kB/s |
+| FFT, 256 bins × 1 B × 10 fps | about 2.5 kB/s |
+| FFT, 512 bins × 2 B × 20 fps | about 20 kB/s |
+| Raw audio, 16 kHz × 16 bit | 32 kB/s |
 
-With a certified module instead of the chip on our own board, add about $3–7 and drop most of the certification cost. Rev A is about $1.85. Rev B is a €20–30 retail device rather than a €2 give-away, which is why the two are separate tiers.
+- BLE 5 with the 2M PHY carries about 50–100 kB/s in practice. A hand or a pocket detunes and blocks a 2.4 GHz antenna: a 1 m link survives, a 20 kB/s stream may not.
+- Per the review, treat the live spectrum as a developer tool (or a UART stream on B1), not a headline feature.
+
+## Experiments before any board
+
+1. **Wearing position, on rev A.**
+   - Positions: clip on the shoulder, lanyard, shirt pocket, trouser pocket, hand-held.
+   - Compare each against the AC2 at 85–100 dBA pink noise and real music.
+   - Record the level offset and the high/low band energy ratio.
+   - This decides whether continuous metering means anything, and gives a pocket detector its thresholds.
+2. **Sampled vs continuous dose.**
+   - Record one loud night continuously, with the AC2 or with rev A streaming over UART.
+   - Compute the dose from the full record and from 1 s-a-minute subsamples.
+   - If they agree within 1 dB, drop continuous metering as a requirement and take adaptive sampling.
+3. **Port and membrane sweep.**
+   - Print three case variants: bare port, port with an acoustic membrane, short vs long port.
+   - Measure the 1/3-octave response from 100 Hz to 20 kHz against the reference.
+   - This decides whether a sealed case and full band are compatible, and whether 20 kHz is worth anything.
+4. **NFC readout in one evening.**
+   - An ST25DV breakout (or an nRF54L DK) with the dose summary in a tag URL.
+   - Tap with an iPhone and an Android, and confirm the page opens with no app.
+   - This decides the readout for both directions.
+5. **Only if Qi stays:**
+   - A cheap receiver module with a 20 mm coil, on three common pads, inside a closed printed box with a thermocouple on the cell.
+   - Does the pad accept it, at what current, at what temperature?
+
+Bonus if going nRF anyway: an nRF54L15 DK plus an IM69D130 breakout. Run PDM at about 3 MHz into about 48 kHz with the CPU asleep, and measure continuous and advertising-only current. That replaces the runtime guesses with numbers.
 
 ## Open questions
 
-- Verify every price and stock level above.
-- nRF52833 vs nRF54L: PDM support, power use, VDDH, NFC, price.
-- Which pouch cell fits, and does its holder area beat a CR2032's.
-- Qi coupling with a 20 mm coil on common pads: charge current and heating, measured.
-- Module vs our own board, given the expected volume.
-- Continuous vs adaptive sampling, against charging interval.
-- 1/3-octave bands vs FFT for the live view; what the web page shows.
+- Clip or keyfob, or both as two tiers: after experiment 1.
+- Continuous, adaptive or sampled: after experiment 2.
+- CR2032, CR2450 or LiPo. The EU rule and shelf life favour coin cells.
+- B1's MCU: a CH32V00x with a hardware multiplier (CH32V006?) in stock, and whether its SPI reaches a 3 MHz mic clock for full band.
+- Not yet verified: CC2340 price; nRF52833 WLCSP price; ESP32-C6 PDM; nRF54L module prices; PTX30W price; TP4054 at ≤30 mA; Bluetooth SIG fee; real lab quotes.
