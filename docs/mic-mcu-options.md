@@ -4,6 +4,10 @@ The decision record for the microphone and MCU. The decision itself is at the to
 
 Prices are LCSC / DigiKey list prices seen in September 2026, in USD. Check them again before ordering.
 
+## Update (2026-10-29): mic lifecycle
+
+The IM69D130 is "not for new design", with no replacement named by Infineon. The planned second source, the TDK T5818, is now EOL. For rev B the **Infineon IM67D130A** looks like a drop-in, with the same package, pin order, clock bands, sensitivity and 130 dB AOP. The **Knowles SPW0690LM4H-1** is the second source. Survey and sources: [rev-b.md § B1 target](rev-b.md#b1-target).
+
 ## Decision (2026-09-27)
 
 - **Digital (PDM) microphone.** Analog is ruled out; see the cost and calibration comparison below.

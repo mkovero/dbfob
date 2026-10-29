@@ -56,6 +56,30 @@ Two directions are on the table:
 - **The coin cell is a problem for the antenna.** Its metal under the board detunes and damps the coil. A thin ferrite sheet between the antenna and the cell, as phones use, plus antenna tuning on the real stack-up. **Experiment 4 must test this with the cell fitted**, not on a bare breakout.
 - **What the fob can't do:** stream live levels. That stays the UART's job on the bench.
 
+**Mic.** The IM69D130 (`IM69D130V01XTSA1`) is "not for new design" at Infineon, with no named replacement. Survey on 2026-10-29, requiring PDM, ≥130 dB SPL AOP, ±1 dB and running from a CR2032 without an LDO:
+
+| # | Part | AOP and clock | Sens. | VDD | Current @1.5 / @3 MHz | Package | Status | Price |
+|---|---|---|---|---|---|---|---|---|
+| 1 | **Infineon IM67D130A** (AEC-Q103 automotive) | 130 in all modes: 1.05–1.9 MHz and 2.9–3.3 MHz | −36 ±1 | 1.62–3.6 | 620 / 980 µA | 4 × 3 × 1.3, bottom port, same pin order as IM69D130 | active | $1.19 @1k (Digi-Key); LCSC C3098141, $1.77 @100, thin stock |
+| 2 | **Knowles SPW0690LM4H-1** | 133 min / 135 typ, 1.1–4.8 MHz | −41 ±1 | 1.65–3.6 | 750 / ~1,225 µA | 3.1 × 2.5 × 0.95, bottom | active | $1.01 reel (Digi-Key); LCSC C3171749 |
+| 3 | Infineon IM66D130M | 130 in all modes: 1.34–1.72 and 2.84–3.44 MHz | −37 ±1 | 1.6–**3.465** | 420 / 540 µA | 3 × 2 × 0.98, bottom | active, preferred | $0.66 @1k (Digi-Key); LCSC 0 stock |
+| 4 | Infineon IM66D130A | 130, 2.9–3.3 MHz only | −36 ±1 | 1.62–3.6 | – / 1,100 µA | 3.5 × 2.65, bottom | active, preferred to 2034+ | $0.97 @1k |
+| – | Infineon IM72D128 | **128**: misses the requirement | −36 ±1 | 1.62–3.6 | – / 980 µA | 4 × 3 | active, preferred | best stocked: LCSC C5119248, 3.5k pcs |
+
+- **Primary: IM67D130A.** Same 4 × 3 mm body and pin order, the same clock bands, sensitivity and AOP. So rev A's firmware at 1.5 MHz should carry over unchanged. SNR is 67 against 69 dB(A). **Overlay the two footprint drawings before calling it a drop-in**; the datasheet drawings only looked the same by eye. ([product](https://www.infineon.com/part/IM67D130A), [datasheet](https://www.infineon.com/assets/row/public/documents/30/49/infineon-im67d130a-datasheet-en.pdf))
+- **Second source: SPW0690LM4H-1.** The most headroom (133 dB guaranteed), and works at 1.5 or 3 MHz. But it needs a new footprint, and its sensitivity is 5 dB lower, which costs some noise floor. ([datasheet](https://mm.digikey.com/Volume0/opasdata/d220001/medias/docus/559/SPW0690LM4H-1_DS.pdf))
+- **IM66D130M** is the cheapest and lowest-current, and the smallest at 3 × 2 mm. Its 3.465 V maximum is fine on a CR2032 (3.0–3.3 V) but leaves no margin for bench supplies.
+- **Dropped:**
+  - TDK T5818, rev A's planned second source: now **EOL**.
+  - TDK T5838/T5837: 1.62–1.98 V, needs an LDO.
+  - T5848: I²S.
+  - ICS-41350/1: EOL, 120 dB.
+  - ST MP23DB01HP: obsolete / NRND, and 135 dB only at ≥1.5 MHz.
+  - IM69D128S and IM69D127: under 130 dB.
+- **Not checked:**
+  - Knowles SPH0690LM4H-1: VDD range.
+  - Chinese parts on LCSC with −37 dBFS sensitivity (Gettop MD-HRA371-H10-3N, Goertek SD18OB371-077): datasheets give no AOP.
+
 **MCU.** Stay with the CH32V00x family and ch32fun. Things to check:
 - a part with a hardware multiplier (CH32V006 or similar) that is in stock;
 - I2C for the NFC chip;
