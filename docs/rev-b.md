@@ -18,15 +18,52 @@ Two directions are on the table:
 | | **B1: "rev A done properly"** | **B2: BLE "pro" fob** |
 |---|---|---|
 | Idea | Same architecture: coin cell, LEDs, button. Adds NFC tap-to-read, calibration stored in flash, a bootloader, a centred mic port and a clip variant. | nRF54L module, rechargeable cell, live levels and spectrum on a phone. |
-| Parts | about $3 | about $12–20 |
+| Parts | about $3 (+ about $0.6 NFC) | about $12–20 |
 | Retail | give-away / €5 | €50–80 |
 | Main risks | few | wearing position, iOS, LiPo shelf life, EU removability rule, Qi coupling, certification |
 
-**The review's recommendation, which this doc follows for now:**
+**Decision (2026-10-29): B1.** Keep the scope on what matters for measuring and reading the log, not on features. If logs are to be processed on a phone, an NFC tag chip does it without blowing up the cost. Size target: **half of rev A**. B2 stays parked. See [B1 target](#b1-target).
+
+**The review's recommendation, which led to this:**
 - Build B1 next.
 - Park B2 until a specific buyer asks for it, such as a venue study, a festival or a band.
 - If BLE happens anyway: a certified nRF54L module, a coin cell (CR2450), advertising only, and the live spectrum as a developer tool.
 - Run the [experiments](#experiments-before-any-board) first. Most of them run on rev A hardware.
+
+## B1 target
+
+**Goal:** rev A's proven metering, half the size, with the log readable on a phone by tapping. Nothing that does not serve measuring correctly or getting the log out.
+
+**Size: half of rev A.** Rev A is 30 × 52.5 mm with every part on top and the CR2032 holder taking most of it. Target about **30 × 26 mm**:
+- **Cell under the board.** A CR2032 (20 mm) sits on the back in a low-profile holder. A CR2450 (24.5 mm, 620 mAh) just fits in 30 × 26 if continuous or adaptive metering needs the capacity.
+- **Parts on the top side:** MCU, mic, NFC chip, four LEDs, button, 0402 passives.
+- **Keyring hole or clip** in one corner.
+- The mic port is centred, and stays clear of fingers and the clip.
+
+**NFC readout.**
+- **The chip:** a dynamic NFC tag chip with I2C and a PCB coil antenna.
+  - ST25DV04K: about $0.5–0.7, price not checked.
+  - Alternative: NXP NTAG I2C plus (NT3H2111).
+  - Package: UFDFPN8, 2 × 3 mm.
+- **What the fob writes:** at the end of a run, or every 10 minutes, a URL record (NDEF) that carries the dose summary. LAeq and Lmax per 10 minutes is about 156 B, see [log-readout.md](log-readout.md).
+- **On the phone:** tapping opens a web page that decodes the URL and draws the graph. No app and no pairing. iPhone reads such tags in the background, and so does Android.
+- **Readable with the cell dead:** the tag's memory is read over the air, powered by the phone's field.
+- **Writing:** the I2C writes cost tens of µA-ms each. The tag's own write endurance (about 1M cycles per block on ST25DV, not checked) covers years of 10-minute updates.
+- **The coin cell is a problem for the antenna.** Its metal under the board detunes and damps the coil. A thin ferrite sheet between the antenna and the cell, as phones use, plus antenna tuning on the real stack-up. **Experiment 4 must test this with the cell fitted**, not on a bare breakout.
+- **What the fob can't do:** stream live levels. That stays the UART's job on the bench.
+
+**MCU.** Stay with the CH32V00x family and ch32fun. Things to check:
+- a part with a hardware multiplier (CH32V006 or similar) that is in stock;
+- I2C for the NFC chip;
+- whether its SPI reaches a 3 MHz mic clock for full band, if experiment 3 says full band is worth it;
+- flash room for the log plus a bootloader.
+
+**Also in B1:**
+- Calibration stored in flash, per board.
+- A UART bootloader, or updates over the NFC tag's mailbox.
+- Rev A's low-battery lockout, and the overload flag in the log.
+
+**Out of B1:** BLE, LiPo, wireless charging, live spectrum on a phone.
 
 ## The design review's main points
 
