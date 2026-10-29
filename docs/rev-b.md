@@ -100,11 +100,50 @@ Two directions are on the table:
   - Knowles SPH0690LM4H-1: VDD range.
   - Chinese parts on LCSC with −37 dBFS sensitivity (Gettop MD-HRA371-H10-3N, Goertek SD18OB371-077): datasheets give no AOP.
 
-**MCU.** Stay with the CH32V00x family and ch32fun. Things to check:
-- a part with a hardware multiplier (CH32V006 or similar) that is in stock;
-- I2C for the NFC chip;
-- whether its SPI reaches a 3 MHz mic clock for full band, if experiment 3 says full band is worth it;
-- flash room for the log plus a bootloader.
+**MCU.** Survey on 2026-10-29. Stock and prices are from JLC's parts library, which feeds JLC assembly. Rev A's firmware is 13.2 KB of flash plus the 1 KB log, out of 16 KB, and 320 B of RAM.
+
+| # | Part (LCSC) | Core / multiply | VDD | Flash / RAM | Standby with wake timer | Package | JLC stock, price | ch32fun |
+|---|---|---|---|---|---|---|---|---|
+| 1 | **CH32L103F8U6** (C22467836) | QingKe V4C RV32IMAC, single-cycle MUL and DIV, 96 MHz | **1.8–3.6 V** | 64 K / 20 K | **0.51–0.74 µA** (LSI, RTC) | QFN-20 3 × 3 | 1,878; $0.56 @1, $0.29 @1k | yes, thin: header plus blink and standby examples |
+| 2 | PY32F003F16U6TR (C3018714); F18P6TR (C55338319) for 64 K / 8 K | Cortex-M0+ (MUL), 32 MHz | 1.7–5.5 V | 32 K / 4 K | 4.5–6 µA Stop, LPTIM/RTC wake | QFN-20 3 × 3 / TSSOP-20 | 7,992; $0.15 @6k. F18P6: 65,781 | no: arm-gcc, Puya LL, pyOCD |
+| 3 | CH32V005F6P6 (C54824605) | QingKe V2C RV32EmC (MUL), 48 MHz | 2.0–5.5 V, **2.4 V with the ADC on** | 32 K / 6 K | 10.2 µA | TSSOP-20 only | **203**; $0.13 | yes |
+| 4 | MSPM0L1306SRGER (C19189323); L1106 WQFN-16 2 × 3 (C32896732) | Cortex-M0+ (MUL), 32 MHz | 1.62–3.6 V | 64 K / 4 K | 1.0 µA | VQFN-24 4 × 4 | 7,831; $0.75 @1k | no: TI SDK + GCC |
+| – | CH32V003F4P6, rev A | V2A, no MUL | 2.7 V | 16 K / 2 K | 7.6 µA | TSSOP-20 | 26,683; $0.15 | yes |
+
+- **Recommended: CH32L103F8U6.** The only in-stock part with all of these:
+  - hardware multiply, so the A-weighting stops costing 65 % of the CPU;
+  - a 1.8 V minimum, which removes the 2.7 V cutoff problem;
+  - 64 K flash for the NFC driver, bootloader and log, plus 20 K RAM;
+  - standby under 1 µA, against about 8 µA board total now;
+  - it stays in ch32fun.
+
+  It costs about twice the V003. Its SPI/DMA/I2C registers follow the CH32V20x model, so the port is mostly clock setup and `rv32imac` build flags. Watch-outs:
+  - **Waking from Standby resets the chip.** RAM can be retained, but the firmware flow changes from rev A's WFE-and-continue.
+  - **PB6/PB7 have built-in 5.1 kΩ USB Type-C pull-downs.** About 5 µA in Standby unless configured off; reported forced on in Standby on some lots. Assign those pins with care.
+  - **Thin ch32fun support.** No SPI-DMA example, so budget bench time.
+  - **PDM clock:** the 8 MHz HSI through the PLL to 24 or 48 MHz, divided by 16 or 32, gives 1.5 MHz (PLL setup not checked).
+- **Fallback: PY32F003**, if price or stock wins over toolchain continuity. It's cheap and well stocked, with DMA on SPI and a 1.7 V minimum, but it moves to ARM tooling and a different programmer.
+- **CH32V005F6P6** only if rev A pin compatibility mattered. It doesn't, since B1 is a new board. Thin stock, a 2.4 V floor with the ADC on, and worse standby than the V003.
+- **MSPM0L1306:** best power figures and a clean 1.62 V minimum, at 5–7× the price. A non-WCH fallback.
+- **Excluded:**
+  - CH32V002/004/006/007 and CH32M007: no JLC stock; some codes are marked no longer manufactured.
+  - CH32X035/X033: standby 51 µA, 528 µA with the wake timer on.
+  - PY32F002A/B: no DMA.
+  - STM32C011: Stop current 72–80 µA.
+  - MSPM0C110x: too little RAM or stock.
+  - STM32U031: no stock.
+- **Not verified:**
+  - CPU load with hardware multiply (estimated, not measured);
+  - L103 PLL and SPI-DMA in ch32fun;
+  - LCSC stock (as opposed to JLC);
+  - WCH and Puya lifecycle status.
+- Sources:
+  - [CH32L103 datasheet (mirror)](https://git.tangentheavy.com/THI/tertiary/raw/branch/main/Documents/CH32L103DS0.PDF), [openwch/ch32l103](https://github.com/openwch/ch32l103)
+  - [CH32V005/006 datasheet](https://atta.szlcsc.com/upload/public/pdf/source/20251215/55744532B0660A1F292C8E9A62911D5C.pdf)
+  - [CH32X035 datasheet](https://atta.szlcsc.com/upload/public/pdf/source/20251203/17E2E459F0796680698329147EAAD418.pdf)
+  - [PY32F003 datasheet](https://atta.szlcsc.com/upload/public/pdf/source/20220816/E4DA13E8427F79CD08E079FD58592346.pdf)
+  - [MSPM0L1306](https://www.ti.com/product/MSPM0L1306)
+  - [ch32fun](https://github.com/cnlohr/ch32fun)
 
 **Also in B1:**
 - Calibration stored in flash, per board.
@@ -281,5 +320,4 @@ Bonus if going nRF anyway: an nRF54L15 DK plus an IM69D130 breakout. Run PDM at 
 
 - Clip or keyfob, or both as two tiers: after experiment 1.
 - Continuous, adaptive or sampled: after experiment 2.
-- B1's MCU: a CH32V00x with a hardware multiplier (CH32V006?) in stock, and whether its SPI reaches a 3 MHz mic clock for full band.
 - Not yet verified: CC2340 price; nRF52833 WLCSP price; ESP32-C6 PDM; nRF54L module prices; PTX30W price; TP4054 at ≤30 mA; Bluetooth SIG fee; real lab quotes.
