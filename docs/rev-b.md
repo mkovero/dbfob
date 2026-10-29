@@ -66,7 +66,7 @@ Two directions are on the table:
 | 4 | Infineon IM66D130A | 130, 2.9–3.3 MHz only | −36 ±1 | 1.62–3.6 | – / 1,100 µA | 3.5 × 2.65, bottom | active, preferred to 2034+ | $0.97 @1k |
 | – | Infineon IM72D128 | **128**: misses the requirement | −36 ±1 | 1.62–3.6 | – / 980 µA | 4 × 3 | active, preferred | best stocked: LCSC C5119248, 3.5k pcs |
 
-- **B1 plan (2026-10-29): IM66D130M as the main mic, IM67D130A as the fallback.**
+- **B1 mic: IM66D130M, decided 2026-10-29.** Availability, specs and current all favour it. The IM67D130A stays only as a drop-in for rev A boards.
   - IM66D130M: Mouser stocks it in quantity.
     - Its normal-mode clock band (1.34–1.72 MHz) contains rev A's 1.5 MHz, so the firmware keeps its clock.
     - The sensitivity is 1 dB lower (−37 dBFS), which is one calibration constant.
@@ -86,7 +86,7 @@ Two directions are on the table:
     - Draw a new footprint from Figure 15, and re-route.
     - The 0.375 mm sound hole is about JLC's smallest plated drill, so check their minimum. It also changes the port acoustics: experiment 3 should use this hole.
     - Use **ENIG** for these small non-solder-mask-defined pads. HASL leaves them uneven.
-  - Before committing: check a few of each on a breakout against the AC2.
+  - First boards: check the level against the AC2, then set the calibration constant.
 - **Drop-in for rev A boards: IM67D130A.** Same 4 × 3 mm body and pin order, the same clock bands, sensitivity and AOP. So rev A's firmware at 1.5 MHz should carry over unchanged. SNR is 67 against 69 dB(A). **Overlay the two footprint drawings before calling it a drop-in**; the datasheet drawings only looked the same by eye. ([product](https://www.infineon.com/part/IM67D130A), [datasheet](https://www.infineon.com/assets/row/public/documents/30/49/infineon-im67d130a-datasheet-en.pdf))
 - **Second source: SPW0690LM4H-1.** The most headroom (133 dB guaranteed), and works at 1.5 or 3 MHz. But it needs a new footprint, and its sensitivity is 5 dB lower, which costs some noise floor. ([datasheet](https://mm.digikey.com/Volume0/opasdata/d220001/medias/docus/559/SPW0690LM4H-1_DS.pdf))
 - **Dropped:**
