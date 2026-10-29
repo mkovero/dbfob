@@ -35,7 +35,11 @@ Two directions are on the table:
 **Goal:** rev A's proven metering, half the size, with the log readable on a phone by tapping. Nothing that does not serve measuring correctly or getting the log out.
 
 **Size: half of rev A.** Rev A is 30 × 52.5 mm with every part on top and the CR2032 holder taking most of it. Target about **30 × 26 mm**:
-- **Cell under the board.** A CR2032 (20 mm) sits on the back in a low-profile holder. A CR2450 (24.5 mm, 620 mAh) just fits in 30 × 26 if continuous or adaptive metering needs the capacity.
+- **Cell: CR2032, under the board** (decided 2026-10-29). It sits on the back in a low-profile holder.
+  - Kept because it fits the half-size footprint and is everywhere.
+  - Smaller cells only help below half size or for thinness, and their higher internal resistance fights rev A's >10 mA peaks against the V003's 2.7 V minimum. CR1632 (16 mm, ~130 mAh) is the option if the board shrinks further, with a bulk capacitor and dimmer LED peaks.
+  - Two stacked CR2016s give 6 V, which is over the mic's 3.6 V. Not an option.
+  - A CR2450 (24.5 mm, 620 mAh) just fits in 30 × 26, if adaptive metering ever needs the capacity.
 - **Parts on the top side:** MCU, mic, NFC chip, four LEDs, button, 0402 passives.
 - **Keyring hole or clip** in one corner.
 - The mic port is centred, and stays clear of fingers and the clip.
@@ -233,6 +237,5 @@ Bonus if going nRF anyway: an nRF54L15 DK plus an IM69D130 breakout. Run PDM at 
 
 - Clip or keyfob, or both as two tiers: after experiment 1.
 - Continuous, adaptive or sampled: after experiment 2.
-- CR2032, CR2450 or LiPo. The EU rule and shelf life favour coin cells.
 - B1's MCU: a CH32V00x with a hardware multiplier (CH32V006?) in stock, and whether its SPI reaches a 3 MHz mic clock for full band.
 - Not yet verified: CC2340 price; nRF52833 WLCSP price; ESP32-C6 PDM; nRF54L module prices; PTX30W price; TP4054 at ≤30 mA; Bluetooth SIG fee; real lab quotes.
