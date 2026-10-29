@@ -66,9 +66,16 @@ Two directions are on the table:
 | 4 | Infineon IM66D130A | 130, 2.9–3.3 MHz only | −36 ±1 | 1.62–3.6 | – / 1,100 µA | 3.5 × 2.65, bottom | active, preferred to 2034+ | $0.97 @1k |
 | – | Infineon IM72D128 | **128**: misses the requirement | −36 ±1 | 1.62–3.6 | – / 980 µA | 4 × 3 | active, preferred | best stocked: LCSC C5119248, 3.5k pcs |
 
-- **Primary: IM67D130A.** Same 4 × 3 mm body and pin order, the same clock bands, sensitivity and AOP. So rev A's firmware at 1.5 MHz should carry over unchanged. SNR is 67 against 69 dB(A). **Overlay the two footprint drawings before calling it a drop-in**; the datasheet drawings only looked the same by eye. ([product](https://www.infineon.com/part/IM67D130A), [datasheet](https://www.infineon.com/assets/row/public/documents/30/49/infineon-im67d130a-datasheet-en.pdf))
+- **B1 plan (2026-10-29): IM66D130M as the main mic, IM67D130A as the fallback.**
+  - IM66D130M: Mouser stocks it in quantity.
+    - Its normal-mode clock band (1.34–1.72 MHz) contains rev A's 1.5 MHz, so the firmware keeps its clock.
+    - The sensitivity is 1 dB lower (−37 dBFS), which is one calibration constant.
+    - Current is 420 µA against 620 µA, and the 3 × 2 mm package helps the half-size board.
+    - Its 3.465 V operating maximum (3.6 V absolute) is fine on a CR2032 and at 3.3 V on the bench or the WCH-LinkE. Never test it above 3.4 V.
+    - If LCSC still has no stock, use JLC Global Sourcing or consignment.
+  - Before committing: check a few of each on a breakout against the AC2.
+- **Drop-in for rev A boards: IM67D130A.** Same 4 × 3 mm body and pin order, the same clock bands, sensitivity and AOP. So rev A's firmware at 1.5 MHz should carry over unchanged. SNR is 67 against 69 dB(A). **Overlay the two footprint drawings before calling it a drop-in**; the datasheet drawings only looked the same by eye. ([product](https://www.infineon.com/part/IM67D130A), [datasheet](https://www.infineon.com/assets/row/public/documents/30/49/infineon-im67d130a-datasheet-en.pdf))
 - **Second source: SPW0690LM4H-1.** The most headroom (133 dB guaranteed), and works at 1.5 or 3 MHz. But it needs a new footprint, and its sensitivity is 5 dB lower, which costs some noise floor. ([datasheet](https://mm.digikey.com/Volume0/opasdata/d220001/medias/docus/559/SPW0690LM4H-1_DS.pdf))
-- **IM66D130M** is the cheapest and lowest-current, and the smallest at 3 × 2 mm. Its 3.465 V maximum is fine on a CR2032 (3.0–3.3 V) but leaves no margin for bench supplies.
 - **Dropped:**
   - TDK T5818, rev A's planned second source: now **EOL**.
   - TDK T5838/T5837: 1.62–1.98 V, needs an LDO.

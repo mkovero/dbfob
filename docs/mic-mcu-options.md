@@ -6,7 +6,7 @@ Prices are LCSC / DigiKey list prices seen in September 2026, in USD. Check them
 
 ## Update (2026-10-29): mic lifecycle
 
-The IM69D130 is "not for new design", with no replacement named by Infineon. The planned second source, the TDK T5818, is now EOL. For rev B the **Infineon IM67D130A** looks like a drop-in, with the same package, pin order, clock bands, sensitivity and 130 dB AOP. The **Knowles SPW0690LM4H-1** is the second source. Survey and sources: [rev-b.md § B1 target](rev-b.md#b1-target).
+The IM69D130 is "not for new design", with no replacement named by Infineon. The planned second source, the TDK T5818, is now EOL. For rev B (B1) the main candidate is the **Infineon IM66D130M**: active and preferred, in stock at Mouser, 130 dB in all modes, 1.5 MHz in band, 420 µA, 3 × 2 mm, but only up to 3.465 V. The fallback is the **IM67D130A**, which looks like a drop-in for rev A's footprint, with the same package, pin order, clock bands, sensitivity and 130 dB AOP. The **Knowles SPW0690LM4H-1** is a third option. Survey and sources: [rev-b.md § B1 target](rev-b.md#b1-target).
 
 ## Decision (2026-09-27)
 
