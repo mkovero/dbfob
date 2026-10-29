@@ -73,6 +73,19 @@ Two directions are on the table:
     - Current is 420 µA against 620 µA, and the 3 × 2 mm package helps the half-size board.
     - Its 3.465 V operating maximum (3.6 V absolute) is fine on a CR2032 and at 3.3 V on the bench or the WCH-LinkE. Never test it above 3.4 V.
     - If LCSC still has no stock, use JLC Global Sourcing or consignment.
+    - **Footprint is new, not a variant of rev A's** (datasheet v1.1, Figures 13 and 15):
+
+      | | IM69D130 (rev A) | IM66D130M |
+      |---|---|---|
+      | Body | 4 × 3 mm | 3 × 2 mm |
+      | Pads | 4 × 0.45 × 0.75 mm, solder mask defined, columns 0.8 mm apart | 4 × 0.42 × 0.625 mm, non-solder-mask defined, columns 0.6 mm apart (0.18 mm gap), rows 1.11 mm |
+      | Ground ring (port) | Ø2.06 / Ø1.16 | Ø1.4 / Ø0.76 |
+      | PCB sound hole | Ø0.8 mm | **Ø0.375 mm** |
+      | Pin order | 1 DATA, 2 VDD, 3 CLK, 4 SELECT, 5 GND ring | 1 DATA, 2 LR, **3 GND ring**, 4 CLK, 5 VDD |
+
+    - Draw a new footprint from Figure 15, and re-route.
+    - The 0.375 mm sound hole is about JLC's smallest plated drill, so check their minimum. It also changes the port acoustics: experiment 3 should use this hole.
+    - Use **ENIG** for these small non-solder-mask-defined pads. HASL leaves them uneven.
   - Before committing: check a few of each on a breakout against the AC2.
 - **Drop-in for rev A boards: IM67D130A.** Same 4 × 3 mm body and pin order, the same clock bands, sensitivity and AOP. So rev A's firmware at 1.5 MHz should carry over unchanged. SNR is 67 against 69 dB(A). **Overlay the two footprint drawings before calling it a drop-in**; the datasheet drawings only looked the same by eye. ([product](https://www.infineon.com/part/IM67D130A), [datasheet](https://www.infineon.com/assets/row/public/documents/30/49/infineon-im67d130a-datasheet-en.pdf))
 - **Second source: SPW0690LM4H-1.** The most headroom (133 dB guaranteed), and works at 1.5 or 3 MHz. But it needs a new footprint, and its sensitivity is 5 dB lower, which costs some noise floor. ([datasheet](https://mm.digikey.com/Volume0/opasdata/d220001/medias/docus/559/SPW0690LM4H-1_DS.pdf))
