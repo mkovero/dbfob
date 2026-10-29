@@ -193,7 +193,7 @@ Two directions are on the table:
 
 ## Alternatives that came out of the review
 
-- **NFC readout without BLE.** An ST25DV dynamic NFC tag chip (I2C, about $0.6, PCB antenna) works with any MCU. The fob writes a dose summary into a URL the tag serves (NDEF record). The 10-minute summary from [log-readout.md](log-readout.md) is about 156 B. iPhone (background tag reading) and Android open the web page with no app and no pairing, **even with the fob's cell dead.** This replaces most of log-readout.md and the BLE readout for both directions.
+- **NFC readout without BLE.** A dynamic NFC tag chip with I2C (NTAG I2C plus, about $0.35, or ST25DV; PCB antenna) works with any MCU; see [B1 target](#b1-target). The fob writes a dose summary into a URL the tag serves (NDEF record). The 10-minute summary from [log-readout.md](log-readout.md) is about 156 B. iPhone (background tag reading) and Android open the web page with no app and no pairing, **even with the fob's cell dead.** This replaces most of log-readout.md and the BLE readout for both directions.
 - **A primary cell, continuous.** A CR2450 (620 mAh, 24.5 mm) is about the footprint of a 30 × 26 mm board. At about 1 mA continuous for 12 h nights that is about 50 nights on a €0.40 cell; a CR2032 gives about 15. All unmeasured.
 - **nRF + coin cell, advertising only**, if BLE is wanted for bulk readout. A module plus CR2450 at 10–20 µA advertising keeps rev A's duty cycle and shelf life.
 - **Clip, not fob.** Mic on the top edge facing up, spring clip on the back, lanyard hole. The keyfob stays as the spot-check tier.
