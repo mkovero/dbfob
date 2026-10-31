@@ -80,6 +80,8 @@ This is the flash log from one fob over a full 12 h run that ended in auto-off. 
 - **Walk home, 9.8 h:** up to 80 dBA, with the fob in a pocket. Street noise would have read louder in the open, so this part of the dose is understated: the pocket problem described above.
 - **Total:** LAeq 68.1 dBA over 12 h, which is 3.1 % of the daily allowance. A triple click would have shown the slowest blink, about once a second.
 
+A cased and a bare fob side by side through a night in front of a big PA: [docs/logs/2026-10-31-case-ab.md](docs/logs/2026-10-31-case-ab.md).
+
 ## Hardware
 
 No radio, no display, no app. The design goal was **under €2 all-in**. The rev A parts come to about $1.85 per board at 1,000 units. A 130 dB-capable mic alone is about €1.2, so sub-€1 is out unless mic prices drop.
