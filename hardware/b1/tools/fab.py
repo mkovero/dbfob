@@ -44,7 +44,7 @@ def preflight():
                 items = ' '.join(i['description'] for i in v.get('items', []))
                 # MIC_VDD and NFC_VCC are GPIO-driven supplies, flagged on purpose (as rev A's PC6)
                 if v['type'] == 'pin_to_pin' and 'U2' in items and (
-                        ('#FLG03' in items and 'Pin 5 ' in items) or ('#FLG04' in items and 'Pin 8 ' in items)):
+                        ('#FLG03' in items and 'Pin 5 ' in items) or ('#FLG04' in items and 'Pin 7 ' in items)):
                     continue
                 out.append(f"ERC {v['severity']} {v['type']}: {v['description'][:60]} {items[:80]}")
         drc = os.path.join(td, 'drc.json')

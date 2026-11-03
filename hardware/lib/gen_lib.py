@@ -159,13 +159,15 @@ def im66d130m():
     """Fig. 15, top view: pin 1 lower left, the port on the right."""
     name = 'Infineon_IM66D130M_LGA-5_3x2mm'
     px = 0.54                                  # ring and port centre
-    pads = [smd(n, x, y, 0.42, 0.625, name, 'rect') for n, x, y in
+    # fig. 15: all pads non-solder-mask defined, so 0.05 mm mask clearance (the board default is 0)
+    nsmd = ' (solder_mask_margin 0.05)'
+    pads = [smd(n, x, y, 0.42, 0.625, name, 'rect').replace(' (uuid', nsmd + ' (uuid') for n, x, y in
             (('1', -1.15, 0.555), ('2', -0.55, 0.555), ('4', -0.55, -0.555), ('5', -1.15, -0.555))]
     # GND ring: outer 1.4 as fig. 15, inner 1.0 instead of 0.76 so the 0.5 mm port keeps 0.25 mm
     # hole-to-copper. The mic's own ring is 0.8 / 1.3, so the seal band is still 1.0..1.3.
     rm, rw = (1.4 + 1.0) / 4, (1.4 - 1.0) / 2
     pads.append(f'\t(pad "3" smd custom (at {f(px)} {f(-rm)}) (size {f(rw)} {f(rw)}) (layers "F.Cu" "F.Mask") '
-                f'(zone_connect 0) (options (clearance outline) (anchor circle)) (primitives (gr_circle '
+                f'(zone_connect 0){nsmd} (options (clearance outline) (anchor circle)) (primitives (gr_circle '
                 f'(center 0 {f(rm)}) (end {f(rm)} {f(rm)}) (width {f(rw)}) (fill no))) (uuid "{uid(name, "ring")}"))')
     # paste: three ring segments with 0.1 mm vents at 60, 180 and 300 degrees, as fig. 15 but
     # inside the narrower copper ring
@@ -193,13 +195,13 @@ def im66d130m():
                            'smd', items)
 
 
-def pogo4():
-    """Four round SMD test pads on 2.54 mm for a pogo clip or pressed-in pins (programming)."""
-    name = 'TestPads_1x04_P2.54mm_D1.2mm'
-    pads = [smd(str(i + 1), 0, i * 2.54, 1.2, 1.2, name, 'circle') for i in range(4)]
-    items = [fp_text('Reference', 'REF**', 0, -1.6, 'F.Fab'), fp_text('Value', name, 0, 9.3, 'F.Fab'),
-             rect(-0.85, -0.85, 0.85, 7.62 + 0.85, 'F.CrtYd', 0.05, name)] + pads
-    return name, footprint(name, '1 x 4 SMD test pads, 1.2 mm, 2.54 mm pitch (pogo / pressed pins)', 'smd', items)
+def pogo5():
+    """Five round SMD test pads on 2.54 mm for a pogo clip or pressed-in pins (programming + UART)."""
+    name = 'TestPads_1x05_P2.54mm_D1.2mm'
+    pads = [smd(str(i + 1), 0, i * 2.54, 1.2, 1.2, name, 'circle') for i in range(5)]
+    items = [fp_text('Reference', 'REF**', 0, -1.6, 'F.Fab'), fp_text('Value', name, 0, 11.8, 'F.Fab'),
+             rect(-0.85, -0.85, 0.85, 10.16 + 0.85, 'F.CrtYd', 0.05, name)] + pads
+    return name, footprint(name, '1 x 5 SMD test pads, 1.2 mm, 2.54 mm pitch (pogo / pressed pins)', 'smd', items)
 
 
 def bs08():
@@ -226,7 +228,7 @@ def main():
     open(os.path.join(HERE, 'dbfob.kicad_sym'), 'w').write('\n'.join(sym) + '\n')
     d = os.path.join(HERE, 'dbfob.pretty')
     os.makedirs(d, exist_ok=True)
-    for gen in (xqfn8, im66d130m, pogo4, bs08):
+    for gen in (xqfn8, im66d130m, pogo5, bs08):
         name, text = gen()
         open(os.path.join(d, name + '.kicad_mod'), 'w').write(text)
     print('wrote', os.path.join(HERE, 'dbfob.kicad_sym'), 'and', d)

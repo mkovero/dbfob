@@ -47,6 +47,7 @@ Two directions are on the table:
   - 0603 passives (rev A's parts, and room enough);
   - no hole in the PCB, as the coil runs round the edge: the keyring goes on the case;
   - the IM66D130M has 0 JLC stock (global sourcing), and its NSMD pads want ENIG.
+  - the button is on PA0/WKUP to VBAT: the pull-up first drafted would have failed on some CH32L103 lots (see the B1 README).
 - The mic port is centred, and stays clear of fingers and the clip.
 
 **NFC readout.** Survey on 2026-10-29. Stock and prices are from JLC's parts library.

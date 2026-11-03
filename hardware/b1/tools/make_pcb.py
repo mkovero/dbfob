@@ -11,14 +11,13 @@ under our fab rules, UUIDs derive from content, DRC with schematic parity is the
 Board: 30 x 26 mm, 2 layers, every machine-placed part on top. The antenna block (coil round the
 edge, its crossover, the tag, trim pads, the CR2032 holder on the back) comes from
 ../lib/antenna.py, identical to the NFC test board's. Inside the coil: the MCU in the middle,
-the mic at the top centre with its port through the board into the strip above the holder,
-the LED bar and the button right, the programming pads down the right side.
+the mic at the top right with its port through the board beside the cell's rim, the button
+and the LED bar left, the programming pads down the right side.
 
 No ground pour: copper inside the loop detunes it, so GND is tracks like everything else, and
-B.Cu under the coil is kept clear apart from the crossover. Three hand GND vias (U2's exposed
-pad, the tag's VSS, C4 by the mic) let the router join GND on B.Cu under the holder.
-Routing: signals first, then GND and VBAT, with the router's 'mps' net ordering (inside_out
-leaves MIC_DATA or SWDIO open here).
+B.Cu under the coil is kept clear apart from the crossover. Hand vias (GND at U2's exposed
+pad, the tag's VSS and C4, VBAT at R3) let the router join GND on B.Cu under the holder.
+Routing: signals first, then GND and VBAT, with the router's inside_out net ordering.
 """
 import json, math, os, re, shutil, subprocess, sys, tempfile, uuid
 import pcbnew
@@ -44,33 +43,38 @@ POWER = ['/GND', '/VBAT']
 
 # The antenna block (coil, VO/VI crossover, NT1, U1, C1-C3, BT1) is ../lib/antenna.py's.
 PLACE = dict(ant.PLACE, **{
-    'U2': (15.0, 10.8, 0, False),      # mic on the left/top-left pins, tag below, LEDs and button right
-    'C4': (12.6, 7.65, 0, False),      # VDD (pin 19, top) decoupling
-    'C5': (9.8, 6.0, 90, False),       # bulk
-    'MK1': (15.0, 5.0, 90, False),     # port at (15, 4.46): above the holder's top edge (6.15)
-    'C6': (11.8, 5.4, 90, False),
-    # LED bar, vertical, right of U2: red on top. Resistors next to U2 (pad 1 left), LEDs
-    # outside them with the anode left, cathode right
-    'R7': (19.2, 7.2, 0, False), 'R6': (19.2, 8.8, 0, False),
-    'R5': (19.2, 10.4, 0, False), 'R4': (19.2, 12.0, 0, False),
-    'D4': (22.2, 7.2, 180, False), 'D3': (22.2, 8.8, 180, False),
-    'D2': (22.2, 10.4, 180, False), 'D1': (22.2, 12.0, 180, False),
-    'SW1': (21.0, 17.0, 90, False),
-    'R8': (16.9, 14.4, 90, False),     # BTN pull-up
+    'U2': (15.0, 10.8, 0, False),      # LEDs, button and mic on the left pins, tag below, debug right
+    'C4': (12.8, 7.65, 0, False),      # VDD (pin 19, top) decoupling
+    'C5': (19.6, 11.6, 90, False),     # bulk
+    # mic top right: port at (21.5, 4.26), 1.5 mm outside the cell's rim (r 10.15 about (15, 14)),
+    # so it opens beside the holder, not into the slot under the cell
+    'MK1': (21.5, 4.8, 90, False),
+    'C6': (18.9, 4.8, 90, False),
+    # button top left, next to PA0 (pin 1)
+    'SW1': (7.3, 5.85, 0, False),
+    # LED bar below it, left of U2, in the order of the pins: red on top (PA8 and PA10 come over
+    # the top), then orange, yellow, green (PA1-PA3). Resistors next to U2 (pad 1 right), LEDs
+    # outside them, anode right, cathode left
+    'R7': (8.6, 9.9, 180, False), 'R6': (8.6, 11.5, 180, False),
+    'R5': (8.6, 13.1, 180, False), 'R4': (8.6, 14.7, 180, False),
+    'D4': (5.6, 9.9, 0, False), 'D3': (5.6, 11.5, 0, False),
+    'D2': (5.6, 13.1, 0, False), 'D1': (5.6, 14.7, 0, False),
     # tag pull-ups in a stack left of U1, each level with its pin: supply pad left, signal right
     'R2': (9.9, 16.4, 0, False),      # SCL
     'R3': (9.9, 18.0, 0, False),      # FD
     'R1': (9.9, 19.6, 0, False),      # SDA
-    'J1': (25.0, 8.6, 0, False),       # pads downwards: SWDIO SWCLK GND VBAT
+    'J1': (25.0, 10.6, 0, False),      # pads downwards: SWDIO SWCLK GND VBAT TX
 })
 
 SILK_F = [  # text, x, y, size
-    ('D', 26.2, 8.6, 0.7), ('C', 26.2, 11.14, 0.7), ('G', 26.2, 13.68, 0.7), ('+', 26.2, 16.22, 0.7),
-    ('dbfob B1', 6.4, 12.0, 1.0),
+    # 1.0 mm: JLC's minimum legend height
+    ('D', 26.4, 10.6, 1.0), ('C', 26.4, 13.14, 1.0), ('G', 26.4, 15.68, 1.0), ('+', 26.4, 18.22, 1.0),
+    ('T', 26.4, 20.76, 1.0),
+    ('dbfob B1', 21.2, 17.0, 1.0),
 ]
 SILK_B = [
-    ('FERRITE under cell', 15.0, 11.0, 0.9),
-    ('CR2032 holder BS-08', 15.0, 17.5, 0.9),
+    ('FERRITE under cell', 15.0, 11.0, 1.0),
+    ('CR2032 holder BS-08', 15.0, 17.5, 1.0),
 ]
 
 
@@ -204,10 +208,14 @@ def build():
     pad = next(q for q in fps['U1'].Pads() if q.GetNumber() == '2').GetPosition()
     track(board, nets['/GND'], pcbnew.F_Cu, pad, mm(13.75, 16.1), 0.25)
     via(board, nets['/GND'], 13.75, 16.1)
-    # the mic's ring, C6 and C4 share GND above U2's top pins, cut off from the EP: own via
+    # C4's GND pad is boxed in by the top pins' fan-out: own via
     pad = next(q for q in fps['C4'].Pads() if q.GetNumber() == '2').GetPosition()
-    track(board, nets['/GND'], pcbnew.F_Cu, pad, mm(13.375, 6.7), 0.3)
-    via(board, nets['/GND'], 13.375, 6.7)
+    track(board, nets['/GND'], pcbnew.F_Cu, pad, mm(13.575, 6.7), 0.3)
+    via(board, nets['/GND'], 13.575, 6.7)
+    # R3's VBAT pad sits between the NFC_VCC ends of R2 and R1: straight down to B.Cu
+    pad = next(q for q in fps['R3'].Pads() if q.GetNumber() == '1').GetPosition()
+    track(board, nets['/VBAT'], pcbnew.F_Cu, pad, mm(8.15, 18.0), 0.3)
+    via(board, nets['/VBAT'], 8.15, 18.0)
 
     for s, x, y, size in SILK_F: text(board, s, x, y, size, pcbnew.F_SilkS)
     for s, x, y, size in SILK_B: text(board, s, x, y, size, pcbnew.B_SilkS, mirror=True)
@@ -267,7 +275,7 @@ def route(keep_pro):
     # the antenna nets are drawn by hand; the router gets the rest (net names from the API)
     nets = sorted(str(n) for n in board.GetNetsByName().keys() if str(n) and str(n) not in ('/LA', '/LB'))
     py = os.path.join(KRT, '.venv', 'bin', 'python')
-    for group in ([n for n in nets if n not in POWER], [n for n in nets if n in POWER]):
+    for k, group in enumerate(([n for n in nets if n not in POWER], [n for n in nets if n in POWER])):
         with tempfile.TemporaryDirectory() as td:
             out = os.path.join(td, 'routed.kicad_pcb')
             r = subprocess.run([py, os.path.join(KRT, 'py_router', 'route.py'), PCB, out, '--nets', *group,
@@ -277,7 +285,7 @@ def route(keep_pro):
                                 '--grid-step', '0.025', '--fab-tier', 'standard', '--escalation', 'off',
                                 '--same-net-pad-clearance', '0.2', '--board-edge-clearance', '0.5',
                                 '--hole-to-hole-clearance', '0.25', '--max-ripup', '200',
-                                '--ordering', os.environ.get('ORDERING', 'mps'), '--direction', os.environ.get('DIRECTION', 'forward')],
+                                '--ordering', os.environ.get('ORDERING%d' % k, os.environ.get('ORDERING', 'inside_out')), '--direction', os.environ.get('DIRECTION', 'forward')],
                                capture_output=True, text=True, cwd=KRT)
             log = r.stdout + r.stderr
             if r.returncode or not os.path.exists(out):
