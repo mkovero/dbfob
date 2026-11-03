@@ -8,18 +8,18 @@ routes under our fab rules, UUIDs derive from content, DRC with schematic parity
   python3 hardware/nfc-test/tools/make_pcb.py
   python3 hardware/nfc-test/tools/fab.py
 
-Board: 30 x 38 mm. The top 30 x 26 mm is B1's outline and carries B1's antenna, with the CR2032
-in B1's holder on the back under it. Below that a 12 mm tail holds the tag, the trim pads, the
-field LED and the host header, outside the loop, so the loop sees only what B1's will: the
-cell, the holder and the ferrite.
+Board: 30 x 38 mm. The top 30 x 26 mm is B1's outline and carries B1's antenna block exactly as
+B1 has it (../lib/antenna.py): the coil, its crossover, the tag, the trim pads and the CR2032 in
+B1's holder on the back. Below that a 12 mm tail holds the pull-ups, the field LED and the host
+header; their lines cross the bottom turns on B.Cu.
 
-The antenna is drawn here, not routed: a 6-turn rectangular spiral of LA track on F.Cu, inner end
-through net tie NT1 to LB, which crosses back under the turns on B.Cu. Every turn keeps the same
-pitch round the chamfered corners, so the 0.2 mm gap holds everywhere (same-net copper is not
-clearance-checked by DRC, so the geometry is made right by construction and asserted below).
+The antenna is drawn, not routed (see antenna.py); the router gets every other net.
 """
 import json, math, os, re, shutil, subprocess, sys, tempfile, uuid
 import pcbnew
+
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..', 'lib'))
+import antenna as ant
 
 HERE = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 NAME = 'nfc-test'
@@ -32,106 +32,26 @@ FPLIB = '/usr/share/kicad/footprints'
 KRT = os.environ.get('KRT', '/home/mui/src/KicadRoutingTools')
 
 W, H = 30.0, 38.0            # board, mm
-LOOP_H = 26.0                # B1's outline: the antenna area
 X0, Y0 = 100.0, 100.0
 CORNER = 3.0
-TRACK, CLEAR, VIA, DRILL = 0.2, 0.15, 0.6, 0.3
+TRACK, CLEAR, VIA, DRILL = 0.2, 0.15, ant.VIA, ant.DRILL
 POWER = ['/GND', '/VBAT', '/VCC']
 
-# ---------------------------------------------------------------------------------------------
-# Antenna. Inductance by NXP AN11276's rectangular-coil formula (N^1.8 fit): 6 turns of 0.25 mm
-# at 0.45 mm pitch on a 28.7 x 24.75 mm outer turn is about 2.1 uH in air, against 2.75 uH for
-# 13.56 MHz with the tag's 50 pF. Deliberately short: ferrite raises L, the cell lowers it, and
-# the C1/C2 trim pads can only pull the resonance down (about +14 pF at 2.1 uH).
-# ---------------------------------------------------------------------------------------------
-TURNS = 6
-TW = 0.25                    # coil track width
-PITCH = 0.45                 # 0.2 mm gap
-D0 = 0.65                    # outer turn centre line from the board edge (0.525 mm copper-edge)
-HB0 = 25.4                   # outer turn's bottom side; the tail starts below it
-CT0 = 2.45                   # top-corner chamfer, outer turn: clears the 3 mm edge radius
-CB0 = 1.5                    # bottom-corner chamfer, outer turn
-DC = (2 - math.sqrt(2)) * PITCH   # chamfer shrink per turn that keeps the diagonal pitch = PITCH
-XS, XE = 13.0, 17.0          # where the coil leaves (LA, outer) and ends (inner, to NT1)
-
-
-def coil():
-    pts = [(XS, HB0)]
-    for k in range(TURNS):
-        d, ct, cb = D0 + k * PITCH, CT0 - k * DC, CB0 - k * DC
-        hb, hb1 = HB0 - k * PITCH, HB0 - (k + 1) * PITCH
-        pts += [(d + cb, hb), (d, hb - cb), (d, d + ct), (d + ct, d), (W - d - ct, d), (W - d, d + ct),
-                (W - d, hb1 - cb), (W - d - cb, hb1)]
-    pts.append((XE, HB0 - TURNS * PITCH))
-    return pts
-
-
-def seg_dist(a, b, c, d):
-    """Minimum distance between segments ab and cd (2D)."""
-    def pt_seg(p, q, r):
-        qx, qy = r[0] - q[0], r[1] - q[1]
-        L = qx * qx + qy * qy
-        t = 0 if L == 0 else max(0, min(1, ((p[0] - q[0]) * qx + (p[1] - q[1]) * qy) / L))
-        return math.dist(p, (q[0] + t * qx, q[1] + t * qy))
-    def cross(o, p, q): return (p[0] - o[0]) * (q[1] - o[1]) - (p[1] - o[1]) * (q[0] - o[0])
-    if (cross(a, b, c) * cross(a, b, d) < 0) and (cross(c, d, a) * cross(c, d, b) < 0): return 0.0
-    return min(pt_seg(a, c, d), pt_seg(b, c, d), pt_seg(c, a, b), pt_seg(d, a, b))
-
-
-def check_coil(pts):
-    segs = list(zip(pts, pts[1:]))
-    worst = min(seg_dist(*segs[i], *segs[j]) for i in range(len(segs)) for j in range(i + 4, len(segs)))
-    # (segments under four apart along the path are the same turn turning a corner)
-    gap = worst - TW
-    assert gap >= 0.199, f'coil gap {gap:.3f} mm'
-    return gap
-
-
-# Antenna inductance, NXP AN11276 (rectangular), for the record printed by main()
-def inductance(a0, b0, n, w=TW, g=PITCH - TW, t=0.035):
-    a0, b0, w, g, t = (v / 1e3 for v in (a0, b0, w, g, t))
-    aa, bb = a0 - n * (g + w), b0 - n * (g + w)
-    d, s = 2 * (t + w) / math.pi, math.hypot(aa, bb)
-    x1 = aa * math.log(2 * aa * bb / (d * (aa + s))); x2 = bb * math.log(2 * aa * bb / (d * (bb + s)))
-    return 4e-7 * (x1 + x2 - 2 * (aa + bb - s) + (aa + bb) / 4) * n ** 1.8
-
-
-# ref: (x, y, rotation, back side) in board mm from the top-left corner, y down
-PLACE = {
-    'BT1': (14.4, 13.0, 0, True),      # cell centre (footprint x -0.6, mirrored) at (15, 13)
-    'NT1': (XE, 21.7, 90, False),      # pad 1 (LA) below, pad 2 (LB) above
-    'C1': (14.4, 27.3, 0, False),
-    'C2': (14.4, 28.8, 0, False),
-    'U1': (15.0, 31.0, 0, False),
-    'C3': (17.6, 31.0, 90, False),
-    'R1': (19.8, 31.0, 90, False),     # SDA pull-up
-    'R2': (11.0, 31.0, 90, False),     # SCL pull-up
-    'R3': (8.6, 31.0, 90, False),      # FD pull-up to VBAT
+# The antenna block (coil, VO/VI crossover, NT1, U1, C1-C3, BT1) is B1's, from ../lib/antenna.py.
+# Here: the tail parts below it.
+PLACE = dict(ant.PLACE, **{
+    'R1': (13.0, 31.0, 90, False),     # SDA pull-up
+    'R2': (19.8, 31.0, 90, False),     # SCL pull-up
+    'R3': (16.4, 31.0, 90, False),     # FD pull-up to VBAT
     'R4': (6.4, 31.0, 90, False),
     'D1': (4.2, 31.0, 90, False),
     'JP1': (24.6, 31.4, 0, False),
-    'J1': (8.65, 36.2, 90, False),     # pads left to right: VBAT GND SCL FD SDA VCC
-}
-V1 = (XE, 20.3)                        # NT1 pad 2 -> B.Cu
-V2 = (XE, 26.9)                        # back up to F.Cu in the tail
-# hand routes: (net, layer, [points]); a point may be 'REF.pad' for that pad's centre
-HAND = [
-    ('/LA', 'F', [(XE, HB0 - TURNS * PITCH), 'NT1.1']),
-    ('/LB', 'F', ['NT1.2', V1]),
-    ('/LB', 'B', [V1, V2]),
-    ('/LA', 'F', [(XS, HB0), (XS, 27.3), 'C1.1']),
-    ('/LA', 'F', [(XS, 27.3), (XS, 28.8), 'C2.1']),
-    ('/LA', 'F', [(XS, 28.8), (XS, 30.5), 'U1.1']),
-    ('/LB', 'F', [V2, (XE, 27.3), 'C1.2']),
-    ('/LB', 'F', [(XE, 27.3), (XE, 28.8), 'C2.2']),
-    ('/LB', 'F', ['C2.2', (15.0, 29.2), 'U1.8']),
-]
-# nothing but the holder (on the back) inside the loop: keep the router out of the interior
-INTERIOR = (5.6, 3.6, 22.9, 19.6)   # clear of BT1's pads, so tracks leave them outward
+    'J1': (8.65, 36.2, 90, False),     # pads left to right: VBAT VCC SDA FD SCL GND
+})
 
 SILK_F = [  # text, x, y, size
-    ('+', 8.65, 34.1, 0.7), ('G', 11.19, 34.1, 0.7), ('C', 13.73, 34.1, 0.7), ('F', 16.27, 34.1, 0.7),
-    ('D', 18.81, 34.1, 0.7), ('V', 21.35, 34.1, 0.7),
+    ('+', 8.65, 34.1, 0.7), ('V', 11.19, 34.1, 0.7), ('D', 13.73, 34.1, 0.7), ('F', 16.27, 34.1, 0.7),
+    ('C', 18.81, 34.1, 0.7), ('G', 21.35, 34.1, 0.7),
     ('dbfob NFC test', 15.0, 10.0, 1.2),
     ('NT3H2111  6T 0.25/0.2', 15.0, 12.2, 0.8),
     ('C1 C2: C0G trim', 15.0, 14.0, 0.8),
@@ -208,8 +128,8 @@ def outline(board):
         board.Add(s)
 
 
-def keepout(board, box, name):
-    for layer in (pcbnew.F_Cu, pcbnew.B_Cu):
+def keepout(board, box, name, layers=(pcbnew.F_Cu, pcbnew.B_Cu)):
+    for layer in layers:
         z = pcbnew.ZONE(board); z.SetIsRuleArea(True); z.SetLayer(layer); z.SetZoneName(name)
         z.SetDoNotAllowTracks(True); z.SetDoNotAllowVias(True); z.SetDoNotAllowZoneFills(True)
         z.SetDoNotAllowPads(False); z.SetDoNotAllowFootprints(False)
@@ -265,25 +185,9 @@ def build():
             if net in nets: p.SetNet(nets[net])
         fps[ref] = fp
     outline(board)
-    keepout(board, INTERIOR, 'loop interior')
-
-    # the coil
-    pts = coil()
-    gap = check_coil(pts)
-    la, lb = nets['/LA'], nets['/LB']
-    for a, b in zip(pts, pts[1:]):
-        track(board, la, pcbnew.F_Cu, mm(*a), mm(*b), TW)
-    via(board, lb, *V1); via(board, lb, *V2)
-
-    def point(p):
-        if isinstance(p, str):
-            ref, pad = p.split('.')
-            return next(q for q in fps[ref].Pads() if q.GetNumber() == pad).GetPosition()
-        return mm(*p)
-    for net, side, path in HAND:
-        layer = pcbnew.F_Cu if side == 'F' else pcbnew.B_Cu
-        for a, b in zip(path, path[1:]):
-            track(board, nets[net], layer, point(a), point(b), TW)
+    for i, box in enumerate(ant.KEEPOUT_SIDES):
+        keepout(board, box, f'under the coil {i}', (pcbnew.B_Cu,))
+    gap = ant.draw(board, nets, fps, mm, track, via)
 
     for s, x, y, size in SILK_F: text(board, s, x, y, size, pcbnew.F_SilkS)
     for s, x, y, size in SILK_B: text(board, s, x, y, size, pcbnew.B_SilkS, mirror=True)
@@ -291,9 +195,7 @@ def build():
     ds.SetAuxOrigin(mm(0, H)); ds.SetGridOrigin(mm(0, H))
     board.Save(PCB)
     stabilise_uuids(PCB)
-    a0, b0 = W - 2 * D0 + TW, HB0 - D0 + TW
-    print(f'coil: {TURNS} turns, outer {a0:.2f} x {b0:.2f} mm, min gap {gap:.3f} mm, '
-          f'L about {inductance(a0, b0, TURNS) * 1e6:.2f} uH in air (AN11276)')
+    print(ant.summary(gap))
 
 
 def _top_blocks(text, kinds):
@@ -340,29 +242,31 @@ def stabilise_uuids(path):
 
 
 def route(keep_pro):
+    """Signals first, then the power nets around them (one pass lets GND wall in the tag's pins)."""
     board = pcbnew.LoadBoard(PCB)
     # the antenna nets are drawn by hand; the router gets the rest (net names from the API)
     nets = sorted(str(n) for n in board.GetNetsByName().keys() if str(n) and str(n) not in ('/LA', '/LB'))
     py = os.path.join(KRT, '.venv', 'bin', 'python')
-    with tempfile.TemporaryDirectory() as td:
-        out = os.path.join(td, 'routed.kicad_pcb')
-        r = subprocess.run([py, os.path.join(KRT, 'py_router', 'route.py'), PCB, out, '--nets', *nets,
-                            '--layers', 'F.Cu', 'B.Cu', '--track-width', str(TRACK), '--clearance', str(CLEAR),
-                            '--via-size', str(VIA), '--via-drill', str(DRILL),
-                            '--power-nets', *POWER, '--power-nets-widths', *['0.3'] * len(POWER),
-                            '--grid-step', '0.025', '--fab-tier', 'standard', '--escalation', 'off',
-                            '--same-net-pad-clearance', '0.2', '--board-edge-clearance', '0.5',
-                            '--hole-to-hole-clearance', '0.25', '--max-ripup', '200',
-                            '--ordering', 'inside_out'],
-                           capture_output=True, text=True, cwd=KRT)
-        log = r.stdout + r.stderr
-        if r.returncode or not os.path.exists(out):
-            print(log[-3000:]); raise SystemExit('KiCadRoutingTools failed')
-        shutil.copy(out, PCB)
-    open(PRO, 'w').write(keep_pro)
-    for l in log.splitlines():
-        if l.startswith('JSON_SUMMARY') or 'routed' in l.lower() and ('/' in l or 'fail' in l.lower()):
-            print('  router:', l[:200])
+    for group in ([n for n in nets if n not in POWER], [n for n in nets if n in POWER]):
+        with tempfile.TemporaryDirectory() as td:
+            out = os.path.join(td, 'routed.kicad_pcb')
+            r = subprocess.run([py, os.path.join(KRT, 'py_router', 'route.py'), PCB, out, '--nets', *group,
+                                '--layers', 'F.Cu', 'B.Cu', '--track-width', str(TRACK), '--clearance', str(CLEAR),
+                                '--via-size', str(VIA), '--via-drill', str(DRILL),
+                                '--power-nets', *POWER, '--power-nets-widths', *['0.3'] * len(POWER),
+                                '--grid-step', '0.025', '--fab-tier', 'standard', '--escalation', 'off',
+                                '--same-net-pad-clearance', '0.2', '--board-edge-clearance', '0.5',
+                                '--hole-to-hole-clearance', '0.25', '--max-ripup', '200',
+                                '--ordering', os.environ.get('ORDERING', 'inside_out')],
+                               capture_output=True, text=True, cwd=KRT)
+            log = r.stdout + r.stderr
+            if r.returncode or not os.path.exists(out):
+                print(log[-3000:]); raise SystemExit('KiCadRoutingTools failed')
+            shutil.copy(out, PCB)
+        open(PRO, 'w').write(keep_pro)
+        for l in log.splitlines():
+            if l.startswith('JSON_SUMMARY_MIN'):
+                print('  router:', l[:200])
 
 
 def drc():

@@ -74,8 +74,8 @@ PARTS = {
             'BS-08-B2AA001', 'hand-fit on the back (LCSC C964777); ferrite sheet between holder floor and cell',
             (40, 120, 0), {'1': 'VBAT', '2': 'GND'}, False),
     'J1': ('Connector_Generic:Conn_01x06', 'HOST', 'Connector_PinHeader_2.54mm:PinHeader_1x06_P2.54mm_Vertical',
-           '', '', 'not fitted: 1 VBAT, 2 GND, 3 SCL, 4 FD, 5 SDA, 6 VCC (order follows U1 sides)',
-           (230, 80, 0), {'1': 'VBAT', '2': 'GND', '3': 'SCL', '4': 'FD', '5': 'SDA', '6': 'VCC'}, False),
+           '', '', 'not fitted: 1 VBAT, 2 VCC, 3 SDA, 4 FD, 5 SCL, 6 GND (order follows U1 sides)',
+           (230, 80, 0), {'1': 'VBAT', '2': 'VCC', '3': 'SDA', '4': 'FD', '5': 'SCL', '6': 'GND'}, False),
 }
 
 FLAGS = {'#FLG01': ('VBAT', (40, 100)), '#FLG02': ('GND', (100, 130)), '#FLG03': ('VCC', (140, 45))}
@@ -85,7 +85,7 @@ TEXT = [
     ('Tag: NT3H2111 (NTAG I2C plus 1k), Type 2. A phone reads/writes it with no MCU and no VCC.', (20, 150), 1.5),
     ('Antenna: PCB coil, LA tracks closed to LB by NT1. Trim with C1/C2 (C0G) on the bench.', (20, 154), 1.5),
     ('FD: open drain, works from the field alone; D1 lights while a reader field is on.', (20, 158), 1.5),
-    ('J1 for any host MCU: VBAT GND SCL FD SDA VCC. JP1 powers the tag from the cell.', (20, 162), 1.5),
+    ('J1 for any host MCU: VBAT VCC SDA FD SCL GND. JP1 powers the tag from the cell.', (20, 162), 1.5),
     ('BT1 on the back, hand-fitted; ferrite sheet between holder floor and cell.', (20, 166), 1.5),
 ]
 

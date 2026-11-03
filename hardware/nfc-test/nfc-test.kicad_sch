@@ -1325,13 +1325,13 @@
 			(exclude_from_sim no)
 			(in_bom yes)
 			(on_board yes)
-			(property "Reference" "U" (at 0 6.35 0) (effects (font (size 1.27 1.27))))
-			(property "Value" "NT3H2111W0FHK" (at 0 -11.43 0) (effects (font (size 1.27 1.27))))
+			(property "Reference" "U" (at -7.62 6.35 0) (effects (font (size 1.27 1.27))))
+			(property "Value" "NT3H2111W0FHK" (at 0 -13.97 0) (effects (font (size 1.27 1.27))))
 			(property "Footprint" "dbfob:NXP_XQFN-8_1.6x1.6mm_P0.5mm" (at 0 0 0) (effects (font (size 1.27 1.27)) (hide yes)))
 			(property "Datasheet" "" (at 0 0 0) (effects (font (size 1.27 1.27)) (hide yes)))
 			(property "Description" "NTAG I2C plus 1k, NFC Forum Type 2 tag with I2C and field detect, XQFN8" (at 0 0 0) (effects (font (size 1.27 1.27)) (hide yes)))
 			(symbol "NT3H2111W0FHK_0_1"
-				(rectangle (start -7.62 5.08) (end 7.62 -7.62) (stroke (width 0.254) (type default)) (fill (type background)))
+				(rectangle (start -7.62 5.08) (end 7.62 -10.16) (stroke (width 0.254) (type default)) (fill (type background)))
 			)
 			(symbol "NT3H2111W0FHK_1_1"
 				(pin passive line
@@ -1377,7 +1377,7 @@
 					(number "4" (effects (font (size 1.27 1.27))))
 				)
 				(pin power_in line
-					(at 0 -10.16 90)
+					(at 0 -12.7 90)
 					(length 2.54)
 					(name "VSS" (effects (font (size 1.27 1.27))))
 					(number "2" (effects (font (size 1.27 1.27))))
@@ -1819,7 +1819,7 @@
 			(at 231.14 78.74 0)
 			(effects (font (size 1.27 1.27)) (hide yes))
 		)
-		(property "Note" "not fitted: 1 VBAT, 2 GND, 3 SCL, 4 FD, 5 SDA, 6 VCC (order follows U1 sides)"
+		(property "Note" "not fitted: 1 VBAT, 2 VCC, 3 SDA, 4 FD, 5 SCL, 6 GND (order follows U1 sides)"
 			(at 231.14 78.74 0)
 			(effects (font (size 1.27 1.27)) (hide yes))
 		)
@@ -1849,17 +1849,17 @@
 		(effects (font (size 1.27 1.27)) (justify right bottom))
 		(uuid "c58b55cd-c865-5f16-a105-03c9cbdd63ba")
 	)
-	(label "GND"
+	(label "VCC"
 		(at 226.06 76.2 180)
 		(fields_autoplaced yes)
 		(effects (font (size 1.27 1.27)) (justify right bottom))
-		(uuid "3ec9c501-0d8d-5ed8-a2aa-ddd1c42bbae4")
+		(uuid "815c88f2-1085-5770-bb1c-d63b943f7db8")
 	)
-	(label "SCL"
+	(label "SDA"
 		(at 226.06 78.74 180)
 		(fields_autoplaced yes)
 		(effects (font (size 1.27 1.27)) (justify right bottom))
-		(uuid "380890cb-3db7-5e54-bf6f-27eb86965350")
+		(uuid "458c9d29-bbfd-50b0-b077-af062c365331")
 	)
 	(label "FD"
 		(at 226.06 81.28 180)
@@ -1867,17 +1867,17 @@
 		(effects (font (size 1.27 1.27)) (justify right bottom))
 		(uuid "330e760a-78c0-5ec3-b863-b4c73243a54d")
 	)
-	(label "SDA"
+	(label "SCL"
 		(at 226.06 83.82 180)
 		(fields_autoplaced yes)
 		(effects (font (size 1.27 1.27)) (justify right bottom))
-		(uuid "50e8abb8-4ad3-5958-b71f-09d3183f24dd")
+		(uuid "1fe2390a-f90f-5b11-aba1-d03024751d01")
 	)
-	(label "VCC"
+	(label "GND"
 		(at 226.06 86.36 180)
 		(fields_autoplaced yes)
 		(effects (font (size 1.27 1.27)) (justify right bottom))
-		(uuid "126cdd42-7d95-5f31-b5e0-80295696d69b")
+		(uuid "6fede2b8-f07a-5de3-bc5d-c3ed90870f16")
 	)
 	(symbol
 		(lib_id "Jumper:SolderJumper_2_Open")
@@ -2297,10 +2297,10 @@
 		(uuid "e0e45b67-a28e-58d2-bda1-4d735305e448")
 	)
 	(label "GND"
-		(at 119.38 88.9 270)
+		(at 119.38 91.44 270)
 		(fields_autoplaced yes)
 		(effects (font (size 1.27 1.27)) (justify right bottom))
-		(uuid "6fa72705-e6b7-54e9-b467-c7723c723678")
+		(uuid "fd571d0c-bb7b-533f-bac4-b19ca291dd93")
 	)
 	(label "VCC"
 		(at 129.54 76.2 0)
@@ -2462,11 +2462,11 @@
 		(effects (font (size 1.5 1.5)) (justify left bottom))
 		(uuid "81802abe-f9f6-579b-9ba8-3d88789c31ae")
 	)
-	(text "J1 for any host MCU: VBAT GND SCL FD SDA VCC. JP1 powers the tag from the cell."
+	(text "J1 for any host MCU: VBAT VCC SDA FD SCL GND. JP1 powers the tag from the cell."
 		(exclude_from_sim no)
 		(at 20 162 0)
 		(effects (font (size 1.5 1.5)) (justify left bottom))
-		(uuid "aee5ef7d-6f61-582e-a34c-142fa0fb3f7c")
+		(uuid "bb81f779-c1e8-5f24-aead-d2281e88cf3a")
 	)
 	(text "BT1 on the back, hand-fitted; ferrite sheet between holder floor and cell."
 		(exclude_from_sim no)

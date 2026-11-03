@@ -8,14 +8,12 @@ It goes in the **same order as B1**, so it can't steer B1's layout. B1 copies th
 
 ## What's on it
 
-- **Top 30 × 26 mm:** B1's outline and B1's antenna. A 6-turn PCB coil, 0.25 mm track with a 0.2 mm gap, chamfered to clear the 3 mm corners. It is about 2.1 µH in air (NXP AN11276 formula). Nothing sits inside the loop on the top side.
+- **Top 30 × 26 mm:** B1's outline and B1's antenna block, from [../lib/antenna.py](../lib/antenna.py), which both boards import so they can't drift apart:
+  - a 6-turn PCB coil, 0.25 mm track with a 0.2 mm gap, chamfered to clear the 3 mm corners, about 2.1 µH in air (NXP AN11276 formula);
+  - its outer end drops to B.Cu at VO, crosses under the turns and comes back up at VI, as on B1, whose edge leaves no room for a tail;
+  - **U1** (NT3H2111, NTAG I2C plus 1k), **C3** and the **C1/C2** trim pads (not fitted) inside the bottom turns, where they sit on B1.
 - **Back:** B1's CR2032 holder, MYOUNG BS-08-B2AA001. The holder has its own − spring, so the board under the cell is bare. A ferrite sheet can then lie on the holder floor under the cell, with a slot for the spring. Rev A's Keystone 3034 couldn't take a ferrite, because the cell sits directly on a PCB pad.
-- **Tail, 12 mm:**
-  - **U1:** NT3H2111 (NTAG I2C plus 1k).
-  - **C1/C2:** trim pads (not fitted).
-  - **D1:** field LED.
-  - **J1:** host header.
-  - **JP1:** solder jumper.
+- **Tail, 12 mm:** D1 field LED, the pull-ups, JP1 and the J1 host header.
 
 | Ref | What | Note |
 |---|---|---|
@@ -27,7 +25,7 @@ It goes in the **same order as B1**, so it can't steer B1's layout. B1 copies th
 | R4, D1 | 1 kΩ, red | lit while a reader's field is on: FD pulls it low, even with VCC off |
 | JP1 | solder jumper | bridge to run the tag's I2C side from the cell |
 | BT1 | BS-08-B2AA001 (C964777) | **hand-fit on the back**, so JLC assembly stays one-sided |
-| J1 | 1×6 2.54 mm, not fitted | `+ G C F D V` = VBAT, GND, SCL, FD, SDA, VCC |
+| J1 | 1×6 2.54 mm, not fitted | `+ V D F C G` = VBAT, VCC, SDA, FD, SCL, GND |
 
 ## Regenerate
 
@@ -40,7 +38,7 @@ python3 hardware/nfc-test/tools/fab.py        # -> production/
 
 This follows the same procedure as rev A ([../README.md](../README.md)).
 
-**How the antenna is drawn.** The coil is LA track. Its inner end meets LB through net tie NT1, and LB crosses back under the turns on B.Cu. DRC doesn't check clearance within one net, so `make_pcb.py` builds the turns at a fixed pitch and asserts the 0.2 mm gap itself.
+**How the antenna is drawn.** The coil is LA track. Its inner end meets LB through net tie NT1; its outer end crosses under the turns on B.Cu (VO to VI) to reach the tag's LA pin. DRC doesn't check clearance within one net, so `antenna.py` builds the turns at a fixed pitch and asserts the 0.2 mm gap, and the vias' gap to the turns, itself.
 
 **State at commit:**
 - **ERC:** clean, apart from the library-table warnings.

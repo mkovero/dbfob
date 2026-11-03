@@ -43,6 +43,10 @@ Two directions are on the table:
   - A CR2450 (24.5 mm, 620 mAh) just fits in 30 × 26, if adaptive metering ever needs the capacity.
 - **Parts on the top side:** MCU, mic, NFC chip, four LEDs, button, 0402 passives.
 - **Keyring hole or clip** in one corner.
+- **Board drafted 2026-11-03:** [hardware/b1](../hardware/b1/README.md), routed clean, not ordered. Where it differs from the bullets here:
+  - 0603 passives (rev A's parts, and room enough);
+  - no hole in the PCB, as the coil runs round the edge: the keyring goes on the case;
+  - the IM66D130M has 0 JLC stock (global sourcing), and its NSMD pads want ENIG.
 - The mic port is centred, and stays clear of fingers and the clip.
 
 **NFC readout.** Survey on 2026-10-29. Stock and prices are from JLC's parts library.

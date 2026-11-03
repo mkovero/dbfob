@@ -31,6 +31,9 @@ PAD_MAP = {
     'SW_Push_1P1T_XKB_TS-1187A': {'1': '1', '2': '1', '3': '2', '4': '2'},
 }
 BY_NAME = {'LED_0603_1608Metric': {'K': '1', 'A': '2'}}   # KiCad LED: 1 = K, 2 = A
+# Parts EasyEDA has no footprint for yet: membership and side are still checked, the geometry
+# can't be. JLC builds the footprint when the part is sourced; check their DFM preview by eye.
+UNCHECKED = {'C52053030': 'IM66D130M, not stocked at JLC on 2026-11-03 (global sourcing)'}
 
 
 def easyeda(lcsc):
@@ -97,6 +100,10 @@ def main():
         a = math.radians(float(r['Rotation']))
         # EasyEDA frame (y down) turned by the CPL angle (CCW), into CPL coordinates (y up)
         place = lambda ex, ey: (cx + ex * math.cos(a) + ey * math.sin(a), cy + ex * math.sin(a) - ey * math.cos(a))
+        if lcsc[ref] in UNCHECKED:
+            print(f"--  {ref:4s} {lcsc[ref]:9s} rot {float(r['Rotation']):5.0f}  no EasyEDA footprint: "
+                  f"{UNCHECKED[lcsc[ref]]}; check JLC's DFM preview")
+            continue
         title, names, pads, holes, arcs_y = easyeda(lcsc[ref])
         kpads = {}
         for p in fp.Pads(): kpads.setdefault(p.GetNumber(), []).append(p)
