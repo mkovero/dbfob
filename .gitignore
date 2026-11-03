@@ -11,3 +11,4 @@ firmware/*.hex
 firmware/*.lst
 firmware/*.map
 firmware/build/
+hardware/nfc-test/production.staging/

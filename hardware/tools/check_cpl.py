@@ -20,7 +20,7 @@ import pcbnew
 
 HERE = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 CACHE = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'jlc_footprints')
-PCB = os.path.join(HERE, 'dbfob.kicad_pcb')
+PCB = sys.argv[2] if len(sys.argv) > 2 else os.path.join(HERE, 'dbfob.kicad_pcb')   # other boards: check_cpl.py PROD PCB
 PROD = sys.argv[1] if len(sys.argv) > 1 else os.path.join(HERE, 'production')
 MIL10 = 0.254                  # EasyEDA units: 10 mil
 TOL_HOLE = 0.15                # mm

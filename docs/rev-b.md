@@ -35,7 +35,8 @@ Two directions are on the table:
 **Goal:** rev A's proven metering, half the size, with the log readable on a phone by tapping. Nothing that does not serve measuring correctly or getting the log out.
 
 **Size: half of rev A.** Rev A is 30 × 52.5 mm with every part on top and the CR2032 holder taking most of it. Target about **30 × 26 mm**:
-- **Cell: CR2032, under the board** (decided 2026-10-29). It sits on the back in a low-profile holder.
+- **Cell: CR2032, under the board** (decided 2026-10-29).
+  - **Holder: MYOUNG BS-08-B2AA001** (C964777, decided 2026-11-03). It has its own − spring, so the board under the cell stays bare and a ferrite sheet can lie between the holder floor and the cell. Rev A's Keystone 3034 uses a PCB pad as the − contact, which leaves no room for the ferrite. Body 25.4 × 15.7 × 5.3 mm.
   - Kept because it fits the half-size footprint and is everywhere.
   - Smaller cells only help below half size or for thinness, and their higher internal resistance fights rev A's >10 mA peaks against the V003's 2.7 V minimum. CR1632 (16 mm, ~130 mAh) is the option if the board shrinks further, with a bulk capacitor and dimmer LED peaks.
   - Two stacked CR2016s give 6 V, which is over the mic's 3.6 V. Not an option.
@@ -72,7 +73,7 @@ Two directions are on the table:
 - **Devkit for experiment 4 (none on hand yet).**
   - MikroE NFC Tag 2 Click (MIKROE-2462) carries the NT3H2111 and an on-board antenna. Retired at SparkFun; still listed at some distributors.
   - NXP's explorer kit (OM23221ARD) is marked no longer manufactured.
-  - Fallback: a tiny JLC board with the NT3H2111 in XQFN8, the rev B antenna loop at its real size, and a CR2032 holder behind it. That tests the actual antenna over the actual cell, which no Click board does.
+  - **Chosen: our own test board,** [hardware/nfc-test](../hardware/nfc-test/README.md). It has the NT3H2111, B1's antenna at full size and B1's holder behind it, so it tests the actual antenna over the actual cell, which no Click board does. It ships in the same order as B1, so B1 copies its antenna and trim pads, and the bench result sets B1's trim cap.
 - **Phones.**
   - **iPhone** ([Apple](https://developer.apple.com/documentation/corenfc/adding-support-for-background-tag-reading)):
     - Needs an XS or later, with the screen on and the phone unlocked at least once since boot.
@@ -138,7 +139,7 @@ Two directions are on the table:
 | 4 | MSPM0L1306SRGER (C19189323); L1106 WQFN-16 2 × 3 (C32896732) | Cortex-M0+ (MUL), 32 MHz | 1.62–3.6 V | 64 K / 4 K | 1.0 µA | VQFN-24 4 × 4 | 7,831; $0.75 @1k | no: TI SDK + GCC |
 | – | CH32V003F4P6, rev A | V2A, no MUL | 2.7 V | 16 K / 2 K | 7.6 µA | TSSOP-20 | 26,683; $0.15 | yes |
 
-- **Recommended: CH32L103F8U6.** The only in-stock part with all of these:
+- **Decided (2026-11-03): CH32L103F8U6.** JLC stock had fallen to 708 by then; that is enough for prototypes, but check it before a run. The only in-stock part with all of these:
   - hardware multiply, so the A-weighting stops costing 65 % of the CPU;
   - a 1.8 V minimum, which removes the 2.7 V cutoff problem;
   - 64 K flash for the NFC driver, bootloader and log, plus 20 K RAM;
@@ -337,7 +338,7 @@ If B2 happens, BLE is enough, as long as the fob computes the spectrum and sends
    - Measure the 1/3-octave response from 100 Hz to 20 kHz against the reference.
    - This decides whether a sealed case and full band are compatible, and whether 20 kHz is worth anything.
 4. **NFC readout in one evening.**
-   - An NTAG I2C plus (NT3H2111) breakout with the dose summary in a tag URL, **over a CR2032, with and without a ferrite sheet**.
+   - **On [hardware/nfc-test](../hardware/nfc-test/README.md)** (B1's antenna and holder): the dose summary in a tag URL, **over a CR2032, with and without a ferrite sheet**.
    - Tap with an iPhone (screen on, and locked) and an Android, and confirm the page opens with no app.
    - This decides the readout for both directions.
 5. ~~Qi~~: dropped 2026-11-03, see [Wireless charging](#wireless-charging).
