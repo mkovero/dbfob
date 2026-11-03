@@ -53,7 +53,7 @@ Two directions are on the table:
 | 3 | NXP NTP5332, NTAG 5 link (C3301642) | 2 KB + 256 B SRAM, Type 5 | event pin | standby 6 µA, power-down 0.25 µA | XQFN16 1.8 × 2.6 | 89; $1.32 @100 | active |
 | 4 | NXP NT3H2211W0FHKH, NTAG I2C plus 2k (C2905792) | 1912 B, Type 2 | as #1 | as #1 | XQFN8 1.6 × 1.6, same footprint as #1 | 50; $1.15 @100 | active |
 
-- **Recommended: NT3H2111.** Smallest, cheapest, deep stock, and Type 2 is the safest tag type for iPhone background reading.
+- **Decided (2026-11-03): NT3H2111.** Smallest, cheapest, deep stock, and Type 2 is the safest tag type for iPhone background reading.
   - 888 B holds the 156 B summary URL easily.
   - VCC comes from an MCU GPIO. Keep SDA/SCL low or floating while it is off, so the chip isn't powered through them.
   - Its FD pin can wake the MCU from the phone's field alone.
@@ -69,6 +69,10 @@ Two directions are on the table:
   - **The CR2032 behind the coil is the main risk.** Eddy currents in the cell drop inductance and add loss; read range may collapse ([Würth ANP022](https://www.we-online.com/components/media/o109046v410%20ANP022c%20EN.pdf)).
   - Fix: a 0.1–0.2 mm NFC-grade ferrite sheet between the board and the cell (Würth WE-FSFS, 364 material, [ANP016](https://www.we-online.com/components/media/o109045v410%20ANP016c%20EN.pdf)). Not stocked at JLC, so it's a hand-assembly step. Tune with the ferrite and cell in place.
   - No app note found for coin cells specifically, so **prototype this first** (experiment 4).
+- **Devkit for experiment 4 (none on hand yet).**
+  - MikroE NFC Tag 2 Click (MIKROE-2462) carries the NT3H2111 and an on-board antenna. Retired at SparkFun; still listed at some distributors.
+  - NXP's explorer kit (OM23221ARD) is marked no longer manufactured.
+  - Fallback: a tiny JLC board with the NT3H2111 in XQFN8, the rev B antenna loop at its real size, and a CR2032 holder behind it. That tests the actual antenna over the actual cell, which no Click board does.
 - **Phones.**
   - **iPhone** ([Apple](https://developer.apple.com/documentation/corenfc/adding-support-for-background-tag-reading)):
     - Needs an XS or later, with the screen on and the phone unlocked at least once since boot.
@@ -283,6 +287,8 @@ IM69D130: operating 1.62–3.6 V, **absolute maximum 4 V on any pin** (datasheet
 
 ### Wireless charging
 
+**Dropped (2026-11-03).** B1 runs on a CR2032 and B2 is parked, so nothing charges. The notes below stay for the record.
+
 **Qi.**
 - **BQ51050B** (TI): Active, Qi 1.2, includes the Li-ion charger. $2.86 @500, $2.61 @3k (Digi-Key). DSBGA-28 or 4.5 × 3.5 mm VQFN. Still **the only verified single-chip Qi receiver plus charger**. Its matching transmitter (bq500212A) is not recommended for new designs, so the platform is ageing.
 - **Receiver-only alternatives:** BQ51003 (2.5 W), STWLC38 ($2.35 @2.5k), P9222-R (5 W, not 2.5 W as first written).
@@ -334,9 +340,7 @@ If B2 happens, BLE is enough, as long as the fob computes the spectrum and sends
    - An NTAG I2C plus (NT3H2111) breakout with the dose summary in a tag URL, **over a CR2032, with and without a ferrite sheet**.
    - Tap with an iPhone (screen on, and locked) and an Android, and confirm the page opens with no app.
    - This decides the readout for both directions.
-5. **Only if Qi stays:**
-   - A cheap receiver module with a 20 mm coil, on three common pads, inside a closed printed box with a thermocouple on the cell.
-   - Does the pad accept it, at what current, at what temperature?
+5. ~~Qi~~: dropped 2026-11-03, see [Wireless charging](#wireless-charging).
 
 Bonus if going nRF anyway: an nRF54L15 DK plus an IM69D130 breakout. Run PDM at about 3 MHz into about 48 kHz with the CPU asleep, and measure continuous and advertising-only current. That replaces the runtime guesses with numbers.
 
