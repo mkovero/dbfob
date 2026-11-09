@@ -25,7 +25,7 @@ Along the stick from the tip:
 | U3 | TLV61220DBVR, C111811 | boost, 0.7 V start-up, 3.0 V out (R9 1 MΩ / R10 200 kΩ); EN to the cell, always on |
 | L1 | MPL2016S4R7MHT, C98335 | 4.7 µH, 2.0 × 1.6 mm, multilayer |
 | C5, C7 | 10 µF | boost output, input |
-| MK1 | IM66D130M, C52053030 | **0 JLC stock: global sourcing.** 0.5 mm port (NPTH) through the board, inside the coil |
+| MK1 | IM66D130M, C52053030 | **20 at JLC on 2026-11-09** (0 on 2026-11-03): order early. 0.5 mm port (NPTH) through the board, inside the coil |
 | R8, C6 | 100 Ω, 1 µF (C15849) | mic supply from PA4, filtered against the boost's burst ripple |
 | U1 | NT3H2111W0FHKH, C710403 | NTAG I2C plus 1k, powered from PB14 |
 | C1, C2 | 0603 trim, **not fitted** | C0G, value from the NFC test board |
@@ -81,7 +81,7 @@ Same procedure as rev A ([../README.md](../README.md)). Routing is signals first
 
 ## Before ordering
 
-- Re-check CH32L103F8U6 and TLV61220 stock, and source the IM66D130M.
+- Stock on 2026-11-09: CH32L103F8U6 481, TLV61220 10 670, IM66D130M 20, MY-AAA-07 3 594. Recheck the MCU and the mic on order day.
 - **ENIG finish:** the mic's pads are NSMD (0.05 mm mask clearance on them).
 - **Check JLC's DFM preview** for the mic: its rotation, and that the copper ring round the 0.5 mm port isn't trimmed (JLC may remove thin copper rings at NPTHs).
 - 4 layers at 1.0 mm: check JLC's stack-up price against the test board's, since both use it.

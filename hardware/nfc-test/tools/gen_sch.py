@@ -26,7 +26,7 @@ def uid(*k): return str(uuid.uuid5(NS, '/'.join(map(str, k))))
 
 
 # ---------------------------------------------------------------------------------------------
-# Parts. LCSC numbers and stock checked against JLC's parts API on 2026-11-03.
+# Parts. LCSC numbers and stock checked against JLC's parts API on 2026-11-09.
 # ref: lib_id, value, footprint, LCSC, MPN, note, (x, y, rot) on the sheet, {pin: net}, dnp
 # A part with no LCSC number lands in the manual BOM (etofab.md §2).
 # ---------------------------------------------------------------------------------------------

@@ -26,7 +26,7 @@ def uid(*k): return str(uuid.uuid5(NS, '/'.join(map(str, k))))
 
 
 # ---------------------------------------------------------------------------------------------
-# Parts. LCSC numbers and stock checked against JLC's parts API on 2026-11-03.
+# Parts. LCSC numbers and stock checked against JLC's parts API on 2026-11-09.
 # ref: lib_id, value, footprint, LCSC, MPN, note, (x, y, rot) on the sheet, {pin: net}, dnp
 # A part with no LCSC number lands in the manual BOM (etofab.md §2).
 # ---------------------------------------------------------------------------------------------
@@ -86,11 +86,11 @@ PARTS = {
     # Mic: IM66D130M at the tip, inside the coil, bottom port through the board. Powered from PA4
     # only while measuring, through R8 + C6 (1.6 kHz): the boost converter's burst ripple at light
     # load stays off the mic's supply. 100 Ohm x 0.54 mA = 54 mV. LR to
-    # GND as rev A's SELECT: data valid on the same clock edge. 0 stock at JLC/LCSC on
-    # 2026-11-03: JLC global sourcing or consignment.
+    # GND as rev A's SELECT: data valid on the same clock edge. 0 stock at JLC on
+    # 2026-11-03, 20 on 2026-11-09: order early, or global sourcing / consignment.
     'MK1': ('dbfob:IM66D130M', 'IM66D130M', 'dbfob:Infineon_IM66D130M_LGA-5_3x2mm', 'C52053030',
             'IM66D130MV01XTMA1', 'bottom port: the 0.5 mm NPTH in the footprint is the sound inlet; '
-            'not stocked on 2026-11-03, global sourcing', (200, 60, 0),
+            '20 at JLC on 2026-11-09, no EasyEDA footprint', (200, 60, 0),
             {'5': 'MIC_VDD', '4': 'MIC_CLK', '2': 'GND', '1': 'MIC_DATA', '3': 'GND'}, False),
     'R8': ('Device:R', '100', R_FP, 'C22775', '0603WAF1000T5E', 'mic supply filter, with C6', (215, 40, 90),
            {'1': 'MIC_PWR', '2': 'MIC_VDD'}, False),

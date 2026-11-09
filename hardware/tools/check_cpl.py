@@ -33,7 +33,7 @@ PAD_MAP = {
 BY_NAME = {'LED_0603_1608Metric': {'K': '1', 'A': '2'}}   # KiCad LED: 1 = K, 2 = A
 # Parts EasyEDA has no footprint for yet: membership and side are still checked, the geometry
 # can't be. JLC builds the footprint when the part is sourced; check their DFM preview by eye.
-UNCHECKED = {'C52053030': 'IM66D130M, not stocked at JLC on 2026-11-03 (global sourcing)'}
+UNCHECKED = {'C52053030': 'IM66D130M (EasyEDA still 404 on 2026-11-09)'}
 
 
 def easyeda(lcsc):

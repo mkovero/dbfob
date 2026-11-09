@@ -2737,7 +2737,7 @@
 			(at 200.66 60.96 0)
 			(effects (font (size 1.27 1.27)) (hide yes))
 		)
-		(property "Note" "bottom port: the 0.5 mm NPTH in the footprint is the sound inlet; not stocked on 2026-11-03, global sourcing"
+		(property "Note" "bottom port: the 0.5 mm NPTH in the footprint is the sound inlet; 20 at JLC on 2026-11-09, no EasyEDA footprint"
 			(at 200.66 60.96 0)
 			(effects (font (size 1.27 1.27)) (hide yes))
 		)
