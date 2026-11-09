@@ -48,6 +48,7 @@ Two directions are on the table:
   - no hole in the PCB, as the coil runs round the edge: the keyring goes on the case;
   - the IM66D130M has 0 JLC stock (global sourcing), and its NSMD pads want ENIG.
   - the button is on PA0/WKUP to VBAT: the pull-up first drafted would have failed on some CH32L103 lots (see the B1 README).
+- **2026-11-09: a stick shape on an AAA cell is under consideration** instead: see [B1 stick](#b1-stick-aaa-instead-of-cr2032-under-consideration).
 - The mic port is centred, and stays clear of fingers and the clip.
 
 **NFC readout.** Survey on 2026-10-29. Stock and prices are from JLC's parts library.
@@ -185,6 +186,64 @@ Two directions are on the table:
 - Rev A's low-battery lockout, and the overload flag in the log.
 
 **Out of B1:** BLE, LiPo, wireless charging, live spectrum on a phone.
+
+## B1 stick: AAA instead of CR2032 (under consideration)
+
+Raised 2026-11-09: the 30 × 26 mm fob is square and wide in the hand. The wish is a little stick with the mic at the end. A CR2032 sets the width (20 mm cell, about 24 mm case), so a stick needs a thinner cell. Options weighed:
+
+| Option | Case, about | Cell | Verdict |
+|---|---|---|---|
+| Lollipop: CR2032 at one end, narrow neck with the mic at the tip | 24 mm at the cell, 12 mm neck, 50 mm long | 225 mAh | Still wide at one end |
+| CR1632 stick | 19 × 45 mm | ~130 mAh | Smallest change, about 60 % of the life |
+| **AAA stick, with a boost converter** | **14 × 75–80 mm, 14 mm thick** | **~1250 mAh (L92 lithium)** | **The one being looked at** |
+| CR1220/1225, AAAA | ~14 mm | 35–50 mAh | Too little capacity |
+| ER14250 (1/2AA Li-SOCl2) | ~16 mm | ~1200 mAh | 3.67 V fresh, over the mic's 3.465 V maximum |
+
+Nothing is decided. B1 and the NFC test board are not ordered, and a stick changes the shared antenna, so both would be redrawn.
+
+**Cell.** Energizer L92 (Li-FeS2, FR03): 10.5 × 44.5 mm, about 1250 mAh, 1.5 V, −40 to 60 °C, 15–20 years shelf life ([datasheet](https://www.farnell.com/datasheets/83413.pdf)). Through the boost converter, alkaline and NiMH AAAs work too. A cell the user buys anywhere also settles the EU removability rule.
+
+**Holder** (checked 2026-11-09, LCSC):
+- MYOUNG BH-AAA-B5AA001 / B5AK001 (C964881 / C964882) hold **two** cells, 62 × 22 mm. Out.
+- MYOUNG BH-AAA-B5BA021 (C7525446): one cell, 61.7 × 12.5 × 11.2 mm, $1.05, only 74 in stock.
+- **MYOUNG MY-AAA-07 (C6937109): loose SMD spring contacts, $0.12, 3535 in stock.** Two on the board at L = 42.4 mm (the datasheet's AAA dimension), each 6.35 mm wide and 10.5 mm tall. The case is the cradle. Preferred: cheap, stocked, and the board can be narrower than the cell.
+
+**Boost converter** (checked 2026-11-09: datasheets, JLC stock and prices):
+
+| Part | LCSC | Package | Price | Stock | Start | Iq typ | |
+|---|---|---|---|---|---|---|---|
+| **TI TLV61220DBVR** | **C111811** | SOT-23-6 | **$0.28** | 10,670 | 0.7 V | 0.5 µA VIN + 5 µA VOUT | **Pick.** Synchronous, 4.7 µH. Same die from MSTLV61220DBVR (C49208391) and TLV61220DBVR-TP (C47117507) |
+| TI TPS61099DRVR | C2842395 | WSON-6 2 × 2 | $1.31 | 13,293 | 0.7 V | 0.4 + 0.6 µA | Low-Iq fallback, 2.2 µH |
+| TI TPS610993YFFR (3.0 V fixed) | C2070793 | DSBGA-6 | $2.18 | 21 | 0.7 V | 0.4 + 0.6 µA | Out: price, stock, ball grid |
+| Microne ME2108A30 | C19056 | SOT-89 | $0.08 | 2,290 | 0.9 V | 9 µA | Out: asynchronous (diode, 47–100 µH), PFM noise near the mic |
+| TI TPS61097A-33 | C2071172 | SOT-23-5 | $0.71 | 5,910 | 0.9 V | 5 µA | 3.3 V fixed, close to the mic maximum; no gain over the TLV61220 |
+| TI TLV61070A | C6881375 | SOT-23-6 | $0.24 | 17,163 | 1.3 V | 20 µA | Out |
+| ETA ETA1036 | C7435198 | SOT-23-5 | $0.19 | 2,935 | 0.85 V | 40 µA | Out |
+
+TLV61220 at 3.0 V: FB is 0.5 V, R1 = 1 MΩ, R2 = 200 kΩ. The datasheet wants at least 1 µA in the divider, so this one costs 2.5 µA. With 5 µA into VOUT and the converter's poor efficiency at µA loads, idle draw from the cell is **about 20–25 µA (estimate)**: an L92 runs flat from idle alone in about 5–6 years. The TPS61099 would be about 3 µA. The mic needs an RC filter on its supply against the converter's burst ripple at light load.
+
+**Current with the CH32L103** (datasheet table 3-7-1, code from SRAM, flash in low power, all peripherals on):
+
+| HCLK | Run | Sleep (peripherals clocked) |
+|---|---|---|
+| 8 MHz | 0.91 mA | 0.72 mA |
+| 48 MHz | 3.77 mA | 2.52 mA |
+
+**Life estimate (unmeasured):**
+- **Continuous metering.** 24 MHz is interpolated to about 2.0 mA run and 1.4 mA sleep. With an assumed 10 % DSP duty (rev A used 41 % of 48 MHz without a hardware multiplier; the L103 has one), the MCU takes about 1.5 mA and the mic 0.42 mA. That is about 1.9 mA at 3 V, or 6.3 mW from the cell. At 12 MHz (SPI ÷ 8 still gives the 1.5 MHz mic clock) about 1.6 mA.
+- **The L92 holds about 1.8 Wh, so about 280–340 h:** two weeks around the clock, or 25–30 twelve-hour nights.
+- **Sampled like rev A** (1 s per minute, rev A measured about 2 mAh a night): hundreds of nights.
+- **A middle way in firmware:** sample by default and meter continuously only while it is loud.
+
+**Cost:** about +$0.6: the converter $0.28, two contacts $0.24, and the coil and resistors (the coil is not chosen yet). The CR2032 holder goes.
+
+**NFC:** the coil moves to the 12 × 25 mm area past the end of the cell, about 40 % of the current loop area. It needs more turns to reach the tag's ~2.75 µH, and the phone has to touch. In return it no longer sits over a metal cell, so the ferrite sheet goes.
+
+**Open before deciding:**
+- Measure continuous A-weighting current on a CH32L103, on a devkit or on B1.
+- Choose the 4.7 µH coil.
+- Size the small NFC coil.
+- Draw the case outline next to the current 30 × 26 mm fob.
 
 ## The design review's main points
 
