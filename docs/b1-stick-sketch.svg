@@ -1,0 +1,79 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="130mm" height="150mm" viewBox="0 0 130 150">
+<rect width="130" height="150" fill="white"/>
+<rect x="8.25" y="12.25" width="33.50" height="29.50" rx="2.5" fill="none" stroke="#888" stroke-width="0.3"/>
+<rect x="10.00" y="14.00" width="30.00" height="26.00" rx="3" fill="none" stroke="#222" stroke-width="0.2"/>
+<polyline points="27.60,39.00 12.35,39.00 10.65,37.30 10.65,17.10 13.10,14.65 36.90,14.65 39.35,17.10 39.35,36.85 37.65,38.55 12.54,38.55 11.10,37.11 11.10,17.29 13.29,15.10 36.71,15.10 38.90,17.29 38.90,36.66 37.46,38.10 12.72,38.10 11.55,36.93 11.55,17.47 13.47,15.55 36.53,15.55 38.45,17.47 38.45,36.48 37.28,37.65 12.91,37.65 12.00,36.74 12.00,17.66 13.66,16.00 36.34,16.00 38.00,17.66 38.00,36.29 37.09,37.20 13.10,37.20 12.45,36.55 12.45,17.85 13.85,16.45 36.15,16.45 37.55,17.85 37.55,36.10 36.90,36.75 13.28,36.75 12.90,36.37 12.90,18.03 14.03,16.90 35.97,16.90 37.10,18.03 37.10,35.92 36.72,36.30 25.60,36.30" fill="none" stroke="#c47a00" stroke-width="0.25"/>
+<circle cx="25.00" cy="28.00" r="10.00" fill="none" stroke="#3a6fb0" stroke-width="0.2" stroke-dasharray="1,0.6"/>
+<rect x="23.50" y="23.30" width="3.00" height="3.00" rx="0" fill="#ddd" stroke="#555" stroke-width="0.2"/>
+<rect x="30.50" y="17.30" width="2.00" height="3.00" rx="0" fill="#ddd" stroke="#555" stroke-width="0.2"/>
+<circle cx="31.50" cy="18.26" r="0.35" fill="#c0392b" stroke="#c0392b" stroke-width="0.2"/>
+<rect x="14.75" y="17.30" width="5.10" height="5.10" rx="0" fill="#eee" stroke="#555" stroke-width="0.2"/>
+<text x="25.00" y="9.75" font-size="2.8" text-anchor="middle" fill="#222" font-family="sans-serif" font-weight="bold">B1 as drafted: CR2032</text>
+<text x="25.00" y="45.75" font-size="2.4" text-anchor="middle" fill="#222" font-family="sans-serif" font-weight="normal">case about 33.5 × 29.5 × 11 mm</text>
+<text x="25.00" y="48.75" font-size="2.2" text-anchor="middle" fill="#888" font-family="sans-serif" font-weight="normal">coil 6 turns 0.25/0.2, ~2.2 µH</text>
+<rect x="58.25" y="16.25" width="43.50" height="21.50" rx="2.5" fill="none" stroke="#888" stroke-width="0.3"/>
+<rect x="60.00" y="18.00" width="40.00" height="18.00" rx="2" fill="none" stroke="#222" stroke-width="0.2"/>
+<rect x="60.25" y="18.25" width="20.00" height="17.50" rx="0" fill="none" stroke="#c47a00" stroke-width="0.25"/>
+<rect x="60.70" y="18.70" width="19.10" height="16.60" rx="0" fill="none" stroke="#c47a00" stroke-width="0.25"/>
+<rect x="61.15" y="19.15" width="18.20" height="15.70" rx="0" fill="none" stroke="#c47a00" stroke-width="0.25"/>
+<rect x="61.60" y="19.60" width="17.30" height="14.80" rx="0" fill="none" stroke="#c47a00" stroke-width="0.25"/>
+<rect x="62.05" y="20.05" width="16.40" height="13.90" rx="0" fill="none" stroke="#c47a00" stroke-width="0.25"/>
+<rect x="62.50" y="20.50" width="15.50" height="13.00" rx="0" fill="none" stroke="#c47a00" stroke-width="0.25"/>
+<circle cx="90.50" cy="27.00" r="8.00" fill="none" stroke="#3a6fb0" stroke-width="0.2" stroke-dasharray="1,0.6"/>
+<rect x="63.50" y="26.00" width="3.00" height="2.00" rx="0" fill="#ddd" stroke="#555" stroke-width="0.2"/>
+<circle cx="64.00" cy="27.00" r="0.35" fill="#c0392b" stroke="#c0392b" stroke-width="0.2"/>
+<text x="80.00" y="13.75" font-size="2.8" text-anchor="middle" fill="#222" font-family="sans-serif" font-weight="bold">Option B: CR1632 stick</text>
+<text x="80.00" y="41.75" font-size="2.4" text-anchor="middle" fill="#222" font-family="sans-serif" font-weight="normal">case about 44 × 22 × 9 mm, ~130 mAh</text>
+<text x="80.00" y="44.75" font-size="2.2" text-anchor="middle" fill="#888" font-family="sans-serif" font-weight="normal">coil at the tip, cell under the far end</text>
+<rect x="8.25" y="64.25" width="82.50" height="14.00" rx="2.5" fill="none" stroke="#888" stroke-width="0.3"/>
+<rect x="10.00" y="66.00" width="74.00" height="10.50" rx="1" fill="none" stroke="#222" stroke-width="0.2"/>
+<rect x="10.25" y="66.25" width="22.00" height="10.00" rx="0" fill="none" stroke="#c47a00" stroke-width="0.15"/>
+<rect x="10.55" y="66.55" width="21.40" height="9.40" rx="0" fill="none" stroke="#c47a00" stroke-width="0.15"/>
+<rect x="10.85" y="66.85" width="20.80" height="8.80" rx="0" fill="none" stroke="#c47a00" stroke-width="0.15"/>
+<rect x="11.15" y="67.15" width="20.20" height="8.20" rx="0" fill="none" stroke="#c47a00" stroke-width="0.15"/>
+<rect x="11.45" y="67.45" width="19.60" height="7.60" rx="0" fill="none" stroke="#c47a00" stroke-width="0.15"/>
+<rect x="11.75" y="67.75" width="19.00" height="7.00" rx="0" fill="none" stroke="#c47a00" stroke-width="0.15"/>
+<rect x="12.05" y="68.05" width="18.40" height="6.40" rx="0" fill="none" stroke="#c47a00" stroke-width="0.15"/>
+<rect x="12.35" y="68.35" width="17.80" height="5.80" rx="0" fill="none" stroke="#c47a00" stroke-width="0.15"/>
+<rect x="12.65" y="68.65" width="17.20" height="5.20" rx="0" fill="none" stroke="#c47a00" stroke-width="0.15"/>
+<rect x="36.00" y="66.00" width="44.50" height="10.50" rx="1" fill="none" stroke="#3a6fb0" stroke-width="0.2" stroke-dasharray="1,0.6"/>
+<rect x="34.00" y="68.05" width="2.00" height="6.35" rx="0" fill="none" stroke="#3a6fb0" stroke-width="0.15" stroke-dasharray="0.5,0.4"/>
+<rect x="80.50" y="68.05" width="2.00" height="6.35" rx="0" fill="none" stroke="#3a6fb0" stroke-width="0.15" stroke-dasharray="0.5,0.4"/>
+<rect x="13.40" y="70.25" width="3.00" height="2.00" rx="0" fill="#ddd" stroke="#555" stroke-width="0.2"/>
+<circle cx="13.90" cy="71.25" r="0.35" fill="#c0392b" stroke="#c0392b" stroke-width="0.2"/>
+<rect x="19.00" y="70.45" width="1.60" height="1.60" rx="0" fill="#ddd" stroke="#555" stroke-width="0.2"/>
+<rect x="23.00" y="69.65" width="1.60" height="0.80" rx="0" fill="#eee" stroke="#555" stroke-width="0.2"/>
+<rect x="23.00" y="72.05" width="1.60" height="0.80" rx="0" fill="#eee" stroke="#555" stroke-width="0.2"/>
+<rect x="36.00" y="69.75" width="3.00" height="3.00" rx="0" fill="#ddd" stroke="#555" stroke-width="0.2"/>
+<rect x="42.00" y="69.80" width="1.60" height="2.90" rx="0" fill="#ddd" stroke="#555" stroke-width="0.2"/>
+<rect x="45.00" y="70.45" width="2.00" height="1.60" rx="0" fill="#eee" stroke="#555" stroke-width="0.2"/>
+<rect x="51.00" y="70.85" width="1.60" height="0.80" rx="0" fill="#ffd27f" stroke="#555" stroke-width="0.2"/>
+<rect x="54.00" y="70.85" width="1.60" height="0.80" rx="0" fill="#ffd27f" stroke="#555" stroke-width="0.2"/>
+<rect x="57.00" y="70.85" width="1.60" height="0.80" rx="0" fill="#ffd27f" stroke="#555" stroke-width="0.2"/>
+<rect x="60.00" y="70.85" width="1.60" height="0.80" rx="0" fill="#ffd27f" stroke="#555" stroke-width="0.2"/>
+<rect x="64.00" y="68.70" width="5.10" height="5.10" rx="0" fill="#eee" stroke="#555" stroke-width="0.2"/>
+<circle cx="72.00" cy="71.25" r="0.60" fill="#eee" stroke="#555" stroke-width="0.2"/>
+<circle cx="74.54" cy="71.25" r="0.60" fill="#eee" stroke="#555" stroke-width="0.2"/>
+<circle cx="77.08" cy="71.25" r="0.60" fill="#eee" stroke="#555" stroke-width="0.2"/>
+<circle cx="79.62" cy="71.25" r="0.60" fill="#eee" stroke="#555" stroke-width="0.2"/>
+<circle cx="82.16" cy="71.25" r="0.60" fill="#eee" stroke="#555" stroke-width="0.2"/>
+<text x="47.00" y="61.75" font-size="2.8" text-anchor="middle" fill="#222" font-family="sans-serif" font-weight="bold">Option C: AAA stick (parts face; cell dashed, on the other face)</text>
+<text x="47.00" y="82.25" font-size="2.4" text-anchor="middle" fill="#222" font-family="sans-serif" font-weight="normal">case about 82 × 14 × 16 mm, ~1250 mAh (L92)</text>
+<text x="47.00" y="85.25" font-size="2.2" text-anchor="middle" fill="#888" font-family="sans-serif" font-weight="normal">coil 9 turns 0.15/0.15 in 22 × 10 mm, ~2.2 µH, mic port at the tip</text>
+<text x="47.00" y="88.25" font-size="2.2" text-anchor="middle" fill="#888" font-family="sans-serif" font-weight="normal">MCU, boost, LEDs, button and pads sit under the cell, on the other face</text>
+<text x="10.00" y="99.00" font-size="2.8" text-anchor="start" fill="#222" font-family="sans-serif" font-weight="bold">Edge views (case skins, parts, board, cell)</text>
+<rect x="10.00" y="113.80" width="33.50" height="1.20" rx="0" fill="#ccc" stroke="#ccc" stroke-width="0.15"/>
+<rect x="10.00" y="108.50" width="33.50" height="5.30" rx="0" fill="#9fbde0" stroke="#9fbde0" stroke-width="0.15"/>
+<rect x="10.00" y="106.90" width="33.50" height="1.60" rx="0" fill="#4a7" stroke="#4a7" stroke-width="0.15"/>
+<rect x="10.00" y="105.40" width="33.50" height="1.50" rx="0" fill="#555" stroke="#555" stroke-width="0.15"/>
+<rect x="10.00" y="104.20" width="33.50" height="1.20" rx="0" fill="#ccc" stroke="#ccc" stroke-width="0.15"/>
+<text x="45.50" y="110.40" font-size="2.4" text-anchor="start" fill="#222" font-family="sans-serif" font-weight="normal">B1: about 11 mm thick</text>
+<rect x="10.00" y="133.80" width="82.50" height="1.20" rx="0" fill="#ccc" stroke="#ccc" stroke-width="0.15"/>
+<rect x="10.00" y="132.30" width="82.50" height="1.50" rx="0" fill="#555" stroke="#555" stroke-width="0.15"/>
+<rect x="10.00" y="131.30" width="82.50" height="1.00" rx="0" fill="#4a7" stroke="#4a7" stroke-width="0.15"/>
+<rect x="10.00" y="120.50" width="82.50" height="10.80" rx="0" fill="#9fbde0" stroke="#9fbde0" stroke-width="0.15"/>
+<rect x="10.00" y="119.30" width="82.50" height="1.20" rx="0" fill="#ccc" stroke="#ccc" stroke-width="0.15"/>
+<text x="94.50" y="127.95" font-size="2.4" text-anchor="start" fill="#222" font-family="sans-serif" font-weight="normal">AAA stick: about 16 mm thick</text>
+<text x="10.00" y="143.00" font-size="2.2" text-anchor="start" fill="#888" font-family="sans-serif" font-weight="normal">Sizes estimated with rev A walls (1.6 mm wall, 1.2 mm skins); parts indicative.</text>
+<text x="10.00" y="146.00" font-size="2.2" text-anchor="start" fill="#888" font-family="sans-serif" font-weight="normal">Red dot = mic port. 1 unit = 1 mm: print at 100 % for real size.</text>
+</svg>
