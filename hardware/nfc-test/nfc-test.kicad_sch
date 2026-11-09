@@ -1142,184 +1142,6 @@
 			)
 			(embedded_fonts no)
 		)
-			(symbol "Jumper:SolderJumper_2_Open"
-			(pin_numbers
-				(hide yes)
-			)
-			(pin_names
-				(offset 0)
-				(hide yes)
-			)
-			(exclude_from_sim no)
-			(in_bom no)
-			(on_board yes)
-			(in_pos_files yes)
-			(duplicate_pin_numbers_are_jumpers no)
-			(property "Reference" "JP"
-				(at 0 2.032 0)
-				(show_name no)
-				(do_not_autoplace no)
-				(effects
-					(font
-						(size 1.27 1.27)
-					)
-				)
-			)
-			(property "Value" "SolderJumper_2_Open"
-				(at 0 -2.54 0)
-				(show_name no)
-				(do_not_autoplace no)
-				(effects
-					(font
-						(size 1.27 1.27)
-					)
-				)
-			)
-			(property "Footprint" ""
-				(at 0 0 0)
-				(show_name no)
-				(do_not_autoplace no)
-				(hide yes)
-				(effects
-					(font
-						(size 1.27 1.27)
-					)
-				)
-			)
-			(property "Datasheet" ""
-				(at 0 -7.62 0)
-				(show_name no)
-				(do_not_autoplace no)
-				(hide yes)
-				(effects
-					(font
-						(size 1.27 1.27)
-					)
-				)
-			)
-			(property "Description" "Solder Jumper, 2-pole, open"
-				(at 0 -5.08 0)
-				(show_name no)
-				(do_not_autoplace no)
-				(hide yes)
-				(effects
-					(font
-						(size 1.27 1.27)
-					)
-				)
-			)
-			(property "ki_keywords" "solder jumper SPST"
-				(at 0 0 0)
-				(show_name no)
-				(do_not_autoplace no)
-				(hide yes)
-				(effects
-					(font
-						(size 1.27 1.27)
-					)
-				)
-			)
-			(property "ki_fp_filters" "SolderJumper*Open*"
-				(at 0 0 0)
-				(show_name no)
-				(do_not_autoplace no)
-				(hide yes)
-				(effects
-					(font
-						(size 1.27 1.27)
-					)
-				)
-			)
-			(symbol "SolderJumper_2_Open_0_1"
-				(polyline
-					(pts
-						(xy -0.254 1.016) (xy -0.254 -1.016)
-					)
-					(stroke
-						(width 0.1524)
-						(type default)
-					)
-					(fill
-						(type none)
-					)
-				)
-				(arc
-					(start -0.254 -1.016)
-					(mid -1.2656 0)
-					(end -0.254 1.016)
-					(stroke
-						(width 0.1524)
-						(type default)
-					)
-					(fill
-						(type outline)
-					)
-				)
-				(arc
-					(start 0.254 1.016)
-					(mid 1.2656 0)
-					(end 0.254 -1.016)
-					(stroke
-						(width 0.1524)
-						(type default)
-					)
-					(fill
-						(type outline)
-					)
-				)
-				(polyline
-					(pts
-						(xy 0.254 1.016) (xy 0.254 -1.016)
-					)
-					(stroke
-						(width 0.1524)
-						(type default)
-					)
-					(fill
-						(type none)
-					)
-				)
-			)
-			(symbol "SolderJumper_2_Open_1_1"
-				(pin passive line
-					(at -5.08 0 0)
-					(length 3.81)
-					(name "A"
-						(effects
-							(font
-								(size 1.27 1.27)
-							)
-						)
-					)
-					(number "1"
-						(effects
-							(font
-								(size 1.27 1.27)
-							)
-						)
-					)
-				)
-				(pin passive line
-					(at 5.08 0 180)
-					(length 3.81)
-					(name "B"
-						(effects
-							(font
-								(size 1.27 1.27)
-							)
-						)
-					)
-					(number "2"
-						(effects
-							(font
-								(size 1.27 1.27)
-							)
-						)
-					)
-				)
-			)
-			(embedded_fonts no)
-		)
 			(symbol "dbfob:NT3H2111W0FHK"
 			(pin_names (offset 1.016))
 			(exclude_from_sim no)
@@ -1514,11 +1336,11 @@
 			(at 43.64 113.38 0)
 			(effects (font (size 1.27 1.27)))
 		)
-		(property "Value" "CR2032"
+		(property "Value" "AAA"
 			(at 43.64 125.38 0)
 			(effects (font (size 1.27 1.27)))
 		)
-		(property "Footprint" "dbfob:BatteryHolder_MYOUNG_BS-08-B2AA001_CR2032"
+		(property "Footprint" "dbfob:BatteryContacts_MYOUNG_MY-AAA-07_1xAAA"
 			(at 40.64 119.38 0)
 			(effects (font (size 1.27 1.27)) (hide yes))
 		)
@@ -1530,11 +1352,11 @@
 			(at 40.64 119.38 0)
 			(effects (font (size 1.27 1.27)) (hide yes))
 		)
-		(property "MPN" "BS-08-B2AA001"
+		(property "MPN" "MY-AAA-07"
 			(at 40.64 119.38 0)
 			(effects (font (size 1.27 1.27)) (hide yes))
 		)
-		(property "Note" "hand-fit on the back (LCSC C964777); ferrite sheet between holder floor and cell"
+		(property "Note" "hand-fit on the back: 2x MYOUNG MY-AAA-07 (LCSC C6937109)"
 			(at 40.64 119.38 0)
 			(effects (font (size 1.27 1.27)) (hide yes))
 		)
@@ -1546,11 +1368,11 @@
 		)
 		(instances (project "nfc-test" (path "/7e6ede9b-4364-501f-9aee-fb1f18d79865" (reference "BT1") (unit 1))))
 	)
-	(label "VBAT"
+	(label "VCELL"
 		(at 40.64 114.3 90)
 		(fields_autoplaced yes)
 		(effects (font (size 1.27 1.27)) (justify left bottom))
-		(uuid "09f158f2-883c-59f3-9ee2-7688c7ede792")
+		(uuid "7a5671f7-199f-51fc-b928-8b5a4ee39f2b")
 	)
 	(label "GND"
 		(at 40.64 121.92 270)
@@ -1803,7 +1625,7 @@
 			(at 234.14 84.74 0)
 			(effects (font (size 1.27 1.27)))
 		)
-		(property "Footprint" "Connector_PinHeader_2.54mm:PinHeader_1x06_P2.54mm_Vertical"
+		(property "Footprint" "dbfob:TestPads_1x06_P2.54mm_D1.2mm"
 			(at 231.14 78.74 0)
 			(effects (font (size 1.27 1.27)) (hide yes))
 		)
@@ -1819,7 +1641,7 @@
 			(at 231.14 78.74 0)
 			(effects (font (size 1.27 1.27)) (hide yes))
 		)
-		(property "Note" "not fitted: 1 VBAT, 2 VCC, 3 SDA, 4 FD, 5 SCL, 6 GND (order follows U1 sides)"
+		(property "Note" "SMD pads for wires or pogo pins: 1 VCELL, 2 VCC, 3 SDA, 4 FD, 5 SCL, 6 GND"
 			(at 231.14 78.74 0)
 			(effects (font (size 1.27 1.27)) (hide yes))
 		)
@@ -1843,11 +1665,11 @@
 		)
 		(instances (project "nfc-test" (path "/7e6ede9b-4364-501f-9aee-fb1f18d79865" (reference "J1") (unit 1))))
 	)
-	(label "VBAT"
+	(label "VCELL"
 		(at 226.06 73.66 180)
 		(fields_autoplaced yes)
 		(effects (font (size 1.27 1.27)) (justify right bottom))
-		(uuid "c58b55cd-c865-5f16-a105-03c9cbdd63ba")
+		(uuid "2b6a3c44-5f17-517f-8e14-a8484bc728bc")
 	)
 	(label "VCC"
 		(at 226.06 76.2 180)
@@ -1878,63 +1700,6 @@
 		(fields_autoplaced yes)
 		(effects (font (size 1.27 1.27)) (justify right bottom))
 		(uuid "6fede2b8-f07a-5de3-bc5d-c3ed90870f16")
-	)
-	(symbol
-		(lib_id "Jumper:SolderJumper_2_Open")
-		(at 60.96 119.38 0)
-		(unit 1)
-		(exclude_from_sim no)
-		(in_bom no)
-		(on_board yes)
-		(dnp no)
-		(uuid "047ad6a5-1dd1-53fd-ad0c-d863d2a9c12e")
-		(property "Reference" "JP1"
-			(at 63.96 113.38 0)
-			(effects (font (size 1.27 1.27)))
-		)
-		(property "Value" "VCC=VBAT"
-			(at 63.96 125.38 0)
-			(effects (font (size 1.27 1.27)))
-		)
-		(property "Footprint" "Jumper:SolderJumper-2_P1.3mm_Open_Pad1.0x1.5mm"
-			(at 60.96 119.38 0)
-			(effects (font (size 1.27 1.27)) (hide yes))
-		)
-		(property "Datasheet" ""
-			(at 60.96 119.38 0)
-			(effects (font (size 1.27 1.27)) (hide yes))
-		)
-		(property "LCSC" ""
-			(at 60.96 119.38 0)
-			(effects (font (size 1.27 1.27)) (hide yes))
-		)
-		(property "MPN" ""
-			(at 60.96 119.38 0)
-			(effects (font (size 1.27 1.27)) (hide yes))
-		)
-		(property "Note" "bridge to power the tag from the cell (I2C with no host supply)"
-			(at 60.96 119.38 0)
-			(effects (font (size 1.27 1.27)) (hide yes))
-		)
-		(pin "1"
-			(uuid "7315a431-75af-56e4-a001-6361cfec1726")
-		)
-		(pin "2"
-			(uuid "313a338a-7102-5b17-9f3a-85ef1340c4b9")
-		)
-		(instances (project "nfc-test" (path "/7e6ede9b-4364-501f-9aee-fb1f18d79865" (reference "JP1") (unit 1))))
-	)
-	(label "VBAT"
-		(at 55.88 119.38 180)
-		(fields_autoplaced yes)
-		(effects (font (size 1.27 1.27)) (justify right bottom))
-		(uuid "e9d43712-1b23-535b-903e-bddee93ce139")
-	)
-	(label "VCC"
-		(at 66.04 119.38 0)
-		(fields_autoplaced yes)
-		(effects (font (size 1.27 1.27)) (justify left bottom))
-		(uuid "31279df1-fbdb-5e95-aa03-51648467a48a")
 	)
 	(symbol
 		(lib_id "Device:NetTie_2")
@@ -1969,7 +1734,7 @@
 			(at 76.2 60.96 0)
 			(effects (font (size 1.27 1.27)) (hide yes))
 		)
-		(property "Note" "inner end of the PCB coil: 6 turns, 0.25 mm / 0.2 mm, about 2.1 uH in air"
+		(property "Note" "inner end of the PCB coil: 9 turns, 0.15 mm / 0.15 mm, about 2.25 uH in air"
 			(at 76.2 60.96 0)
 			(effects (font (size 1.27 1.27)) (hide yes))
 		)
@@ -2140,7 +1905,7 @@
 			(at 175.26 99.06 0)
 			(effects (font (size 1.27 1.27)) (hide yes))
 		)
-		(property "Note" "FD pull-up to the cell"
+		(property "Note" "FD pull-up to VCC"
 			(at 175.26 99.06 0)
 			(effects (font (size 1.27 1.27)) (hide yes))
 		)
@@ -2152,11 +1917,11 @@
 		)
 		(instances (project "nfc-test" (path "/7e6ede9b-4364-501f-9aee-fb1f18d79865" (reference "R3") (unit 1))))
 	)
-	(label "VBAT"
+	(label "VCC"
 		(at 175.26 95.25 90)
 		(fields_autoplaced yes)
 		(effects (font (size 1.27 1.27)) (justify left bottom))
-		(uuid "a0e806e9-8729-5f6e-96fc-514e734c6221")
+		(uuid "bf48c9bf-4204-5806-9eb5-5cb1cbe6ff1d")
 	)
 	(label "FD"
 		(at 175.26 102.87 270)
@@ -2209,11 +1974,11 @@
 		)
 		(instances (project "nfc-test" (path "/7e6ede9b-4364-501f-9aee-fb1f18d79865" (reference "R4") (unit 1))))
 	)
-	(label "VBAT"
+	(label "VCC"
 		(at 190.5 95.25 90)
 		(fields_autoplaced yes)
 		(effects (font (size 1.27 1.27)) (justify left bottom))
-		(uuid "7a735946-a349-5e82-8fb3-ce4b845ea366")
+		(uuid "3fda1be1-fec5-5ffa-a85c-f151a839d115")
 	)
 	(label "LED_A"
 		(at 190.5 102.87 270)
@@ -2360,11 +2125,11 @@
 		)
 		(instances (project "nfc-test" (path "/7e6ede9b-4364-501f-9aee-fb1f18d79865" (reference "#FLG01") (unit 1))))
 	)
-	(label "VBAT"
+	(label "VCELL"
 		(at 40.64 99.06 270)
 		(fields_autoplaced yes)
 		(effects (font (size 1.27 1.27)) (justify right bottom))
-		(uuid "b2aa46f4-91a2-5b97-92c1-af0b667e1802")
+		(uuid "761161ec-7570-5e43-b64a-51c3e0ab53c7")
 	)
 	(symbol
 		(lib_id "power:PWR_FLAG")
@@ -2438,11 +2203,11 @@
 		(effects (font (size 1.27 1.27)) (justify right bottom))
 		(uuid "3eeaf06c-1a3b-59bb-91da-2c315895c719")
 	)
-	(text "dbfob NFC test board (for rev B / B1)"
+	(text "dbfob NFC test board (for rev B / B1, the AAA stick)"
 		(exclude_from_sim no)
 		(at 20 20 0)
 		(effects (font (size 2.5 2.5)) (justify left bottom))
-		(uuid "5487f4b4-40e9-52db-bd7c-27ad72883286")
+		(uuid "947e2425-14f3-5637-8b31-34317093d42b")
 	)
 	(text "Tag: NT3H2111 (NTAG I2C plus 1k), Type 2. A phone reads/writes it with no MCU and no VCC."
 		(exclude_from_sim no)
@@ -2456,23 +2221,23 @@
 		(effects (font (size 1.5 1.5)) (justify left bottom))
 		(uuid "853dc018-25da-5b0f-b28f-9a8e5cfe1f96")
 	)
-	(text "FD: open drain, works from the field alone; D1 lights while a reader field is on."
+	(text "FD: open drain, works from the field alone; D1 lights while a reader field is on and VCC is up."
 		(exclude_from_sim no)
 		(at 20 158 0)
 		(effects (font (size 1.5 1.5)) (justify left bottom))
-		(uuid "81802abe-f9f6-579b-9ba8-3d88789c31ae")
+		(uuid "a0893e24-7470-5fdd-9dd1-c0311e4f7647")
 	)
-	(text "J1 for any host MCU: VBAT VCC SDA FD SCL GND. JP1 powers the tag from the cell."
+	(text "J1 pads for any host MCU: VCELL VCC SDA FD SCL GND. VCC 1.67-3.6 V from the host."
 		(exclude_from_sim no)
 		(at 20 162 0)
 		(effects (font (size 1.5 1.5)) (justify left bottom))
-		(uuid "bb81f779-c1e8-5f24-aead-d2281e88cf3a")
+		(uuid "b008a885-2c56-587f-9c73-df27ee569f6b")
 	)
-	(text "BT1 on the back, hand-fitted; ferrite sheet between holder floor and cell."
+	(text "BT1: AAA contacts on the back, hand-fitted; the cell is there for its effect on the tuning."
 		(exclude_from_sim no)
 		(at 20 166 0)
 		(effects (font (size 1.5 1.5)) (justify left bottom))
-		(uuid "2ed39282-dd8f-5c7e-8bbf-4b48fe7cce0e")
+		(uuid "21b0ac17-904f-52f6-ab54-e5abf581573b")
 	)
 	(sheet_instances
 		(path "/"

@@ -5,7 +5,7 @@
   hardware/nfc-test/production/nfc-test-gerbers.zip   upload this as the PCB
   hardware/nfc-test/production/bom_jlc.csv            machine-placed parts
   hardware/nfc-test/production/cpl_jlc.csv            their placements, checked by ../tools/check_cpl.py
-  hardware/nfc-test/production/bom_manual.csv         hand-fitted: BT1 (back), J1, C1/C2 trim (DNP)
+  hardware/nfc-test/production/bom_manual.csv         hand-fitted: BT1 contacts (back), C1/C2 trim (DNP); J1 is bare pads
   hardware/nfc-test/production/render-top.png / render-bottom.png
 
 Everything is staged and only replaces production/ once ERC, DRC, parity and the CPL check pass.
@@ -83,7 +83,7 @@ def main():
     stage = OUT + '.staging'
     shutil.rmtree(stage, ignore_errors=True)
     g = os.path.join(stage, 'gerbers'); os.makedirs(g)
-    run('pcb', 'export', 'gerbers', '--layers', 'F.Cu,B.Cu,F.Paste,B.Paste,F.SilkS,B.SilkS,F.Mask,B.Mask,Edge.Cuts',
+    run('pcb', 'export', 'gerbers', '--layers', 'F.Cu,In1.Cu,In2.Cu,B.Cu,F.Paste,B.Paste,F.SilkS,B.SilkS,F.Mask,B.Mask,Edge.Cuts',
         '--subtract-soldermask', '--no-protel-ext', '--use-drill-file-origin', '-o', g, PCB)
     run('pcb', 'export', 'drill', '--format', 'excellon', '--excellon-separate-th', '--generate-map',
         '--drill-origin', 'plot', '--map-format', 'gerberx2', '-o', g + '/', PCB)
@@ -115,7 +115,7 @@ def main():
         sys.exit('CPL check failed, production/ left untouched: ' + chk.stderr[-500:])
     back = sorted(r['Ref'] for r in placed if r['Side'] != 'top' and r['Ref'] in machine)
     for side in ('top', 'bottom'):
-        run('pcb', 'render', '--side', side, '--width', '1000', '--height', '1260', '--quality', 'high',
+        run('pcb', 'render', '--side', side, '--width', '1800', '--height', '400', '--zoom', '4.2', '--quality', 'high',
             '-o', os.path.join(stage, f'render-{side}.png'), PCB)
     shutil.rmtree(OUT, ignore_errors=True)
     os.rename(stage, OUT)

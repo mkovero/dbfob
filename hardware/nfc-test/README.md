@@ -1,6 +1,6 @@
 # NFC test board (for rev B / B1)
 
-30 × 38 mm, 2 layers. It answers one question before B1 is trusted: **does B1's NFC antenna read on a phone with a CR2032 right behind it, and with what trim?** This is [experiment 4](../../docs/rev-b.md#experiments-before-any-board).
+10.5 × 76.5 mm, 1.0 mm thick, 4 layers like B1 (the inner two are empty here, so the coil sees the same stack-up): B1's stick outline. It answers one question before B1 is trusted: **does B1's NFC antenna read on a phone with the AAA cell beside it, and with what trim?** This is [experiment 4](../../docs/rev-b.md#experiments-before-any-board).
 
 ![top render](production/render-top.png)
 
@@ -8,12 +8,12 @@ It goes in the **same order as B1**, so it can't steer B1's layout. B1 copies th
 
 ## What's on it
 
-- **Top 30 × 26 mm:** B1's outline and B1's antenna block, from [../lib/antenna.py](../lib/antenna.py), which both boards import so they can't drift apart:
-  - a 6-turn PCB coil, 0.25 mm track with a 0.2 mm gap, chamfered to clear the 3 mm corners, about 2.1 µH in air (NXP AN11276 formula);
-  - its outer end drops to B.Cu at VO, crosses under the turns and comes back up at VI, as on B1, whose edge leaves no room for a tail;
-  - **U1** (NT3H2111, NTAG I2C plus 1k), **C3** and the **C1/C2** trim pads (not fitted) inside the bottom turns, where they sit on B1.
-- **Back:** B1's CR2032 holder, MYOUNG BS-08-B2AA001. The holder has its own − spring, so the board under the cell is bare. A ferrite sheet can then lie on the holder floor under the cell, with a slot for the spring. Rev A's Keystone 3034 couldn't take a ferrite, because the cell sits directly on a PCB pad.
-- **Tail, 12 mm:** D1 field LED, the pull-ups, JP1 and the J1 host header.
+- **Tip, 24 mm:** B1's antenna block, from [../lib/antenna.py](../lib/antenna.py), which both boards import so they can't drift apart:
+  - a 9-turn PCB coil, 0.15 mm track with a 0.15 mm gap, about 23 × 9.3 mm, about 2.25 µH in air (NXP AN11276 formula);
+  - its inner end meets LB through net tie NT1; LB drops through a via and crosses under the cell-end turns on B.Cu to the tag;
+  - **U1** (NT3H2111, NTAG I2C plus 1k), **C3** and the **C1/C2** trim pads (not fitted) just past the coil, where they sit on B1.
+- **Back:** B1's AAA cell between two MYOUNG MY-AAA-07 spring contacts, its near end about 1.4 mm past the coil. The cell is there for its steel can. At 1.5 V it can't run the tag (1.67 V minimum) or the LED.
+- **Past the tag:** the pull-ups where B1 has them, the D1 field LED, and six host pads.
 
 | Ref | What | Note |
 |---|---|---|
@@ -21,16 +21,15 @@ It goes in the **same order as B1**, so it can't steer B1's layout. B1 copies th
 | C1, C2 | 0603 trim, **not fitted** | C0G, chosen on the bench |
 | C3 | 100 nF | VCC decoupling |
 | R1, R2 | 4.7 kΩ | SDA / SCL pull-ups to VCC |
-| R3 | 10 kΩ | FD pull-up to the cell, as B1 will wake the MCU with it |
-| R4, D1 | 1 kΩ, red | lit while a reader's field is on: FD pulls it low, even with VCC off |
-| JP1 | solder jumper | bridge to run the tag's I2C side from the cell |
-| BT1 | BS-08-B2AA001 (C964777) | **hand-fit on the back**, so JLC assembly stays one-sided |
-| J1 | 1×6 2.54 mm, not fitted | `+ V D F C G` = VBAT, VCC, SDA, FD, SCL, GND |
+| R3 | 10 kΩ | FD pull-up to VCC |
+| R4, D1 | 1 kΩ, red | lit while a reader's field is on and VCC is up: FD pulls it low |
+| BT1 | 2 × MY-AAA-07 (C6937109) | **hand-fit on the back**, so JLC assembly stays one-sided |
+| J1 | 6 SMD pads, 2.54 mm | `G C F D V B` = GND, SCL, FD, SDA, VCC, VCELL; for wires or pogo pins |
 
 ## Regenerate
 
 ```sh
-python3 hardware/lib/gen_lib.py               # NT3H2111 symbol, XQFN8 + BS-08 footprints
+python3 hardware/lib/gen_lib.py               # NT3H2111 symbol, XQFN8 + AAA contact footprints
 python3 hardware/nfc-test/tools/gen_sch.py    # tables -> schematic
 python3 hardware/nfc-test/tools/make_pcb.py   # coil + placement + hand-drawn LA/LB, the router does the rest
 python3 hardware/nfc-test/tools/fab.py        # -> production/
@@ -38,7 +37,7 @@ python3 hardware/nfc-test/tools/fab.py        # -> production/
 
 This follows the same procedure as rev A ([../README.md](../README.md)).
 
-**How the antenna is drawn.** The coil is LA track. Its inner end meets LB through net tie NT1; its outer end crosses under the turns on B.Cu (VO to VI) to reach the tag's LA pin. DRC doesn't check clearance within one net, so `antenna.py` builds the turns at a fixed pitch and asserts the 0.2 mm gap, and the vias' gap to the turns, itself.
+**How the antenna is drawn.** The coil is LA track; its outer end runs straight to the tag's LA pin. Its inner end meets LB through net tie NT1, and LB crosses under the turns on B.Cu (VI to VO). DRC doesn't check clearance within one net, so `antenna.py` builds the turns at a fixed pitch and asserts the 0.15 mm gap, and the vias' gap to the turns, itself.
 
 **State at commit:**
 - **ERC:** clean, apart from the library-table warnings.
@@ -48,12 +47,14 @@ This follows the same procedure as rev A ([../README.md](../README.md)).
 
 ## On the bench
 
-1. **No cell, no ferrite.** Tap with an Android (NXP TagInfo) and an iPhone. Write a URL with NFC Tools. Note the read distance, and the distance at which D1 lights.
+Power the tag side from a 3 V supply on V and G (or a host MCU, which also gets C, D and F) so D1 can show the field.
+
+1. **No cell.** Tap with an Android (NXP TagInfo) and an iPhone. Write a URL with NFC Tools. Note the read distance, and the distance at which D1 lights.
 2. **Find the resonance**, if a NanoVNA and a small pickup loop are at hand. Couple the loop loosely and read the S11 dip, f0. Then the trim is **C = 50 pF × ((f0 / 13.56 MHz)² − 1)**. Without a VNA, try 0, 4.7, 10, 15 and 22 pF C0G in C1, and keep the value with the longest read distance.
-3. **Fit the cell, no ferrite.** Repeat steps 1–2. This shows how much the cell costs.
-4. **Fit the ferrite:** WE-FSFS-class, 0.1–0.2 mm, cut to a 20 mm disc with a slot for the − spring, on the holder floor. Repeat steps 1–2.
+3. **Fit the cell** (an alkaline and, if B1 will take one, a lithium AAA). Repeat steps 1–2. This shows how much the cell costs.
+4. **In the case**, if one is printed: repeat steps 1–2 with the board in it.
 5. **Locked iPhone:** with the screen on, a tap should open the URL with no app.
 
-Record f0, the trim value, the read distance and the LED distance for each of steps 1, 3 and 4. The step 4 trim value goes on B1's pads.
+Record f0, the trim value, the read distance and the LED distance for each step. The trim value from step 3 (or 4) goes on B1's pads.
 
-**Why the coil is under 2.75 µH.** 13.56 MHz needs 2.75 µH with the tag's 50 pF (44–56 pF). The coil is short of that on purpose: ferrite raises L, the cell lowers it, and a parallel trim cap can only pull the resonance down.
+**Why the coil is under 2.75 µH.** 13.56 MHz needs 2.75 µH with the tag's 50 pF (44–56 pF). The coil is short of that on purpose: the cell, its contacts and a phone pull the tuning about, and a parallel trim cap can only pull the resonance down.

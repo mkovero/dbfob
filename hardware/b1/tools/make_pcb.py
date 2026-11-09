@@ -8,16 +8,21 @@ under our fab rules, UUIDs derive from content, DRC with schematic parity is the
   python3 hardware/b1/tools/make_pcb.py
   python3 hardware/b1/tools/fab.py
 
-Board: 30 x 26 mm, 2 layers, every machine-placed part on top. The antenna block (coil round the
-edge, its crossover, the tag, trim pads, the CR2032 holder on the back) comes from
-../lib/antenna.py, identical to the NFC test board's. Inside the coil: the MCU in the middle,
-the mic at the top right with its port through the board beside the cell's rim, the button
-and the LED bar left, the programming pads down the right side.
+Board: the stick, 10.5 x 76.5 x 1.0 mm, 4 layers, every machine-placed part on the front. The
+outline and the antenna block (coil in the tip, the LB crossover, tag, trim pads, the AAA
+contacts on the back) come from ../lib/antenna.py, identical to the NFC test board's. Along
+the stick from the tip: the mic inside the coil with its port through the board, the tag, the
+LED bar, the MCU, the boost converter, the button, the programming pads. Everything past the
+coil sits under the cell, which lies on the back.
 
-No ground pour: copper inside the loop detunes it, so GND is tracks like everything else, and
-B.Cu under the coil is kept clear apart from the crossover. Hand vias (GND at U2's exposed
-pad, the tag's VSS and C4, VBAT at R3) let the router join GND on B.Cu under the holder.
-Routing: signals first, then GND and VBAT, with the router's inside_out net ordering.
+Four layers because two would not route in 10.5 mm: the MCU's fan-out, the tag's lines and the
+mic's lines out of the coil share one corridor, and the cell contacts' pads fill the middle of
+B.Cu. The inner layers carry signals only. No planes or pours anywhere: copper near the loop
+detunes it, so GND is tracks like everything else, and every layer under the coil is kept clear
+apart from the band at its cell end, where LB and the mic's nets cross under the turns.
+Hand-drawn: a via in U2's exposed pad, and the mic's GND ring tied to its GND pad.
+Routing: signals first, then the power nets, with the router's mps net ordering and no extra via
+cost near pads (the default tenfold one keeps the MCU's bottom pins off the inner layers).
 """
 import json, math, os, re, shutil, subprocess, sys, tempfile, uuid
 import pcbnew
@@ -35,46 +40,54 @@ FPLIBS = {'dbfob': os.path.join(HERE, '..', 'lib', 'dbfob.pretty')}
 FPLIB = '/usr/share/kicad/footprints'
 KRT = os.environ.get('KRT', '/home/mui/src/KicadRoutingTools')
 
-W, H = 30.0, 26.0            # board, mm
+W, H = ant.L, ant.W           # board, mm: x along the stick
 X0, Y0 = 100.0, 100.0
-CORNER = 3.0
-TRACK, CLEAR, VIA, DRILL = 0.2, 0.15, ant.VIA, ant.DRILL
-POWER = ['/GND', '/VBAT']
+THICKNESS = 1.0
+TRACK, CLEAR, VIA, DRILL = 0.15, 0.15, ant.VIA, ant.DRILL
+POWER = ['/GND', '/VDD', '/VCELL']
+LAYERS = ['F.Cu', 'In1.Cu', 'In2.Cu', 'B.Cu']   # 4 layers, no planes: the inner two are for signals
+POWER_FIRST = os.environ.get('POWER_FIRST') == '1'
+ROUTER_ARGS = os.environ.get('ROUTER_ARGS', '').split()
 
-# The antenna block (coil, VO/VI crossover, NT1, U1, C1-C3, BT1) is ../lib/antenna.py's.
+# The antenna block (coil, LB crossover, NT1, U1, C1-C3, BT1) is ../lib/antenna.py's.
 PLACE = dict(ant.PLACE, **{
-    'U2': (15.0, 10.8, 0, False),      # LEDs, button and mic on the left pins, tag below, debug right
-    'C4': (12.8, 7.65, 0, False),      # VDD (pin 19, top) decoupling
-    'C5': (19.6, 11.6, 90, False),     # bulk
-    # mic top right: port at (21.5, 4.26), 1.5 mm outside the cell's rim (r 10.15 about (15, 14)),
-    # so it opens beside the holder, not into the slot under the cell
-    'MK1': (21.5, 4.8, 90, False),
-    'C6': (18.9, 4.8, 90, False),
-    # button top left, next to PA0 (pin 1)
-    'SW1': (7.3, 5.85, 0, False),
-    # LED bar below it, left of U2, in the order of the pins: red on top (PA8 and PA10 come over
-    # the top), then orange, yellow, green (PA1-PA3). Resistors next to U2 (pad 1 right), LEDs
-    # outside them, anode right, cathode left
-    'R7': (8.6, 9.9, 180, False), 'R6': (8.6, 11.5, 180, False),
-    'R5': (8.6, 13.1, 180, False), 'R4': (8.6, 14.7, 180, False),
-    'D4': (5.6, 9.9, 0, False), 'D3': (5.6, 11.5, 0, False),
-    'D2': (5.6, 13.1, 0, False), 'D1': (5.6, 14.7, 0, False),
-    # tag pull-ups in a stack left of U1, each level with its pin: supply pad left, signal right
-    'R2': (9.9, 16.4, 0, False),      # SCL
-    'R3': (9.9, 18.0, 0, False),      # FD
-    'R1': (9.9, 19.6, 0, False),      # SDA
-    'J1': (25.0, 10.6, 0, False),      # pads downwards: SWDIO SWCLK GND VBAT TX
+    # mic at the tip inside the coil, pads towards the cell end; port at x 4.36
+    'MK1': (4.9, 5.25, 180, False),
+    'C6': (7.5, 5.25, 90, False),
+    'R8': (9.2, 5.25, 90, False),
+    # tag pull-ups right of U1, signal pad left, each level with its pin
+    'R1': (32.0, 2.3, 180, False),     # SDA
+    'R3': (32.0, 4.0, 180, False),     # FD
+    'R2': (32.0, 5.7, 180, False),     # SCL
+    # LED bar right after the tag, green to red. Each column: the LED at the top, cathode to the
+    # edge, anode down onto its resistor, whose U2 end faces the middle of the stick.
+    'D1': (34.6, 1.9, 270, False), 'D2': (36.4, 1.9, 270, False), 'D3': (38.2, 1.9, 270, False), 'D4': (40.0, 1.9, 270, False),
+    'R4': (34.6, 5.0, 90, False), 'R5': (36.4, 5.0, 90, False), 'R6': (38.2, 5.0, 90, False), 'R7': (40.0, 5.0, 90, False),
+    'U2': (45.4, 5.25, 0, False),
+    'C4': (48.4, 2.4, 90, False),      # VDD decoupling, top right of U2: its top pins escape upwards
+    # boost: L1 over U3, SW (pin 1) top left, VBAT (pin 6) top right, VOUT (5) and FB (4) right
+    'U3': (51.5, 5.25, 0, False),
+    'L1': (51.5, 2.2, 180, False),
+    'C7': (54.7, 2.4, 90, False),
+    'C5': (54.7, 5.6, 90, False),
+    'R9': (51.8, 8.5, 0, False),
+    'R10': (55.1, 8.5, 0, False),
+    'SW1': (59.5, 5.25, 90, False),
+    'J1': (63.3, 5.25, 90, False),     # pads along the stick: SWDIO SWCLK GND VDD TX
 })
+
+# The mic's GND ring (pad 3, round the port) tied to its GND pad 2: the router can't get in
+# between the pads. Ring centre line at r 0.6 round the port.
+RING_TIE = ['MK1.2', (4.36 + 0.6 * math.cos(math.radians(40)), 5.25 - 0.6 * math.sin(math.radians(40)))]
 
 SILK_F = [  # text, x, y, size
     # 1.0 mm: JLC's minimum legend height
-    ('D', 26.4, 10.6, 1.0), ('C', 26.4, 13.14, 1.0), ('G', 26.4, 15.68, 1.0), ('+', 26.4, 18.22, 1.0),
-    ('T', 26.4, 20.76, 1.0),
-    ('dbfob B1', 21.2, 17.0, 1.0),
+    ('D', 63.30, 3.6, 1.0), ('C', 65.84, 3.6, 1.0), ('G', 68.38, 3.6, 1.0), ('+', 70.92, 3.6, 1.0),
+    ('T', 73.46, 3.6, 1.0),
+    ('dbfob B1', 67.8, 8.4, 1.0),
 ]
 SILK_B = [
-    ('FERRITE under cell', 15.0, 11.0, 1.0),
-    ('CR2032 holder BS-08', 15.0, 17.5, 1.0),
+    ('AAA', 44.0, 9.4, 1.0),
 ]
 
 
@@ -126,22 +139,6 @@ def text(board, s, x, y, size, layer, mirror=False):
     board.Add(t)
 
 
-def outline(board):
-    r = CORNER
-    segs = [((r, 0), (W - r, 0)), ((W, r), (W, H - r)), ((W - r, H), (r, H)), ((0, H - r), (0, r))]
-    for a, b in segs:
-        s = pcbnew.PCB_SHAPE(board); s.SetShape(pcbnew.SHAPE_T_SEGMENT)
-        s.SetStart(mm(*a)); s.SetEnd(mm(*b)); s.SetLayer(pcbnew.Edge_Cuts); s.SetWidth(pcbnew.FromMM(0.05))
-        board.Add(s)
-    k = r * (1 - 0.5 ** 0.5)
-    for a, m, b in [((0, r), (k, k), (r, 0)), ((W - r, 0), (W - k, k), (W, r)),
-                    ((W, H - r), (W - k, H - k), (W - r, H)), ((r, H), (k, H - k), (0, H - r))]:
-        s = pcbnew.PCB_SHAPE(board); s.SetShape(pcbnew.SHAPE_T_ARC)
-        s.SetArcGeometry(mm(*a), mm(*m), mm(*b))
-        s.SetLayer(pcbnew.Edge_Cuts); s.SetWidth(pcbnew.FromMM(0.05))
-        board.Add(s)
-
-
 def keepout(board, box, name, layers=(pcbnew.F_Cu, pcbnew.B_Cu)):
     for layer in layers:
         z = pcbnew.ZONE(board); z.SetIsRuleArea(True); z.SetLayer(layer); z.SetZoneName(name)
@@ -168,7 +165,8 @@ def via(board, net, x, y):
 def build():
     comps, pins = netlist()
     board = pcbnew.BOARD()
-    board.SetCopperLayerCount(2)
+    board.SetCopperLayerCount(4)
+    board.GetDesignSettings().SetBoardThickness(pcbnew.FromMM(THICKNESS))
     nets = {}
     for name in sorted(set(pins.values())):
         n = pcbnew.NETINFO_ITEM(board, name); board.Add(n); nets[name] = n
@@ -198,24 +196,15 @@ def build():
             net = pins.get((ref, p.GetNumber()))
             if net in nets: p.SetNet(nets[net])
         fps[ref] = fp
-    outline(board)
-    for i, box in enumerate(ant.KEEPOUT_SIDES + ant.KEEPOUT_BOTTOM):
-        keepout(board, box, f'under the coil {i}', (pcbnew.B_Cu,))
+    ant.outline(board, mm)
+    for i, box in enumerate(ant.KEEPOUTS):
+        keepout(board, box, f'under the coil {i}', (pcbnew.In1_Cu, pcbnew.In2_Cu, pcbnew.B_Cu))
     gap = ant.draw(board, nets, fps, mm, track, via)
-    # U2's exposed pad straight down to B.Cu, where the router fans GND out under the holder
+    # U2's exposed pad straight down
     via(board, nets['/GND'], *PLACE['U2'][:2])
-    # the tag's VSS (pin 2, top) is boxed in by LA and SCL: straight up to its own via
-    pad = next(q for q in fps['U1'].Pads() if q.GetNumber() == '2').GetPosition()
-    track(board, nets['/GND'], pcbnew.F_Cu, pad, mm(13.75, 16.1), 0.25)
-    via(board, nets['/GND'], 13.75, 16.1)
-    # C4's GND pad is boxed in by the top pins' fan-out: own via
-    pad = next(q for q in fps['C4'].Pads() if q.GetNumber() == '2').GetPosition()
-    track(board, nets['/GND'], pcbnew.F_Cu, pad, mm(13.575, 6.7), 0.3)
-    via(board, nets['/GND'], 13.575, 6.7)
-    # R3's VBAT pad sits between the NFC_VCC ends of R2 and R1: straight down to B.Cu
-    pad = next(q for q in fps['R3'].Pads() if q.GetNumber() == '1').GetPosition()
-    track(board, nets['/VBAT'], pcbnew.F_Cu, pad, mm(8.15, 18.0), 0.3)
-    via(board, nets['/VBAT'], 8.15, 18.0)
+    ref, pad = RING_TIE[0].split('.')
+    track(board, nets['/GND'], pcbnew.F_Cu, next(q for q in fps[ref].Pads() if q.GetNumber() == pad).GetPosition(),
+          mm(*RING_TIE[1]), TRACK)
 
     for s, x, y, size in SILK_F: text(board, s, x, y, size, pcbnew.F_SilkS)
     for s, x, y, size in SILK_B: text(board, s, x, y, size, pcbnew.B_SilkS, mirror=True)
@@ -275,17 +264,20 @@ def route(keep_pro):
     # the antenna nets are drawn by hand; the router gets the rest (net names from the API)
     nets = sorted(str(n) for n in board.GetNetsByName().keys() if str(n) and str(n) not in ('/LA', '/LB'))
     py = os.path.join(KRT, '.venv', 'bin', 'python')
-    for k, group in enumerate(([n for n in nets if n not in POWER], [n for n in nets if n in POWER])):
+    groups = [[n for n in nets if n not in POWER], [n for n in nets if n in POWER]]
+    if POWER_FIRST: groups.reverse()
+    for k, group in enumerate(groups):
         with tempfile.TemporaryDirectory() as td:
             out = os.path.join(td, 'routed.kicad_pcb')
             r = subprocess.run([py, os.path.join(KRT, 'py_router', 'route.py'), PCB, out, '--nets', *group,
-                                '--layers', 'F.Cu', 'B.Cu', '--track-width', str(TRACK), '--clearance', str(CLEAR),
+                                '--layers', *LAYERS, '--track-width', str(TRACK), '--clearance', str(CLEAR),
                                 '--via-size', str(VIA), '--via-drill', str(DRILL),
                                 '--power-nets', *POWER, '--power-nets-widths', *['0.3'] * len(POWER),
                                 '--grid-step', '0.025', '--fab-tier', 'standard', '--escalation', 'off',
                                 '--same-net-pad-clearance', '0.2', '--board-edge-clearance', '0.5',
                                 '--hole-to-hole-clearance', '0.25', '--max-ripup', '200',
-                                '--ordering', os.environ.get('ORDERING%d' % k, os.environ.get('ORDERING', 'inside_out')), '--direction', os.environ.get('DIRECTION', 'forward')],
+                                '--via-proximity-cost', '0',   # the MCU's pins must drop to the inner layers
+                                *ROUTER_ARGS, '--ordering', os.environ.get('ORDERING%d' % k, os.environ.get('ORDERING', 'mps')), '--direction', os.environ.get('DIRECTION', 'forward')],
                                capture_output=True, text=True, cwd=KRT)
             log = r.stdout + r.stderr
             if r.returncode or not os.path.exists(out):

@@ -2,7 +2,7 @@
 	(version 20240108)
 	(generator "dbfob_gen_lib")
 	(layer "F.Cu")
-	(descr "1 x 5 SMD test pads, 1.2 mm, 2.54 mm pitch (pogo / pressed pins)")
+	(descr "1 x 5 SMD test pads, 1.2 mm, 2.54 mm pitch (pogo / pressed pins / wires)")
 	(attr smd)
 	(property "Reference" "REF**" (at 0 -1.6 0) (layer "F.Fab") (uuid "74df7a8a-8eed-5dcd-aa70-21c73924e8a3") (effects (font (size 0.8 0.8) (thickness 0.12))))
 	(property "Value" "TestPads_1x05_P2.54mm_D1.2mm" (at 0 11.8 0) (layer "F.Fab") (uuid "ecbc8f32-6282-5c04-8dff-8d5a34df5281") (effects (font (size 0.8 0.8) (thickness 0.12))))

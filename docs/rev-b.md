@@ -48,7 +48,7 @@ Two directions are on the table:
   - no hole in the PCB, as the coil runs round the edge: the keyring goes on the case;
   - the IM66D130M has 0 JLC stock (global sourcing), and its NSMD pads want ENIG.
   - the button is on PA0/WKUP to VBAT: the pull-up first drafted would have failed on some CH32L103 lots (see the B1 README).
-- **2026-11-09: a stick shape on an AAA cell is under consideration** instead: see [B1 stick](#b1-stick-aaa-instead-of-cr2032-under-consideration).
+- **2026-11-09: decided to make B1 a stick on an AAA cell** instead: see [B1 stick](#b1-stick-aaa-instead-of-cr2032-decided-2026-11-09). The 30 × 26 mm board above is superseded; the bullets above stay as the history.
 - The mic port is centred, and stays clear of fingers and the clip.
 
 **NFC readout.** Survey on 2026-10-29. Stock and prices are from JLC's parts library.
@@ -187,7 +187,7 @@ Two directions are on the table:
 
 **Out of B1:** BLE, LiPo, wireless charging, live spectrum on a phone.
 
-## B1 stick: AAA instead of CR2032 (under consideration)
+## B1 stick: AAA instead of CR2032 (decided 2026-11-09)
 
 Raised 2026-11-09: the 30 × 26 mm fob is square and wide in the hand. The wish is a little stick with the mic at the end. A CR2032 sets the width (20 mm cell, about 24 mm case), so a stick needs a thinner cell. Options weighed:
 
@@ -195,11 +195,11 @@ Raised 2026-11-09: the 30 × 26 mm fob is square and wide in the hand. The wish 
 |---|---|---|---|
 | Lollipop: CR2032 at one end, narrow neck with the mic at the tip | 24 mm at the cell, 12 mm neck, 50 mm long | 225 mAh | Still wide at one end |
 | CR1632 stick | 19 × 45 mm | ~130 mAh | Smallest change, about 60 % of the life |
-| **AAA stick, with a boost converter** | **14 × 75–80 mm, 14 mm thick** | **~1250 mAh (L92 lithium)** | **The one being looked at** |
+| **AAA stick, with a boost converter** | **14 × 75–80 mm, 14 mm thick** | **~1250 mAh (L92 lithium)** | **Chosen** |
 | CR1220/1225, AAAA | ~14 mm | 35–50 mAh | Too little capacity |
 | ER14250 (1/2AA Li-SOCl2) | ~16 mm | ~1200 mAh | 3.67 V fresh, over the mic's 3.465 V maximum |
 
-Nothing is decided. B1 and the NFC test board are not ordered, and a stick changes the shared antenna, so both would be redrawn.
+**Decided 2026-11-09: the AAA stick.** B1 and the NFC test board were not ordered yet; both are redrawn as the stick, sharing the new antenna (see [hardware/b1](../hardware/b1/README.md) and [hardware/nfc-test](../hardware/nfc-test/README.md)).
 
 **Cell.** Energizer L92 (Li-FeS2, FR03): 10.5 × 44.5 mm, about 1250 mAh, 1.5 V, −40 to 60 °C, 15–20 years shelf life ([datasheet](https://www.farnell.com/datasheets/83413.pdf)). Through the boost converter, alkaline and NiMH AAAs work too. A cell the user buys anywhere also settles the EU removability rule.
 
@@ -235,7 +235,7 @@ TLV61220 at 3.0 V: FB is 0.5 V, R1 = 1 MΩ, R2 = 200 kΩ. The datasheet wants at
 - **Sampled like rev A** (1 s per minute, rev A measured about 2 mAh a night): hundreds of nights.
 - **A middle way in firmware:** sample by default and meter continuously only while it is loud.
 
-**Cost:** about +$0.6: the converter $0.28, two contacts $0.24, and the coil and resistors (the coil is not chosen yet). The CR2032 holder goes.
+**Cost:** about +$0.6: the converter $0.28, two contacts $0.24, the 4.7 µH coil (Sunlord MPL2016S4R7MHT, C98335, 2016 size) and resistors. The CR2032 holder goes.
 
 **NFC:** the coil moves to the 12 × 25 mm area past the end of the cell, about 40 % of the current loop area. It needs more turns to reach the tag's ~2.75 µH, and the phone has to touch. In return it no longer sits over a metal cell, so the ferrite sheet goes.
 
@@ -256,10 +256,14 @@ TLV61220 at 3.0 V: FB is 0.5 V, R1 = 1 MΩ, R2 = 200 kΩ. The datasheet wants at
   - Putting the electronics in line with the cell instead would make the stick about 12 mm longer.
 - **AAA coil:** 9 turns of 0.15 mm track with 0.15 mm gaps in 22 × 10 mm, about 2.2 µH (AN11276, same formula as B1's). This is the same inductance as B1's antenna, from a coil whose outer turn is a third of B1's area. Its inner opening is 4.6 × 16.6 mm: room for the mic, the tag and its trim caps, not for the MCU or the button. Coupling to a phone is weaker than B1's (smaller area), and the phone has to touch.
 
-**Open before deciding:**
+**Settled in the redraw:**
+- Coil: Sunlord MPL2016S4R7MHT (C98335), 4.7 µH in 2.0 × 1.6 mm.
+- Cell contacts: hand-fitted on the back, so JLC assembly stays one-sided.
+- Board 10.5 × 76.5 × 1.0 mm; the drawn antenna is 9 turns of 0.15/0.15 mm in 23 × 9.3 mm, about 2.25 µH.
+- 4 layers. Two would not route in 10.5 mm: the MCU's fan-out, the tag's lines and the mic's lines share one corridor, and the cell contacts' pads fill the middle of the back. The inner layers carry signals only, with no planes, and every layer under the coil stays clear. The NFC test board is 4 layers too (inner ones empty), so the coil sees the same stack-up.
+
+**Still open:**
 - Measure continuous A-weighting current on a CH32L103, on a devkit or on B1.
-- Choose the 4.7 µH coil.
-- Hand-fit or two-sided assembly for the cell contacts (they go on the face opposite the parts).
 
 ## The design review's main points
 
@@ -418,7 +422,7 @@ If B2 happens, BLE is enough, as long as the fob computes the spectrum and sends
    - Measure the 1/3-octave response from 100 Hz to 20 kHz against the reference.
    - This decides whether a sealed case and full band are compatible, and whether 20 kHz is worth anything.
 4. **NFC readout in one evening.**
-   - **On [hardware/nfc-test](../hardware/nfc-test/README.md)** (B1's antenna and holder): the dose summary in a tag URL, **over a CR2032, with and without a ferrite sheet**.
+   - **On [hardware/nfc-test](../hardware/nfc-test/README.md)** (B1's stick antenna and cell contacts): the dose summary in a tag URL, **with and without the AAA cell in place**.
    - Tap with an iPhone (screen on, and locked) and an Android, and confirm the page opens with no app.
    - This decides the readout for both directions.
 5. ~~Qi~~: dropped 2026-11-03, see [Wireless charging](#wireless-charging).

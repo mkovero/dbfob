@@ -26,6 +26,16 @@ Sources, by part:
                  2.8 at x -10.98; body 25.4 x 15.7 x 5.3 mm centred at x -0.34). The holder brings
                  its own - spring under the cell, so the board under the cell can stay bare and a
                  ferrite sheet can lie between the holder floor and the cell.
+  TLV61220       TI TLV61220 datasheet SLVSAZ2: pin functions (SOT-23-6 DBV: 1 SW, 2 GND, 3 EN, 4 FB,
+                 5 VOUT, 6 VBAT). Footprint KiCad's SOT-23-6.
+  MPL2016S4R7MHT 4.7 uH multilayer inductor, 2016 (0806), LCSC C98335: pads from the EasyEDA
+                 footprint JLC places it with (1.2 x 1.8 at x +-1.0).
+  MY-AAA-07      MYOUNG AAA spring contact, LCSC C6937109, two per cell. Pads from the EasyEDA
+                 footprint (4.25 x 5.3 under the base end, 4.25 x 2.6 under the foot at the plate
+                 end, 11.94 apart). The datasheet's layout puts the feet outside and the bases
+                 under the cell, with L = 42.4 mm for AAA between the inner edges of the foot pads:
+                 the plates stand at the feet and spring outward as the 44.5 mm cell goes in. One
+                 footprint carries the pair so the spacing lives in the library: pad 1 (+) at +x.
 """
 import math, os, uuid
 
@@ -69,6 +79,11 @@ SYMBOLS = {
                        ('6', 'VCC', 'power_in', 'R', 0), ('7', 'VOUT', 'power_out', 'R', 1),
                        ('5', 'SDA', 'bidirectional', 'R', 2), ('3', 'SCL', 'input', 'R', 3),
                        ('4', 'FD', 'open_collector', 'R', 4), ('2', 'VSS', 'power_in', 'B', 0)], 7.62),
+    'TLV61220': ('U', 'Package_TO_SOT_SMD:SOT-23-6',
+                 'TI TLV61220 synchronous boost converter, 0.7 V start-up, 5.5 uA Iq, adjustable, SOT-23-6',
+                 [('6', 'VBAT', 'power_in', 'L', 0), ('1', 'SW', 'passive', 'L', 1), ('3', 'EN', 'input', 'L', 2),
+                  ('5', 'VOUT', 'power_out', 'R', 0), ('4', 'FB', 'input', 'R', 2),
+                  ('2', 'GND', 'power_in', 'B', 0)], 7.62),
 }
 
 
@@ -195,13 +210,18 @@ def im66d130m():
                            'smd', items)
 
 
-def pogo5():
-    """Five round SMD test pads on 2.54 mm for a pogo clip or pressed-in pins (programming + UART)."""
-    name = 'TestPads_1x05_P2.54mm_D1.2mm'
-    pads = [smd(str(i + 1), 0, i * 2.54, 1.2, 1.2, name, 'circle') for i in range(5)]
-    items = [fp_text('Reference', 'REF**', 0, -1.6, 'F.Fab'), fp_text('Value', name, 0, 11.8, 'F.Fab'),
-             rect(-0.85, -0.85, 0.85, 10.16 + 0.85, 'F.CrtYd', 0.05, name)] + pads
-    return name, footprint(name, '1 x 5 SMD test pads, 1.2 mm, 2.54 mm pitch (pogo / pressed pins)', 'smd', items)
+def pogo(n):
+    """n round SMD test pads on 2.54 mm for a pogo clip, pressed-in pins or soldered wires."""
+    name = f'TestPads_1x{n:02d}_P2.54mm_D1.2mm'
+    end = (n - 1) * 2.54
+    pads = [smd(str(i + 1), 0, i * 2.54, 1.2, 1.2, name, 'circle') for i in range(n)]
+    items = [fp_text('Reference', 'REF**', 0, -1.6, 'F.Fab'), fp_text('Value', name, 0, end + 1.64, 'F.Fab'),
+             rect(-0.85, -0.85, 0.85, end + 0.85, 'F.CrtYd', 0.05, name)] + pads
+    return name, footprint(name, f'1 x {n} SMD test pads, 1.2 mm, 2.54 mm pitch (pogo / pressed pins / wires)', 'smd', items)
+
+
+def pogo5(): return pogo(5)
+def pogo6(): return pogo(6)
 
 
 def bs08():
@@ -220,6 +240,37 @@ def bs08():
                            'smd', items)
 
 
+def l2016():
+    name = 'L_0806_2016Metric_MPL2016'
+    items = [fp_text('Reference', 'REF**', 0, -1.6, 'F.SilkS'), fp_text('Value', name, 0, 1.6, 'F.Fab'),
+             rect(-1.0, -0.8, 1.0, 0.8, 'F.Fab', 0.1, name),
+             rect(-1.85, -1.15, 1.85, 1.15, 'F.CrtYd', 0.05, name),
+             smd('1', -1.0, 0, 1.2, 1.8, name), smd('2', 1.0, 0, 1.2, 1.8, name)]
+    return name, footprint(name, '2016 (0806) power inductor, pads as the EasyEDA footprint of MPL2016S4R7MHT (C98335)',
+                           'smd', items)
+
+
+AAA_HALF = (42.4 - 2 * 3.845) / 2       # contact centre: the foot pads' inner edges end up 42.4 mm apart
+
+
+def aaa_contacts():
+    name = 'BatteryContacts_MYOUNG_MY-AAA-07_1xAAA'
+    pads, items = [], [fp_text('Reference', 'REF**', 0, -6.6, 'F.SilkS'), fp_text('Value', name, 0, 6.6, 'F.Fab'),
+                       rect(-22.25, -5.25, 22.25, 5.25, 'F.Fab', 0.1, name),               # the cell, 44.5 x 10.5
+                       rect(-25.45, -5.5, 25.45, 5.5, 'F.CrtYd', 0.05, name)]
+    for num, sx in (('1', 1), ('2', -1)):
+        c = sx * AAA_HALF
+        pads.append(smd(num, c - sx * 5.97, 0, 4.25, 5.3, name, 'rect'))      # base, under the cell
+        pads.append(smd(num, c + sx * 5.97, 0, 4.25, 2.6, name, 'rect'))      # foot, at the plate
+        items.append(rect(c - 7.8, -3.175, c + 7.8, 3.175, 'F.Fab', 0.1, name + num))
+    # + mark beside pad 1's base
+    items += [line(14.4, -4.5, 15.6, -4.5, 'F.SilkS', 0.15, name + '+'),
+              line(15.0, -5.1, 15.0, -3.9, 'F.SilkS', 0.15, name + '+'),
+              line(-15.6, -4.5, -14.4, -4.5, 'F.SilkS', 0.15, name + '-')]
+    return name, footprint(name, 'Two MYOUNG MY-AAA-07 spring contacts (LCSC C6937109) for one AAA cell, pad 1 = +',
+                           'smd', items + pads)
+
+
 def main():
     sym = ['(kicad_symbol_lib', '\t(version 20251024)', '\t(generator "dbfob_gen_lib")', '\t(generator_version "10.0")']
     for name, (ref, fp, descr, pins, w) in SYMBOLS.items():
@@ -228,7 +279,7 @@ def main():
     open(os.path.join(HERE, 'dbfob.kicad_sym'), 'w').write('\n'.join(sym) + '\n')
     d = os.path.join(HERE, 'dbfob.pretty')
     os.makedirs(d, exist_ok=True)
-    for gen in (xqfn8, im66d130m, pogo5, bs08):
+    for gen in (xqfn8, im66d130m, pogo5, pogo6, bs08, l2016, aaa_contacts):
         name, text = gen()
         open(os.path.join(d, name + '.kicad_mod'), 'w').write(text)
     print('wrote', os.path.join(HERE, 'dbfob.kicad_sym'), 'and', d)

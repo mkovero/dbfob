@@ -8,10 +8,11 @@ routes under our fab rules, UUIDs derive from content, DRC with schematic parity
   python3 hardware/nfc-test/tools/make_pcb.py
   python3 hardware/nfc-test/tools/fab.py
 
-Board: 30 x 38 mm. The top 30 x 26 mm is B1's outline and carries B1's antenna block exactly as
-B1 has it (../lib/antenna.py): the coil, its crossover, the tag, the trim pads and the CR2032 in
-B1's holder on the back. Below that a 12 mm tail holds the pull-ups, the field LED and the host
-header; their lines cross the bottom turns on B.Cu.
+Board: B1's stick, 10.5 x 76.5 x 1.0 mm, 4 layers as B1 (the inner two empty here, so the coil
+sees the same stack-up), with B1's outline and antenna block exactly as B1 has
+them (../lib/antenna.py): the coil in the tip, its crossover, the tag, the trim pads and the AAA
+contacts on the back. Past the tag: the pull-ups where B1 has them, the field LED, and six pads
+for a host.
 
 The antenna is drawn, not routed (see antenna.py); the router gets every other net.
 """
@@ -31,36 +32,32 @@ FPLIBS = {'dbfob': os.path.join(HERE, '..', 'lib', 'dbfob.pretty')}
 FPLIB = '/usr/share/kicad/footprints'
 KRT = os.environ.get('KRT', '/home/mui/src/KicadRoutingTools')
 
-W, H = 30.0, 38.0            # board, mm
+W, H = ant.L, ant.W           # board, mm: x along the stick
 X0, Y0 = 100.0, 100.0
-CORNER = 3.0
+THICKNESS = 1.0
 TRACK, CLEAR, VIA, DRILL = 0.2, 0.15, ant.VIA, ant.DRILL
-POWER = ['/GND', '/VBAT', '/VCC']
+POWER = ['/GND', '/VCC', '/VCELL']
 
-# The antenna block (coil, VO/VI crossover, NT1, U1, C1-C3, BT1) is B1's, from ../lib/antenna.py.
-# Here: the tail parts below it.
+# The antenna block (coil, LB crossover, NT1, U1, C1-C3, BT1) is B1's, from ../lib/antenna.py.
 PLACE = dict(ant.PLACE, **{
-    'R1': (13.0, 31.0, 90, False),     # SDA pull-up
-    'R2': (19.8, 31.0, 90, False),     # SCL pull-up
-    'R3': (16.4, 31.0, 90, False),     # FD pull-up to VBAT
-    'R4': (6.4, 31.0, 90, False),
-    'D1': (4.2, 31.0, 90, False),
-    'JP1': (24.6, 31.4, 0, False),
-    'J1': (8.65, 36.2, 90, False),     # pads left to right: VBAT VCC SDA FD SCL GND
+    'R1': (32.0, 2.3, 180, False),     # SDA pull-up, as on B1
+    'R3': (32.0, 4.0, 180, False),     # FD pull-up
+    'R2': (32.0, 5.7, 180, False),     # SCL pull-up
+    'D1': (35.4, 2.6, 90, False),
+    'R4': (35.4, 7.9, 90, False),
+    'J1': (52.7, 5.25, 270, False),    # pads from the tag: GND SCL FD SDA VCC VCELL (GND over the - contact)
 })
 
 SILK_F = [  # text, x, y, size
-    ('+', 8.65, 34.1, 1.0), ('V', 11.19, 34.1, 1.0), ('D', 13.73, 34.1, 1.0), ('F', 16.27, 34.1, 1.0),
-    ('C', 18.81, 34.1, 1.0), ('G', 21.35, 34.1, 1.0),
-    ('dbfob NFC test', 15.0, 10.0, 1.2),
-    ('NT3H2111  6T 0.25/0.2', 15.0, 12.2, 1.0),
-    ('C1 C2: C0G trim', 15.0, 14.0, 1.0),
-    ('JP1 tag from cell', 15.0, 15.6, 1.0),
-    ('LED = field', 5.3, 28.9, 1.0),
+    ('G', 40.0, 3.6, 1.0), ('C', 42.54, 3.6, 1.0), ('F', 45.08, 3.6, 1.0), ('D', 47.62, 3.6, 1.0),
+    ('V', 50.16, 3.6, 1.0), ('B', 52.70, 3.6, 1.0),
+    ('dbfob NFC test', 64.0, 4.2, 1.0),
+    ('NT3H2111  9T 0.15/0.15', 64.0, 6.0, 1.0),
+    ('C1 C2: C0G trim', 64.0, 7.8, 1.0),
+    ('D1 lit = field', 64.0, 2.4, 1.0),
 ]
 SILK_B = [
-    ('FERRITE under cell', 15.0, 10.0, 1.0),
-    ('CR2032 holder BS-08', 15.0, 16.5, 1.0),
+    ('AAA', 44.0, 9.4, 1.0),
 ]
 
 
@@ -112,22 +109,6 @@ def text(board, s, x, y, size, layer, mirror=False):
     board.Add(t)
 
 
-def outline(board):
-    r = CORNER
-    segs = [((r, 0), (W - r, 0)), ((W, r), (W, H - r)), ((W - r, H), (r, H)), ((0, H - r), (0, r))]
-    for a, b in segs:
-        s = pcbnew.PCB_SHAPE(board); s.SetShape(pcbnew.SHAPE_T_SEGMENT)
-        s.SetStart(mm(*a)); s.SetEnd(mm(*b)); s.SetLayer(pcbnew.Edge_Cuts); s.SetWidth(pcbnew.FromMM(0.05))
-        board.Add(s)
-    k = r * (1 - 0.5 ** 0.5)
-    for a, m, b in [((0, r), (k, k), (r, 0)), ((W - r, 0), (W - k, k), (W, r)),
-                    ((W, H - r), (W - k, H - k), (W - r, H)), ((r, H), (k, H - k), (0, H - r))]:
-        s = pcbnew.PCB_SHAPE(board); s.SetShape(pcbnew.SHAPE_T_ARC)
-        s.SetArcGeometry(mm(*a), mm(*m), mm(*b))
-        s.SetLayer(pcbnew.Edge_Cuts); s.SetWidth(pcbnew.FromMM(0.05))
-        board.Add(s)
-
-
 def keepout(board, box, name, layers=(pcbnew.F_Cu, pcbnew.B_Cu)):
     for layer in layers:
         z = pcbnew.ZONE(board); z.SetIsRuleArea(True); z.SetLayer(layer); z.SetZoneName(name)
@@ -154,7 +135,8 @@ def via(board, net, x, y):
 def build():
     comps, pins = netlist()
     board = pcbnew.BOARD()
-    board.SetCopperLayerCount(2)
+    board.SetCopperLayerCount(4)
+    board.GetDesignSettings().SetBoardThickness(pcbnew.FromMM(THICKNESS))
     nets = {}
     for name in sorted(set(pins.values())):
         n = pcbnew.NETINFO_ITEM(board, name); board.Add(n); nets[name] = n
@@ -184,9 +166,9 @@ def build():
             net = pins.get((ref, p.GetNumber()))
             if net in nets: p.SetNet(nets[net])
         fps[ref] = fp
-    outline(board)
-    for i, box in enumerate(ant.KEEPOUT_SIDES):
-        keepout(board, box, f'under the coil {i}', (pcbnew.B_Cu,))
+    ant.outline(board, mm)
+    for i, box in enumerate(ant.KEEPOUTS):
+        keepout(board, box, f'under the coil {i}', (pcbnew.In1_Cu, pcbnew.In2_Cu, pcbnew.B_Cu))
     gap = ant.draw(board, nets, fps, mm, track, via)
 
     for s, x, y, size in SILK_F: text(board, s, x, y, size, pcbnew.F_SilkS)

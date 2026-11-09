@@ -320,11 +320,11 @@
       },
       {
         "netclass": "Power",
-        "pattern": "/VBAT"
+        "pattern": "/VCC"
       },
       {
         "netclass": "Power",
-        "pattern": "/VCC"
+        "pattern": "/VCELL"
       }
     ]
   },

@@ -630,6 +630,184 @@
 			)
 			(embedded_fonts no)
 		)
+			(symbol "Device:L"
+			(pin_numbers
+				(hide yes)
+			)
+			(pin_names
+				(offset 1.016)
+				(hide yes)
+			)
+			(exclude_from_sim no)
+			(in_bom yes)
+			(on_board yes)
+			(in_pos_files yes)
+			(duplicate_pin_numbers_are_jumpers no)
+			(property "Reference" "L"
+				(at -1.27 0 90)
+				(show_name no)
+				(do_not_autoplace no)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Value" "L"
+				(at 1.905 0 90)
+				(show_name no)
+				(do_not_autoplace no)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Footprint" ""
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Datasheet" ""
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Description" "Inductor"
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "ki_keywords" "inductor choke coil reactor magnetic"
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "ki_fp_filters" "Choke_* *Coil* Inductor_* L_*"
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(symbol "L_0_1"
+				(arc
+					(start 0 2.54)
+					(mid 0.6323 1.905)
+					(end 0 1.27)
+					(stroke
+						(width 0)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+				(arc
+					(start 0 1.27)
+					(mid 0.6323 0.635)
+					(end 0 0)
+					(stroke
+						(width 0)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+				(arc
+					(start 0 0)
+					(mid 0.6323 -0.635)
+					(end 0 -1.27)
+					(stroke
+						(width 0)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+				(arc
+					(start 0 -1.27)
+					(mid 0.6323 -1.905)
+					(end 0 -2.54)
+					(stroke
+						(width 0)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+			)
+			(symbol "L_1_1"
+				(pin passive line
+					(at 0 3.81 270)
+					(length 1.27)
+					(name "1"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "1"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+				)
+				(pin passive line
+					(at 0 -3.81 90)
+					(length 1.27)
+					(name "2"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "2"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+				)
+			)
+			(embedded_fonts no)
+		)
 			(symbol "Device:LED"
 			(pin_numbers
 				(hide yes)
@@ -1532,6 +1710,59 @@
 			)
 			(embedded_fonts no)
 		)
+			(symbol "dbfob:TLV61220"
+			(pin_names (offset 1.016))
+			(exclude_from_sim no)
+			(in_bom yes)
+			(on_board yes)
+			(property "Reference" "U" (at -7.62 6.35 0) (effects (font (size 1.27 1.27))))
+			(property "Value" "TLV61220" (at 0 -11.43 0) (effects (font (size 1.27 1.27))))
+			(property "Footprint" "Package_TO_SOT_SMD:SOT-23-6" (at 0 0 0) (effects (font (size 1.27 1.27)) (hide yes)))
+			(property "Datasheet" "" (at 0 0 0) (effects (font (size 1.27 1.27)) (hide yes)))
+			(property "Description" "TI TLV61220 synchronous boost converter, 0.7 V start-up, 5.5 uA Iq, adjustable, SOT-23-6" (at 0 0 0) (effects (font (size 1.27 1.27)) (hide yes)))
+			(symbol "TLV61220_0_1"
+				(rectangle (start -7.62 5.08) (end 7.62 -7.62) (stroke (width 0.254) (type default)) (fill (type background)))
+			)
+			(symbol "TLV61220_1_1"
+				(pin power_in line
+					(at -10.16 2.54 0)
+					(length 2.54)
+					(name "VBAT" (effects (font (size 1.27 1.27))))
+					(number "6" (effects (font (size 1.27 1.27))))
+				)
+				(pin passive line
+					(at -10.16 0 0)
+					(length 2.54)
+					(name "SW" (effects (font (size 1.27 1.27))))
+					(number "1" (effects (font (size 1.27 1.27))))
+				)
+				(pin input line
+					(at -10.16 -2.54 0)
+					(length 2.54)
+					(name "EN" (effects (font (size 1.27 1.27))))
+					(number "3" (effects (font (size 1.27 1.27))))
+				)
+				(pin power_out line
+					(at 10.16 2.54 180)
+					(length 2.54)
+					(name "VOUT" (effects (font (size 1.27 1.27))))
+					(number "5" (effects (font (size 1.27 1.27))))
+				)
+				(pin input line
+					(at 10.16 -2.54 180)
+					(length 2.54)
+					(name "FB" (effects (font (size 1.27 1.27))))
+					(number "4" (effects (font (size 1.27 1.27))))
+				)
+				(pin power_in line
+					(at 0 -10.16 90)
+					(length 2.54)
+					(name "GND" (effects (font (size 1.27 1.27))))
+					(number "2" (effects (font (size 1.27 1.27))))
+				)
+			)
+			(embedded_fonts no)
+		)
 			(symbol "power:PWR_FLAG"
 			(power global)
 			(pin_numbers
@@ -1661,11 +1892,11 @@
 			(at 43.64 133.7 0)
 			(effects (font (size 1.27 1.27)))
 		)
-		(property "Value" "CR2032"
+		(property "Value" "AAA"
 			(at 43.64 145.7 0)
 			(effects (font (size 1.27 1.27)))
 		)
-		(property "Footprint" "dbfob:BatteryHolder_MYOUNG_BS-08-B2AA001_CR2032"
+		(property "Footprint" "dbfob:BatteryContacts_MYOUNG_MY-AAA-07_1xAAA"
 			(at 40.64 139.7 0)
 			(effects (font (size 1.27 1.27)) (hide yes))
 		)
@@ -1677,11 +1908,11 @@
 			(at 40.64 139.7 0)
 			(effects (font (size 1.27 1.27)) (hide yes))
 		)
-		(property "MPN" "BS-08-B2AA001"
+		(property "MPN" "MY-AAA-07"
 			(at 40.64 139.7 0)
 			(effects (font (size 1.27 1.27)) (hide yes))
 		)
-		(property "Note" "hand-fit on the back (LCSC C964777); ferrite sheet between holder floor and cell"
+		(property "Note" "two spring contacts, hand-fit on the back (LCSC C6937109); + towards the far end"
 			(at 40.64 139.7 0)
 			(effects (font (size 1.27 1.27)) (hide yes))
 		)
@@ -1693,11 +1924,11 @@
 		)
 		(instances (project "b1" (path "/20f8934c-30b5-5975-96bf-813a8789ed2a" (reference "BT1") (unit 1))))
 	)
-	(label "VBAT"
+	(label "VCELL"
 		(at 40.64 134.62 90)
 		(fields_autoplaced yes)
 		(effects (font (size 1.27 1.27)) (justify left bottom))
-		(uuid "b623212b-9424-5379-9795-7f4eb2fae7e3")
+		(uuid "7384d583-3a62-5230-8491-78cd092e4532")
 	)
 	(label "GND"
 		(at 40.64 142.24 270)
@@ -1921,11 +2152,11 @@
 		)
 		(instances (project "b1" (path "/20f8934c-30b5-5975-96bf-813a8789ed2a" (reference "C4") (unit 1))))
 	)
-	(label "VBAT"
+	(label "VDD"
 		(at 60.96 135.89 90)
 		(fields_autoplaced yes)
 		(effects (font (size 1.27 1.27)) (justify left bottom))
-		(uuid "0cf874cd-27bb-53cf-8974-558fe59be0a0")
+		(uuid "b339328e-06a9-5561-b4dc-d7a40d52d0b3")
 	)
 	(label "GND"
 		(at 60.96 143.51 270)
@@ -1966,7 +2197,7 @@
 			(at 76.2 139.7 0)
 			(effects (font (size 1.27 1.27)) (hide yes))
 		)
-		(property "Note" "bulk: coin cell ESR vs LED + mic current"
+		(property "Note" "boost output (TLV61220: >= L/2 in uF)"
 			(at 76.2 139.7 0)
 			(effects (font (size 1.27 1.27)) (hide yes))
 		)
@@ -1978,11 +2209,11 @@
 		)
 		(instances (project "b1" (path "/20f8934c-30b5-5975-96bf-813a8789ed2a" (reference "C5") (unit 1))))
 	)
-	(label "VBAT"
+	(label "VDD"
 		(at 76.2 135.89 90)
 		(fields_autoplaced yes)
 		(effects (font (size 1.27 1.27)) (justify left bottom))
-		(uuid "427fa6b3-0a57-5df6-b1ba-70ad0848d9fc")
+		(uuid "5c76845c-b483-5c9d-afd4-0727787af92a")
 	)
 	(label "GND"
 		(at 76.2 143.51 270)
@@ -2046,6 +2277,63 @@
 		(fields_autoplaced yes)
 		(effects (font (size 1.27 1.27)) (justify right bottom))
 		(uuid "5ea7aa0a-5d0f-57e8-9bde-15648ddf651f")
+	)
+	(symbol
+		(lib_id "Device:C")
+		(at 254 149.86 0)
+		(unit 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(dnp no)
+		(uuid "3a615931-cede-50d1-8869-e8970e46489a")
+		(property "Reference" "C7"
+			(at 257 143.86 0)
+			(effects (font (size 1.27 1.27)))
+		)
+		(property "Value" "10u"
+			(at 257 155.86 0)
+			(effects (font (size 1.27 1.27)))
+		)
+		(property "Footprint" "Capacitor_SMD:C_0603_1608Metric"
+			(at 254 149.86 0)
+			(effects (font (size 1.27 1.27)) (hide yes))
+		)
+		(property "Datasheet" ""
+			(at 254 149.86 0)
+			(effects (font (size 1.27 1.27)) (hide yes))
+		)
+		(property "LCSC" "C19702"
+			(at 254 149.86 0)
+			(effects (font (size 1.27 1.27)) (hide yes))
+		)
+		(property "MPN" "CL10A106KP8NNNC"
+			(at 254 149.86 0)
+			(effects (font (size 1.27 1.27)) (hide yes))
+		)
+		(property "Note" "boost input, by U3 pin 6"
+			(at 254 149.86 0)
+			(effects (font (size 1.27 1.27)) (hide yes))
+		)
+		(pin "1"
+			(uuid "7e762fa5-5005-58b3-a625-1fef8a642edd")
+		)
+		(pin "2"
+			(uuid "4547fc5e-68f2-5abb-b516-204423dbcfa6")
+		)
+		(instances (project "b1" (path "/20f8934c-30b5-5975-96bf-813a8789ed2a" (reference "C7") (unit 1))))
+	)
+	(label "VCELL"
+		(at 254 146.05 90)
+		(fields_autoplaced yes)
+		(effects (font (size 1.27 1.27)) (justify left bottom))
+		(uuid "d6daf76d-a561-5370-9874-e48fdacc10ab")
+	)
+	(label "GND"
+		(at 254 153.67 270)
+		(fields_autoplaced yes)
+		(effects (font (size 1.27 1.27)) (justify right bottom))
+		(uuid "20da0e0c-6d7b-5894-ae97-c4b6c235606a")
 	)
 	(symbol
 		(lib_id "Device:LED")
@@ -2308,7 +2596,7 @@
 			(at 30.48 88.9 0)
 			(effects (font (size 1.27 1.27)) (hide yes))
 		)
-		(property "Note" "pads for a pogo clip / WCH-LinkE: 1 SWDIO, 2 SWCLK, 3 GND, 4 VBAT, 5 TX"
+		(property "Note" "pads for a pogo clip / WCH-LinkE: 1 SWDIO, 2 SWCLK, 3 GND, 4 VDD, 5 TX"
 			(at 30.48 88.9 0)
 			(effects (font (size 1.27 1.27)) (hide yes))
 		)
@@ -2347,17 +2635,74 @@
 		(effects (font (size 1.27 1.27)) (justify right bottom))
 		(uuid "055a52a8-c888-5e7b-a9b3-a480b6261560")
 	)
-	(label "VBAT"
+	(label "VDD"
 		(at 25.4 91.44 180)
 		(fields_autoplaced yes)
 		(effects (font (size 1.27 1.27)) (justify right bottom))
-		(uuid "fcf08eca-4dbb-5aea-86e2-2b35f6184d96")
+		(uuid "54b3915f-7a06-5222-b98c-e6ee47bacd3f")
 	)
 	(label "TX"
 		(at 25.4 93.98 180)
 		(fields_autoplaced yes)
 		(effects (font (size 1.27 1.27)) (justify right bottom))
 		(uuid "4bb17de3-7db5-5068-a6bb-3ead034c876e")
+	)
+	(symbol
+		(lib_id "Device:L")
+		(at 269.24 129.54 90)
+		(unit 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(dnp no)
+		(uuid "7156df9f-03a1-5fb6-aa63-c1269b12f425")
+		(property "Reference" "L1"
+			(at 272.24 123.54 0)
+			(effects (font (size 1.27 1.27)))
+		)
+		(property "Value" "4.7u"
+			(at 272.24 135.54 0)
+			(effects (font (size 1.27 1.27)))
+		)
+		(property "Footprint" "dbfob:L_0806_2016Metric_MPL2016"
+			(at 269.24 129.54 0)
+			(effects (font (size 1.27 1.27)) (hide yes))
+		)
+		(property "Datasheet" ""
+			(at 269.24 129.54 0)
+			(effects (font (size 1.27 1.27)) (hide yes))
+		)
+		(property "LCSC" "C98335"
+			(at 269.24 129.54 0)
+			(effects (font (size 1.27 1.27)) (hide yes))
+		)
+		(property "MPN" "MPL2016S4R7MHT"
+			(at 269.24 129.54 0)
+			(effects (font (size 1.27 1.27)) (hide yes))
+		)
+		(property "Note" "boost inductor: 4.7 uH, 1.1 A, 110 mOhm, multilayer (closed field)"
+			(at 269.24 129.54 0)
+			(effects (font (size 1.27 1.27)) (hide yes))
+		)
+		(pin "1"
+			(uuid "cf125043-014f-5cf0-a890-71e561305ed9")
+		)
+		(pin "2"
+			(uuid "47bed119-6d35-545d-8880-165de9fc5359")
+		)
+		(instances (project "b1" (path "/20f8934c-30b5-5975-96bf-813a8789ed2a" (reference "L1") (unit 1))))
+	)
+	(label "VCELL"
+		(at 265.43 129.54 180)
+		(fields_autoplaced yes)
+		(effects (font (size 1.27 1.27)) (justify right bottom))
+		(uuid "40bdf16a-b528-5e8d-a211-46af75181650")
+	)
+	(label "SW"
+		(at 273.05 129.54 0)
+		(fields_autoplaced yes)
+		(effects (font (size 1.27 1.27)) (justify left bottom))
+		(uuid "66812d31-fdd0-59ed-9693-cfe178d7348b")
 	)
 	(symbol
 		(lib_id "dbfob:IM66D130M")
@@ -2476,7 +2821,7 @@
 			(at 160.02 88.9 0)
 			(effects (font (size 1.27 1.27)) (hide yes))
 		)
-		(property "Note" "inner end of the PCB coil: 6 turns, 0.25 mm / 0.2 mm, about 2.1 uH in air"
+		(property "Note" "inner end of the PCB coil: 9 turns, 0.15 mm / 0.15 mm, about 2.25 uH in air"
 			(at 160.02 88.9 0)
 			(effects (font (size 1.27 1.27)) (hide yes))
 		)
@@ -2647,7 +2992,7 @@
 			(at 254 139.7 0)
 			(effects (font (size 1.27 1.27)) (hide yes))
 		)
-		(property "Note" "FD pull-up to the cell: 30 uA only while a field is on"
+		(property "Note" "FD pull-up to VDD: 30 uA only while a field is on"
 			(at 254 139.7 0)
 			(effects (font (size 1.27 1.27)) (hide yes))
 		)
@@ -2659,11 +3004,11 @@
 		)
 		(instances (project "b1" (path "/20f8934c-30b5-5975-96bf-813a8789ed2a" (reference "R3") (unit 1))))
 	)
-	(label "VBAT"
+	(label "VDD"
 		(at 254 135.89 90)
 		(fields_autoplaced yes)
 		(effects (font (size 1.27 1.27)) (justify left bottom))
-		(uuid "3fcea856-54a4-5460-a48c-354e31cb38b9")
+		(uuid "c0a9d224-489f-5b4a-8c82-7bfcc9b9da55")
 	)
 	(label "FD"
 		(at 254 143.51 270)
@@ -2900,6 +3245,177 @@
 		(uuid "21df28f2-84cd-5840-8acc-1af4a521e207")
 	)
 	(symbol
+		(lib_id "Device:R")
+		(at 215.9 40.64 90)
+		(unit 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(dnp no)
+		(uuid "173a3556-ead4-5d33-95d1-6e659fbe5f42")
+		(property "Reference" "R8"
+			(at 218.9 34.64 0)
+			(effects (font (size 1.27 1.27)))
+		)
+		(property "Value" "100"
+			(at 218.9 46.64 0)
+			(effects (font (size 1.27 1.27)))
+		)
+		(property "Footprint" "Resistor_SMD:R_0603_1608Metric"
+			(at 215.9 40.64 0)
+			(effects (font (size 1.27 1.27)) (hide yes))
+		)
+		(property "Datasheet" ""
+			(at 215.9 40.64 0)
+			(effects (font (size 1.27 1.27)) (hide yes))
+		)
+		(property "LCSC" "C22775"
+			(at 215.9 40.64 0)
+			(effects (font (size 1.27 1.27)) (hide yes))
+		)
+		(property "MPN" "0603WAF1000T5E"
+			(at 215.9 40.64 0)
+			(effects (font (size 1.27 1.27)) (hide yes))
+		)
+		(property "Note" "mic supply filter, with C6"
+			(at 215.9 40.64 0)
+			(effects (font (size 1.27 1.27)) (hide yes))
+		)
+		(pin "1"
+			(uuid "f70244d6-b3fa-5809-a965-11585bd73bea")
+		)
+		(pin "2"
+			(uuid "2b64ee31-fe9b-5656-a251-e1bc4d605575")
+		)
+		(instances (project "b1" (path "/20f8934c-30b5-5975-96bf-813a8789ed2a" (reference "R8") (unit 1))))
+	)
+	(label "MIC_PWR"
+		(at 212.09 40.64 180)
+		(fields_autoplaced yes)
+		(effects (font (size 1.27 1.27)) (justify right bottom))
+		(uuid "75664c06-5a96-5dc3-8317-f5451959c7c3")
+	)
+	(label "MIC_VDD"
+		(at 219.71 40.64 0)
+		(fields_autoplaced yes)
+		(effects (font (size 1.27 1.27)) (justify left bottom))
+		(uuid "e3adb00f-3d24-5f85-81c7-c6528058be78")
+	)
+	(symbol
+		(lib_id "Device:R")
+		(at 330.2 129.54 0)
+		(unit 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(dnp no)
+		(uuid "9f34ab34-e2d9-561b-aafd-6cc8163a17fd")
+		(property "Reference" "R9"
+			(at 333.2 123.54 0)
+			(effects (font (size 1.27 1.27)))
+		)
+		(property "Value" "1M"
+			(at 333.2 135.54 0)
+			(effects (font (size 1.27 1.27)))
+		)
+		(property "Footprint" "Resistor_SMD:R_0603_1608Metric"
+			(at 330.2 129.54 0)
+			(effects (font (size 1.27 1.27)) (hide yes))
+		)
+		(property "Datasheet" ""
+			(at 330.2 129.54 0)
+			(effects (font (size 1.27 1.27)) (hide yes))
+		)
+		(property "LCSC" "C22935"
+			(at 330.2 129.54 0)
+			(effects (font (size 1.27 1.27)) (hide yes))
+		)
+		(property "MPN" "0603WAF1004T5E"
+			(at 330.2 129.54 0)
+			(effects (font (size 1.27 1.27)) (hide yes))
+		)
+		(property "Note" "feedback top"
+			(at 330.2 129.54 0)
+			(effects (font (size 1.27 1.27)) (hide yes))
+		)
+		(pin "1"
+			(uuid "3178e846-82d1-5ce7-93c6-72e81b3996a6")
+		)
+		(pin "2"
+			(uuid "7307e1bd-4780-5092-b499-89f0315a76f0")
+		)
+		(instances (project "b1" (path "/20f8934c-30b5-5975-96bf-813a8789ed2a" (reference "R9") (unit 1))))
+	)
+	(label "VDD"
+		(at 330.2 125.73 90)
+		(fields_autoplaced yes)
+		(effects (font (size 1.27 1.27)) (justify left bottom))
+		(uuid "6ff5ef58-c27f-53fb-8755-5b16494679b8")
+	)
+	(label "FB"
+		(at 330.2 133.35 270)
+		(fields_autoplaced yes)
+		(effects (font (size 1.27 1.27)) (justify right bottom))
+		(uuid "e7266512-e944-5d09-a000-b0717d272c69")
+	)
+	(symbol
+		(lib_id "Device:R")
+		(at 330.2 149.86 0)
+		(unit 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(dnp no)
+		(uuid "289aed1b-a8b1-50d6-a893-af6c135ca313")
+		(property "Reference" "R10"
+			(at 333.2 143.86 0)
+			(effects (font (size 1.27 1.27)))
+		)
+		(property "Value" "200k"
+			(at 333.2 155.86 0)
+			(effects (font (size 1.27 1.27)))
+		)
+		(property "Footprint" "Resistor_SMD:R_0603_1608Metric"
+			(at 330.2 149.86 0)
+			(effects (font (size 1.27 1.27)) (hide yes))
+		)
+		(property "Datasheet" ""
+			(at 330.2 149.86 0)
+			(effects (font (size 1.27 1.27)) (hide yes))
+		)
+		(property "LCSC" "C25811"
+			(at 330.2 149.86 0)
+			(effects (font (size 1.27 1.27)) (hide yes))
+		)
+		(property "MPN" "0603WAF2003T5E"
+			(at 330.2 149.86 0)
+			(effects (font (size 1.27 1.27)) (hide yes))
+		)
+		(property "Note" "feedback bottom"
+			(at 330.2 149.86 0)
+			(effects (font (size 1.27 1.27)) (hide yes))
+		)
+		(pin "1"
+			(uuid "7fa14e99-3cbf-57c6-a588-5cb1591738ad")
+		)
+		(pin "2"
+			(uuid "c855fbbd-8f97-5921-a49c-ce99dfb59efe")
+		)
+		(instances (project "b1" (path "/20f8934c-30b5-5975-96bf-813a8789ed2a" (reference "R10") (unit 1))))
+	)
+	(label "FB"
+		(at 330.2 146.05 90)
+		(fields_autoplaced yes)
+		(effects (font (size 1.27 1.27)) (justify left bottom))
+		(uuid "994cb20f-61e5-5182-b6ed-ce05347e5320")
+	)
+	(label "GND"
+		(at 330.2 153.67 270)
+		(fields_autoplaced yes)
+		(effects (font (size 1.27 1.27)) (justify right bottom))
+		(uuid "2db8a313-4fbc-572f-a9d0-fb0b8a2657ec")
+	)
+	(symbol
 		(lib_id "Switch:SW_Push")
 		(at 60.96 60.96 0)
 		(unit 1)
@@ -2950,11 +3466,11 @@
 		(effects (font (size 1.27 1.27)) (justify right bottom))
 		(uuid "db9eac55-769e-594c-a213-0779639e8aaa")
 	)
-	(label "VBAT"
+	(label "VDD"
 		(at 66.04 60.96 0)
 		(fields_autoplaced yes)
 		(effects (font (size 1.27 1.27)) (justify left bottom))
-		(uuid "09e8e37a-a19f-5a95-a00e-088090a899a4")
+		(uuid "1de22f97-966c-5692-8620-c3ccf5ea6dd1")
 	)
 	(symbol
 		(lib_id "dbfob:NT3H2111W0FHK")
@@ -3203,11 +3719,11 @@
 		(effects (font (size 1.27 1.27)) (justify right bottom))
 		(uuid "c39995f4-badd-53e7-855d-8560dde43f2c")
 	)
-	(label "MIC_VDD"
+	(label "MIC_PWR"
 		(at 104.14 96.52 180)
 		(fields_autoplaced yes)
 		(effects (font (size 1.27 1.27)) (justify right bottom))
-		(uuid "53789ce3-8be6-5fff-8b1f-9b91da39be71")
+		(uuid "777fb23e-18db-5b2b-b9e4-1e8c1d0e9960")
 	)
 	(label "MIC_CLK"
 		(at 104.14 99.06 180)
@@ -3221,11 +3737,17 @@
 		(effects (font (size 1.27 1.27)) (justify right bottom))
 		(uuid "f81ab58c-860d-5567-80a4-8f4f7bef1128")
 	)
-	(label "NFC_VCC"
+	(label "VCELL"
 		(at 104.14 104.14 180)
 		(fields_autoplaced yes)
 		(effects (font (size 1.27 1.27)) (justify right bottom))
-		(uuid "7f2662aa-4559-5385-90dd-0336770ccc72")
+		(uuid "c30a8c69-85eb-557a-b0b0-33f5b04621c1")
+	)
+	(label "NFC_VCC"
+		(at 134.62 96.52 0)
+		(fields_autoplaced yes)
+		(effects (font (size 1.27 1.27)) (justify left bottom))
+		(uuid "181e7f6f-ca43-5a0f-be57-23bd75a82d4e")
 	)
 	(label "FD"
 		(at 134.62 86.36 0)
@@ -3263,11 +3785,11 @@
 		(effects (font (size 1.27 1.27)) (justify left bottom))
 		(uuid "483a5d02-3c05-5468-a998-f8a2ed779120")
 	)
-	(label "VBAT"
+	(label "VDD"
 		(at 119.38 81.28 90)
 		(fields_autoplaced yes)
 		(effects (font (size 1.27 1.27)) (justify left bottom))
-		(uuid "f01dd6ac-020d-53d8-92ac-51827c04c979")
+		(uuid "3b9d567d-8c0a-58e0-8360-790e9d5e3cd1")
 	)
 	(label "GND"
 		(at 119.38 116.84 270)
@@ -3280,12 +3802,101 @@
 		(uuid "894a8998-ef16-5768-a96a-3ab2a1a08b8b")
 	)
 	(no_connect
-		(at 134.62 96.52)
-		(uuid "819b80a0-57ee-5e0e-a91a-950284d3660b")
-	)
-	(no_connect
 		(at 134.62 99.06)
 		(uuid "9228c369-8b97-59b7-b256-f41912f94ec4")
+	)
+	(symbol
+		(lib_id "dbfob:TLV61220")
+		(at 299.72 139.7 0)
+		(unit 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(dnp no)
+		(uuid "f94291d4-5a3f-5504-a20a-37fadf1ee83d")
+		(property "Reference" "U3"
+			(at 302.72 133.7 0)
+			(effects (font (size 1.27 1.27)))
+		)
+		(property "Value" "TLV61220"
+			(at 302.72 145.7 0)
+			(effects (font (size 1.27 1.27)))
+		)
+		(property "Footprint" "Package_TO_SOT_SMD:SOT-23-6"
+			(at 299.72 139.7 0)
+			(effects (font (size 1.27 1.27)) (hide yes))
+		)
+		(property "Datasheet" ""
+			(at 299.72 139.7 0)
+			(effects (font (size 1.27 1.27)) (hide yes))
+		)
+		(property "LCSC" "C111811"
+			(at 299.72 139.7 0)
+			(effects (font (size 1.27 1.27)) (hide yes))
+		)
+		(property "MPN" "TLV61220DBVR"
+			(at 299.72 139.7 0)
+			(effects (font (size 1.27 1.27)) (hide yes))
+		)
+		(property "Note" "boost 0.7-5.5 V in, 3.0 V out"
+			(at 299.72 139.7 0)
+			(effects (font (size 1.27 1.27)) (hide yes))
+		)
+		(pin "1"
+			(uuid "6fb4ab6f-5a2e-5163-8670-c6fc15e0f56f")
+		)
+		(pin "2"
+			(uuid "bc09feda-38e0-5004-8b71-1e04e1fb9ebf")
+		)
+		(pin "3"
+			(uuid "ae8a0fa2-f2b7-5d01-aba8-7fee67e52747")
+		)
+		(pin "4"
+			(uuid "14833fa7-b692-515f-abe1-5d33cd453d2c")
+		)
+		(pin "5"
+			(uuid "a801dd6c-b473-522f-8ed7-2defe20d66c4")
+		)
+		(pin "6"
+			(uuid "01923345-6713-5f41-9d4a-666633867e65")
+		)
+		(instances (project "b1" (path "/20f8934c-30b5-5975-96bf-813a8789ed2a" (reference "U3") (unit 1))))
+	)
+	(label "VCELL"
+		(at 289.56 137.16 180)
+		(fields_autoplaced yes)
+		(effects (font (size 1.27 1.27)) (justify right bottom))
+		(uuid "58b4999f-7265-5396-a996-831bf648ff74")
+	)
+	(label "VCELL"
+		(at 289.56 142.24 180)
+		(fields_autoplaced yes)
+		(effects (font (size 1.27 1.27)) (justify right bottom))
+		(uuid "5cbd96a5-7f58-50aa-850f-9ee0cb011b9d")
+	)
+	(label "SW"
+		(at 289.56 139.7 180)
+		(fields_autoplaced yes)
+		(effects (font (size 1.27 1.27)) (justify right bottom))
+		(uuid "9f08fffc-a4da-5b3d-a191-260f60b9d897")
+	)
+	(label "GND"
+		(at 299.72 149.86 270)
+		(fields_autoplaced yes)
+		(effects (font (size 1.27 1.27)) (justify right bottom))
+		(uuid "c000197e-b419-5069-b922-5d7a034533c8")
+	)
+	(label "VDD"
+		(at 309.88 137.16 0)
+		(fields_autoplaced yes)
+		(effects (font (size 1.27 1.27)) (justify left bottom))
+		(uuid "f7768d88-3c6d-5040-83c9-ade6dbc2edff")
+	)
+	(label "FB"
+		(at 309.88 142.24 0)
+		(fields_autoplaced yes)
+		(effects (font (size 1.27 1.27)) (justify left bottom))
+		(uuid "df4bdbfc-f451-5c4d-91bc-c4d5fe1937ef")
 	)
 	(symbol
 		(lib_id "power:PWR_FLAG")
@@ -3317,11 +3928,11 @@
 		)
 		(instances (project "b1" (path "/20f8934c-30b5-5975-96bf-813a8789ed2a" (reference "#FLG01") (unit 1))))
 	)
-	(label "VBAT"
+	(label "VCELL"
 		(at 40.64 119.38 270)
 		(fields_autoplaced yes)
 		(effects (font (size 1.27 1.27)) (justify right bottom))
-		(uuid "6e3f0fc5-0eb3-561b-8e87-09e6917f7ad5")
+		(uuid "8c538c40-0766-54b4-9e33-13e3d268d19b")
 	)
 	(symbol
 		(lib_id "power:PWR_FLAG")
@@ -3361,7 +3972,7 @@
 	)
 	(symbol
 		(lib_id "power:PWR_FLAG")
-		(at 215.9 40.64 0)
+		(at 231.14 40.64 0)
 		(unit 1)
 		(exclude_from_sim no)
 		(in_bom no)
@@ -3369,19 +3980,19 @@
 		(dnp no)
 		(uuid "e3ecbe3f-817d-5dcd-adf8-76148698b6ca")
 		(property "Reference" "#FLG03"
-			(at 218.9 34.64 0)
+			(at 234.14 34.64 0)
 			(effects (font (size 1.27 1.27)) (hide yes))
 		)
 		(property "Value" "PWR_FLAG"
-			(at 218.9 46.64 0)
+			(at 234.14 46.64 0)
 			(effects (font (size 1.27 1.27)) (hide yes))
 		)
 		(property "Footprint" ""
-			(at 215.9 40.64 0)
+			(at 231.14 40.64 0)
 			(effects (font (size 1.27 1.27)) (hide yes))
 		)
 		(property "Datasheet" ""
-			(at 215.9 40.64 0)
+			(at 231.14 40.64 0)
 			(effects (font (size 1.27 1.27)) (hide yes))
 		)
 		(pin "1"
@@ -3390,10 +4001,10 @@
 		(instances (project "b1" (path "/20f8934c-30b5-5975-96bf-813a8789ed2a" (reference "#FLG03") (unit 1))))
 	)
 	(label "MIC_VDD"
-		(at 215.9 40.64 270)
+		(at 231.14 40.64 270)
 		(fields_autoplaced yes)
 		(effects (font (size 1.27 1.27)) (justify right bottom))
-		(uuid "596b4742-ae69-5a55-84ef-717519926acd")
+		(uuid "6c40f3c2-d5d3-5ff4-b27e-5faf2acdcbb1")
 	)
 	(symbol
 		(lib_id "power:PWR_FLAG")
@@ -3431,17 +4042,17 @@
 		(effects (font (size 1.27 1.27)) (justify right bottom))
 		(uuid "c7afda90-b993-5056-bee5-ce1385901988")
 	)
-	(text "dbfob B1 - half-size keyfob with NFC readout"
+	(text "dbfob B1 - AAA stick with NFC readout"
 		(exclude_from_sim no)
 		(at 20 20 0)
 		(effects (font (size 2.5 2.5)) (justify left bottom))
-		(uuid "910c351b-a737-5ba4-ab37-eefd43cb14ed")
+		(uuid "f72277ab-0e27-53e2-9f39-1c6c02b05937")
 	)
-	(text "PDM mic on SPI1: PA5 SCK -> CLK at 1.5 MHz, PA6 MISO <- DATA. Mic powered from PA4 while measuring."
+	(text "PDM mic on SPI1: PA5 SCK -> CLK at 1.5 MHz, PA6 MISO <- DATA. Mic powered from PA4 (via R8/C6) while measuring."
 		(exclude_from_sim no)
 		(at 20 158 0)
 		(effects (font (size 1.5 1.5)) (justify left bottom))
-		(uuid "7491d502-2b4d-5749-b265-d2465d3f4af9")
+		(uuid "8add382a-6ff6-5b30-882c-9f0ce0f96533")
 	)
 	(text "LED PWM: PA1 O, PA2 Y, PA3 G (TIM2 CH2-4), PA8 R (TIM1 CH1). D4 cathode on PA10 = light sense."
 		(exclude_from_sim no)
@@ -3449,17 +4060,17 @@
 		(effects (font (size 1.5 1.5)) (justify left bottom))
 		(uuid "268f30f8-11cc-5450-834d-e374de39c460")
 	)
-	(text "Tag on I2C2 (PB10/PB11), powered from PA7; FD (PB0) wakes. BTN on PA0/WKUP to VBAT. TX on PA9."
+	(text "Tag on I2C2 (PB10/PB11), powered from PB14; FD (PB0) wakes. BTN on PA0/WKUP to VDD. TX on PA9."
 		(exclude_from_sim no)
 		(at 20 166 0)
 		(effects (font (size 1.5 1.5)) (justify left bottom))
-		(uuid "6d488050-6670-5fa6-a986-a7e055446e3a")
+		(uuid "ece3aefd-1287-581a-b734-b94f79af2cce")
 	)
-	(text "Remove the cell before programming through J1."
+	(text "AAA (0.9-1.8 V) -> TLV61220 -> VDD 3.0 V. PA7 (ADC7) reads the cell."
 		(exclude_from_sim no)
 		(at 20 170 0)
 		(effects (font (size 1.5 1.5)) (justify left bottom))
-		(uuid "c84d7a3a-d654-56b6-a7f9-c9015169c368")
+		(uuid "bbcc6608-7356-5000-be91-b2dae8fd100f")
 	)
 	(sheet_instances
 		(path "/"

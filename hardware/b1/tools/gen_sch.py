@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
 """Generate hardware/b1/b1.kicad_sch from the tables below.
 
-B1: rev A done properly, half the size (docs/rev-b.md, "B1 target"). 30 x 26 mm, CR2032 under
-the board in a BS-08 holder, the NFC antenna round the edge (../lib/antenna.py, identical to the
-NFC test board's), and on top: CH32L103 MCU, IM66D130M PDM mic, NT3H2111 tag, four LEDs, button.
+B1: rev A done properly, as a stick (docs/rev-b.md, "B1 stick"). 10.5 x 76.5 mm, an AAA cell on
+the back between two spring contacts, a TLV61220 boost converter making 3.0 V from it, the NFC
+coil in the tip (../lib/antenna.py, identical to the NFC test board's), and on the parts face:
+CH32L103 MCU, IM66D130M PDM mic at the tip, NT3H2111 tag, four LEDs, button.
 Same method as rev A's gen_sch.py (etofab.md §1): the tables are the source, labels on pin tips,
 UUIDs from reference designators.
 
@@ -44,34 +45,55 @@ LED_FP = 'LED_SMD:LED_0603_1608Metric'
 #  14 PA8 TIM1_CH1  LED_R    (every LED on its own hardware PWM channel)
 #  18 PA10          LED_R_K (D4 cathode: low to light, high + input to sense ambient light).
 #                   Shares PB7 = CC2: keep CC2_PD off.
-#   5 PA4           MIC_VDD (also SPI1_NSS: use SSM=1, SSOE=0)
+#   5 PA4           MIC_PWR, through R8 + C6 to the mic (also SPI1_NSS: use SSM=1, SSOE=0)
 #   6 PA5 SPI1_SCK  MIC_CLK (PDM clock)   20 PA6 SPI1_MISO MIC_DATA
-#   7 PA7           NFC_VCC (tag supply)
+#   7 PA7 ADC7      VCELL: the cell, straight in (0.9-1.8 V, under VDD), for the low-battery lockout
 #   8 PB0           FD (EXTI: a phone's field wakes the MCU; Standby wake by EXTI event is
 #                   still to be shown on the bench, Stop is the fallback)
 #   9 PB10 I2C2_SCL SCL (PB1 shares the pad: keep it an input)    10 PB11 I2C2_SDA SDA
 #  15 PA9 USART1_TX TX: the dB stream and a UART bootloader, as rev A's PD5
 #  17 PA13 SWDIO, 16 PA14 SWCLK: WCH-LinkE (2-wire SDI)
-#  11-13 PB13/PB14/PB15: spare.  19 VDD, 21 EP: VSS.  No NRST pin, BOOT0 tied low inside.
+#  12 PB14          NFC_VCC (tag supply). Not PB13: it shares the pad with PB6 = CC1.
+#  11 PB13, 13 PB15: spare.  19 VDD, 21 EP: VSS.  No NRST pin, BOOT0 tied low inside.
 #  Firmware: PB2 (no pin on this package) as pull-down input in low power (DS note 5).
 MCU = {'1': 'BTN', '2': 'LED_O', '3': 'LED_Y', '4': 'LED_G', '14': 'LED_R', '18': 'LED_R_K',
-       '5': 'MIC_VDD', '6': 'MIC_CLK', '20': 'MIC_DATA', '7': 'NFC_VCC', '8': 'FD', '9': 'SCL',
-       '10': 'SDA', '15': 'TX', '17': 'SWDIO', '16': 'SWCLK', '19': 'VBAT', '21': 'GND'}
+       '5': 'MIC_PWR', '6': 'MIC_CLK', '20': 'MIC_DATA', '7': 'VCELL', '12': 'NFC_VCC', '8': 'FD',
+       '9': 'SCL', '10': 'SDA', '15': 'TX', '17': 'SWDIO', '16': 'SWCLK', '19': 'VDD', '21': 'GND'}
 
 PARTS = {
     'U2': ('dbfob:CH32L103F8U6', 'CH32L103F8U6', 'Package_DFN_QFN:UQFN-20-1EP_3x3mm_P0.4mm_EP1.85x1.85mm',
            'C22467836', 'CH32L103F8U6', 'RV32IMAC, 1.8-3.6 V, Standby < 1 uA', (120, 90, 0), MCU, False),
     'C4': ('Device:C', '100n', C_FP, 'C14663', 'CC0603KRX7R9BB104', 'U2 decoupling, by pin 19',
-           (60, 140, 0), {'1': 'VBAT', '2': 'GND'}, False),
-    'C5': ('Device:C', '10u', C_FP, 'C19702', 'CL10A106KP8NNNC', 'bulk: coin cell ESR vs LED + mic current',
-           (75, 140, 0), {'1': 'VBAT', '2': 'GND'}, False),
-    # Mic: IM66D130M, bottom port through the board, powered from PA4 only while measuring. LR to
+           (60, 140, 0), {'1': 'VDD', '2': 'GND'}, False),
+    'C5': ('Device:C', '10u', C_FP, 'C19702', 'CL10A106KP8NNNC', 'boost output (TLV61220: >= L/2 in uF)',
+           (75, 140, 0), {'1': 'VDD', '2': 'GND'}, False),
+    # Power: one AAA (Li-FeS2 L92, alkaline or NiMH, 0.9-1.8 V) boosted to 3.0 V. TLV61220 starts
+    # from 0.7 V; Iq 0.5 uA from VBAT + 5 uA into VOUT. EN to the cell: always on, the MCU's
+    # Standby sets the floor. VOUT = 0.5 V x (1 + R9/R10) = 3.0 V; R10 <= 500k per the datasheet
+    # (>= 1 uA in the divider): 1M / 200k draws 2.5 uA.
+    'U3': ('dbfob:TLV61220', 'TLV61220', 'Package_TO_SOT_SMD:SOT-23-6', 'C111811', 'TLV61220DBVR',
+           'boost 0.7-5.5 V in, 3.0 V out', (300, 140, 0),
+           {'6': 'VCELL', '3': 'VCELL', '1': 'SW', '2': 'GND', '5': 'VDD', '4': 'FB'}, False),
+    'L1': ('Device:L', '4.7u', 'dbfob:L_0806_2016Metric_MPL2016', 'C98335', 'MPL2016S4R7MHT',
+           'boost inductor: 4.7 uH, 1.1 A, 110 mOhm, multilayer (closed field)', (270, 130, 90),
+           {'1': 'VCELL', '2': 'SW'}, False),
+    'C7': ('Device:C', '10u', C_FP, 'C19702', 'CL10A106KP8NNNC', 'boost input, by U3 pin 6',
+           (255, 150, 0), {'1': 'VCELL', '2': 'GND'}, False),
+    'R9': ('Device:R', '1M', R_FP, 'C22935', '0603WAF1004T5E', 'feedback top', (330, 130, 0),
+           {'1': 'VDD', '2': 'FB'}, False),
+    'R10': ('Device:R', '200k', R_FP, 'C25811', '0603WAF2003T5E', 'feedback bottom', (330, 150, 0),
+            {'1': 'FB', '2': 'GND'}, False),
+    # Mic: IM66D130M at the tip, inside the coil, bottom port through the board. Powered from PA4
+    # only while measuring, through R8 + C6 (1.6 kHz): the boost converter's burst ripple at light
+    # load stays off the mic's supply. 100 Ohm x 0.54 mA = 54 mV. LR to
     # GND as rev A's SELECT: data valid on the same clock edge. 0 stock at JLC/LCSC on
     # 2026-11-03: JLC global sourcing or consignment.
     'MK1': ('dbfob:IM66D130M', 'IM66D130M', 'dbfob:Infineon_IM66D130M_LGA-5_3x2mm', 'C52053030',
             'IM66D130MV01XTMA1', 'bottom port: the 0.5 mm NPTH in the footprint is the sound inlet; '
             'not stocked on 2026-11-03, global sourcing', (200, 60, 0),
             {'5': 'MIC_VDD', '4': 'MIC_CLK', '2': 'GND', '1': 'MIC_DATA', '3': 'GND'}, False),
+    'R8': ('Device:R', '100', R_FP, 'C22775', '0603WAF1000T5E', 'mic supply filter, with C6', (215, 40, 90),
+           {'1': 'MIC_PWR', '2': 'MIC_VDD'}, False),
     'C6': ('Device:C', '1u', C_FP, 'C15849', 'CL10A105KB8NNNC', 'mic decoupling, next to MK1 (DS table 5 note 2: 1 uF)',
            (230, 60, 0), {'1': 'MIC_VDD', '2': 'GND'}, False),
     # NFC: NT3H2111 pinout from the NXP datasheet's table 3 (XQFN8). The antenna block (U1, NT1,
@@ -80,7 +102,7 @@ PARTS = {
            'C710403', 'NT3H2111W0FHKH', 'NTAG I2C plus 1k; VOUT unused', (200, 110, 0),
            {'1': 'LA', '8': 'LB', '2': 'GND', '6': 'NFC_VCC', '5': 'SDA', '3': 'SCL', '4': 'FD'}, False),
     'NT1': ('Device:NetTie_2', 'antenna', 'NetTie:NetTie-2_SMD_Pad0.5mm', '', '',
-            'inner end of the PCB coil: 6 turns, 0.25 mm / 0.2 mm, about 2.1 uH in air',
+            'inner end of the PCB coil: 9 turns, 0.15 mm / 0.15 mm, about 2.25 uH in air',
             (160, 90, 0), {'1': 'LA', '2': 'LB'}, False),
     'C1': ('Device:C', 'tune C0G', C_FP, '', '', 'not fitted: antenna trim, value from the NFC test board',
            (160, 110, 0), {'1': 'LA', '2': 'LB'}, True),
@@ -94,20 +116,21 @@ PARTS = {
     'R2': ('Device:R', '4.7k', R_FP, 'C23162', '0603WAF4701T5E', 'SCL pull-up to NFC_VCC',
            (255, 120, 0), {'1': 'NFC_VCC', '2': 'SCL'}, False),
     # FD is open drain and pulls low while a reader's field is on, with or without NFC_VCC.
-    'R3': ('Device:R', '100k', R_FP, 'C25803', '0603WAF1003T5E', 'FD pull-up to the cell: 30 uA only while a field is on',
-           (255, 140, 0), {'1': 'VBAT', '2': 'FD'}, False),
-    # to VBAT: PA0/WKUP has its own pull-down in Standby (see the pin table)
+    'R3': ('Device:R', '100k', R_FP, 'C25803', '0603WAF1003T5E', 'FD pull-up to VDD: 30 uA only while a field is on',
+           (255, 140, 0), {'1': 'VDD', '2': 'FD'}, False),
+    # to VDD: PA0/WKUP has its own pull-down in Standby (see the pin table)
     'SW1': ('Switch:SW_Push', 'measure', 'Button_Switch_SMD:SW_Push_1P1T_XKB_TS-1187A', 'C318884',
-            'TS-1187A-B-A-B', '', (60, 60, 0), {'1': 'BTN', '2': 'VBAT'}, False),
-    'BT1': ('Device:Battery_Cell', 'CR2032', 'dbfob:BatteryHolder_MYOUNG_BS-08-B2AA001_CR2032', '',
-            'BS-08-B2AA001', 'hand-fit on the back (LCSC C964777); ferrite sheet between holder floor and cell',
-            (40, 140, 0), {'1': 'VBAT', '2': 'GND'}, False),
+            'TS-1187A-B-A-B', '', (60, 60, 0), {'1': 'BTN', '2': 'VDD'}, False),
+    'BT1': ('Device:Battery_Cell', 'AAA', 'dbfob:BatteryContacts_MYOUNG_MY-AAA-07_1xAAA', '',
+            'MY-AAA-07', 'two spring contacts, hand-fit on the back (LCSC C6937109); + towards the far end',
+            (40, 140, 0), {'1': 'VCELL', '2': 'GND'}, False),
+    # VDD on pad 4: a WCH-LinkE at 3.3 V feeds VDD past the converter (its rectifier blocks the
+    # way back), so the cell can stay in.
     'J1': ('Connector_Generic:Conn_01x05', 'PROG', 'dbfob:TestPads_1x05_P2.54mm_D1.2mm', '', '',
-           'pads for a pogo clip / WCH-LinkE: 1 SWDIO, 2 SWCLK, 3 GND, 4 VBAT, 5 TX',
-           (30, 90, 0), {'1': 'SWDIO', '2': 'SWCLK', '3': 'GND', '4': 'VBAT', '5': 'TX'}, False),
+           'pads for a pogo clip / WCH-LinkE: 1 SWDIO, 2 SWCLK, 3 GND, 4 VDD, 5 TX',
+           (30, 90, 0), {'1': 'SWDIO', '2': 'SWCLK', '3': 'GND', '4': 'VDD', '5': 'TX'}, False),
 }
-# LED bar as rev A: four low-Vf AlInGaP/GaP parts so every colour lights near the cell's end of
-# life; deliberately dim. D4's cathode goes to PA10: reverse-biased and timed, it senses ambient light.
+# LED bar as rev A: four low-Vf AlInGaP/GaP parts, deliberately dim; now from the regulated 3.0 V. D4's cathode goes to PA10: reverse-biased and timed, it senses ambient light.
 LEDS = [  # ref, net, colour, LCSC, MPN, R, R LCSC, cathode net
     ('D1', 'LED_G', 'yellow-green 575nm', 'C89809', 'NCD0603C3', '1k', 'C21190', 'GND'),
     ('D2', 'LED_Y', 'yellow 590nm', 'C2287', 'KT-0603Y', '2.2k', 'C4190', 'GND'),
@@ -121,15 +144,16 @@ for i, (d, net, col, lcsc, mpn, rv, rl, k) in enumerate(LEDS):
     PARTS[d] = ('Device:LED', col, LED_FP, lcsc, mpn, '', (x, 50, 90), {'2': net + '_A', '1': k}, False)
 
 # MIC_VDD and NFC_VCC are driven by GPIOs, which ERC cannot know: flag them
-FLAGS = {'#FLG01': ('VBAT', (40, 120)), '#FLG02': ('GND', (100, 150)), '#FLG03': ('MIC_VDD', (215, 40)),
+# The cell's contacts are passive pins, and MIC_VDD / NFC_VCC come from GPIOs: flag them for ERC
+FLAGS = {'#FLG01': ('VCELL', (40, 120)), '#FLG02': ('GND', (100, 150)), '#FLG03': ('MIC_VDD', (230, 40)),
          '#FLG04': ('NFC_VCC', (270, 100))}
-NOCONNECT = {'U1': ['7'], 'U2': ['11', '12', '13']}
+NOCONNECT = {'U1': ['7'], 'U2': ['11', '13']}
 TEXT = [
-    ('dbfob B1 - half-size keyfob with NFC readout', (20, 20), 2.5),
-    ('PDM mic on SPI1: PA5 SCK -> CLK at 1.5 MHz, PA6 MISO <- DATA. Mic powered from PA4 while measuring.', (20, 158), 1.5),
+    ('dbfob B1 - AAA stick with NFC readout', (20, 20), 2.5),
+    ('PDM mic on SPI1: PA5 SCK -> CLK at 1.5 MHz, PA6 MISO <- DATA. Mic powered from PA4 (via R8/C6) while measuring.', (20, 158), 1.5),
     ('LED PWM: PA1 O, PA2 Y, PA3 G (TIM2 CH2-4), PA8 R (TIM1 CH1). D4 cathode on PA10 = light sense.', (20, 162), 1.5),
-    ('Tag on I2C2 (PB10/PB11), powered from PA7; FD (PB0) wakes. BTN on PA0/WKUP to VBAT. TX on PA9.', (20, 166), 1.5),
-    ('Remove the cell before programming through J1.', (20, 170), 1.5),
+    ('Tag on I2C2 (PB10/PB11), powered from PB14; FD (PB0) wakes. BTN on PA0/WKUP to VDD. TX on PA9.', (20, 166), 1.5),
+    ('AAA (0.9-1.8 V) -> TLV61220 -> VDD 3.0 V. PA7 (ADC7) reads the cell.', (20, 170), 1.5),
 ]
 
 

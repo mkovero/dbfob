@@ -1,0 +1,13 @@
+(footprint "L_0806_2016Metric_MPL2016"
+	(version 20240108)
+	(generator "dbfob_gen_lib")
+	(layer "F.Cu")
+	(descr "2016 (0806) power inductor, pads as the EasyEDA footprint of MPL2016S4R7MHT (C98335)")
+	(attr smd)
+	(property "Reference" "REF**" (at 0 -1.6 0) (layer "F.SilkS") (uuid "74df7a8a-8eed-5dcd-aa70-21c73924e8a3") (effects (font (size 0.8 0.8) (thickness 0.12))))
+	(property "Value" "L_0806_2016Metric_MPL2016" (at 0 1.6 0) (layer "F.Fab") (uuid "6da18788-8479-592f-9d59-f69d497f6081") (effects (font (size 0.8 0.8) (thickness 0.12))))
+	(fp_rect (start -1 -0.8) (end 1 0.8) (stroke (width 0.1) (type solid)) (fill no) (layer "F.Fab") (uuid "db33d576-1290-54b0-bbdf-6b3ef50ed235"))
+	(fp_rect (start -1.85 -1.15) (end 1.85 1.15) (stroke (width 0.05) (type solid)) (fill no) (layer "F.CrtYd") (uuid "fa31705e-a475-5dee-8d26-9998b8c29278"))
+	(pad "1" smd roundrect (at -1 0) (size 1.2 1.8) (layers "F.Cu" "F.Paste" "F.Mask") (roundrect_rratio 0.25) (uuid "22952e84-ee84-5751-b0c0-47ba1e2f7d9a"))
+	(pad "2" smd roundrect (at 1 0) (size 1.2 1.8) (layers "F.Cu" "F.Paste" "F.Mask") (roundrect_rratio 0.25) (uuid "604e22dd-2f01-5d88-b34a-9b2b46f1ceea"))
+)

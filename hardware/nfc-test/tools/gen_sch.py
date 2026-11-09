@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
 """Generate hardware/nfc-test/nfc-test.kicad_sch from the tables below.
 
-The NFC test board for rev B (B1): an NT3H2111 tag with B1's antenna, over a CR2032 in B1's
-holder, so the antenna, the ferrite sheet and the tuning can be measured on the real stack. It
-carries no MCU: a phone reads and writes the tag through RF alone, and the header gives any MCU
-the I2C bus and the field-detect line. Same method as rev A's gen_sch.py (etofab.md §1): the
+The NFC test board for rev B (B1): the B1 stick's outline with B1's antenna, tag and AAA cell
+contacts, so the antenna and its tuning can be measured next to the real cell. It carries no
+MCU: a phone reads and writes the tag through RF alone, and the pads give any host MCU the I2C
+bus and the field-detect line. The AAA cell (1.5 V) is there for its steel can; it cannot run
+the tag (1.67 V minimum) or the LED, so those take VCC from the host pads. Same method as rev A's gen_sch.py (etofab.md §1): the
 tables are the source, labels on pin tips, UUIDs from reference designators.
 
   python3 hardware/lib/gen_lib.py                 # project symbols / footprints
@@ -41,11 +42,11 @@ PARTS = {
     # The antenna is copper on the board (make_pcb.py draws it as LA tracks). Its inner end
     # meets LB through this net tie, so the coil is the one place LA and LB are allowed to touch.
     'NT1': ('Device:NetTie_2', 'antenna', 'NetTie:NetTie-2_SMD_Pad0.5mm', '', '',
-            'inner end of the PCB coil: 6 turns, 0.25 mm / 0.2 mm, about 2.1 uH in air',
+            'inner end of the PCB coil: 9 turns, 0.15 mm / 0.15 mm, about 2.25 uH in air',
             (75, 60, 0), {'1': 'LA', '2': 'LB'}, False),
     # Tuning: the tag has 50 pF (44-56) inside, so 13.56 MHz wants 2.75 uH. The coil is drawn
     # short of that on purpose (a parallel C can only lower the resonance), and these two pads
-    # take C0G trim caps by hand once the coil is measured with the cell and ferrite in place.
+    # take C0G trim caps by hand once the coil is measured beside the cell.
     'C1': ('Device:C', 'tune C0G', C_FP, '', '', 'not fitted: antenna trim, C0G, chosen on the bench',
            (75, 80, 0), {'1': 'LA', '2': 'LB'}, True),
     'C2': ('Device:C', 'tune C0G', C_FP, '', '', 'not fitted: second trim position',
@@ -57,36 +58,33 @@ PARTS = {
     'R2': ('Device:R', '4.7k', R_FP, 'C23162', '0603WAF4701T5E', 'SCL pull-up to VCC',
            (190, 60, 0), {'1': 'VCC', '2': 'SCL'}, False),
     # FD is open drain and works from the RF field with VCC off, as B1 will use it to wake the
-    # MCU. Pulled up to the cell, not to VCC, and the LED lights while a reader's field is on:
-    # a range check with no MCU and no app.
-    'R3': ('Device:R', '10k', R_FP, 'C25804', '0603WAF1002T5E', 'FD pull-up to the cell',
-           (175, 100, 0), {'1': 'VBAT', '2': 'FD'}, False),
+    # MCU. Pulled up to the host's VCC here, and the LED lights while a reader's field is on:
+    # a range check with no app, on any 3 V supply at the pads.
+    'R3': ('Device:R', '10k', R_FP, 'C25804', '0603WAF1002T5E', 'FD pull-up to VCC',
+           (175, 100, 0), {'1': 'VCC', '2': 'FD'}, False),
     'R4': ('Device:R', '1k', R_FP, 'C21190', '0603WAF1001T5E', 'field LED current, ~1 mA',
-           (190, 100, 0), {'1': 'VBAT', '2': 'LED_A'}, False),
+           (190, 100, 0), {'1': 'VCC', '2': 'LED_A'}, False),
     'D1': ('Device:LED', 'red', 'LED_SMD:LED_0603_1608Metric', 'C2286', 'KT-0603R', 'on while a field is present',
            (205, 100, 90), {'2': 'LED_A', '1': 'FD'}, False),
-    'JP1': ('Jumper:SolderJumper_2_Open', 'VCC=VBAT', 'Jumper:SolderJumper-2_P1.3mm_Open_Pad1.0x1.5mm', '', '',
-            'bridge to power the tag from the cell (I2C with no host supply)',
-            (60, 120, 0), {'1': 'VBAT', '2': 'VCC'}, False),
-    # Same holder as B1, on the back. It is hand-soldered here: two large pads, and it keeps
-    # the board a one-sided JLC assembly.
-    'BT1': ('Device:Battery_Cell', 'CR2032', 'dbfob:BatteryHolder_MYOUNG_BS-08-B2AA001_CR2032', '',
-            'BS-08-B2AA001', 'hand-fit on the back (LCSC C964777); ferrite sheet between holder floor and cell',
-            (40, 120, 0), {'1': 'VBAT', '2': 'GND'}, False),
-    'J1': ('Connector_Generic:Conn_01x06', 'HOST', 'Connector_PinHeader_2.54mm:PinHeader_1x06_P2.54mm_Vertical',
-           '', '', 'not fitted: 1 VBAT, 2 VCC, 3 SDA, 4 FD, 5 SCL, 6 GND (order follows U1 sides)',
-           (230, 80, 0), {'1': 'VBAT', '2': 'VCC', '3': 'SDA', '4': 'FD', '5': 'SCL', '6': 'GND'}, False),
+    # Same contacts as B1, on the back, hand-soldered (LCSC C6937109 x2): it keeps the board a
+    # one-sided JLC assembly. The cell's + only reaches the pads, for a host that wants it.
+    'BT1': ('Device:Battery_Cell', 'AAA', 'dbfob:BatteryContacts_MYOUNG_MY-AAA-07_1xAAA', '',
+            'MY-AAA-07', 'hand-fit on the back: 2x MYOUNG MY-AAA-07 (LCSC C6937109)',
+            (40, 120, 0), {'1': 'VCELL', '2': 'GND'}, False),
+    'J1': ('Connector_Generic:Conn_01x06', 'HOST', 'dbfob:TestPads_1x06_P2.54mm_D1.2mm',
+           '', '', 'SMD pads for wires or pogo pins: 1 VCELL, 2 VCC, 3 SDA, 4 FD, 5 SCL, 6 GND',
+           (230, 80, 0), {'1': 'VCELL', '2': 'VCC', '3': 'SDA', '4': 'FD', '5': 'SCL', '6': 'GND'}, False),
 }
 
-FLAGS = {'#FLG01': ('VBAT', (40, 100)), '#FLG02': ('GND', (100, 130)), '#FLG03': ('VCC', (140, 45))}
+FLAGS = {'#FLG01': ('VCELL', (40, 100)), '#FLG02': ('GND', (100, 130)), '#FLG03': ('VCC', (140, 45))}
 NOCONNECT = {'U1': ['7']}
 TEXT = [
-    ('dbfob NFC test board (for rev B / B1)', (20, 20), 2.5),
+    ('dbfob NFC test board (for rev B / B1, the AAA stick)', (20, 20), 2.5),
     ('Tag: NT3H2111 (NTAG I2C plus 1k), Type 2. A phone reads/writes it with no MCU and no VCC.', (20, 150), 1.5),
     ('Antenna: PCB coil, LA tracks closed to LB by NT1. Trim with C1/C2 (C0G) on the bench.', (20, 154), 1.5),
-    ('FD: open drain, works from the field alone; D1 lights while a reader field is on.', (20, 158), 1.5),
-    ('J1 for any host MCU: VBAT VCC SDA FD SCL GND. JP1 powers the tag from the cell.', (20, 162), 1.5),
-    ('BT1 on the back, hand-fitted; ferrite sheet between holder floor and cell.', (20, 166), 1.5),
+    ('FD: open drain, works from the field alone; D1 lights while a reader field is on and VCC is up.', (20, 158), 1.5),
+    ('J1 pads for any host MCU: VCELL VCC SDA FD SCL GND. VCC 1.67-3.6 V from the host.', (20, 162), 1.5),
+    ('BT1: AAA contacts on the back, hand-fitted; the cell is there for its effect on the tuning.', (20, 166), 1.5),
 ]
 
 
