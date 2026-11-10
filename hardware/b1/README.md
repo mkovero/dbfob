@@ -82,7 +82,8 @@ Same procedure as rev A ([../README.md](../README.md)). Routing is signals first
 
 ## Before ordering
 
-- Stock on 2026-11-09: CH32L103F8U6 481, TLV61220 10 670, IM66D130M 20, MY-AAA-07 3 594. Recheck the MCU and the mic on order day.
+- Stock on 2026-11-10: CH32L103F8U6 119 (708 on 11-03, 481 on 11-09: falling fast), TLV61220 10 665, IM66D130M 20, MY-AAA-07 3 594. Recheck the MCU and the mic on order day.
+- Extended parts (JLC setup fee each): D1–D3, L1, MK1, U1, U2, U3 on B1; U1 on the test board. The rest are Basic.
 - **ENIG finish:** the mic's pads are NSMD (0.05 mm mask clearance on them).
 - **Check JLC's DFM preview** for the mic: its rotation, and that the copper ring round the 0.5 mm port isn't trimmed (JLC may remove thin copper rings at NPTHs).
 - 4 layers at 1.0 mm: check JLC's stack-up price against the test board's, since both use it.
