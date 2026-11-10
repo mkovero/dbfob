@@ -8,7 +8,7 @@ under our fab rules, UUIDs derive from content, DRC with schematic parity is the
   python3 hardware/b1/tools/make_pcb.py
   python3 hardware/b1/tools/fab.py
 
-Board: the stick, 10.5 x 76.5 x 1.0 mm, 4 layers, every machine-placed part on the front. The
+Board: the stick, 10.5 x 82.5 x 1.0 mm, 4 layers, every machine-placed part on the front. The
 outline and the antenna block (coil in the tip, the LB crossover, tag, trim pads, the AAA
 contacts on the back) come from ../lib/antenna.py, identical to the NFC test board's. Along
 the stick from the tip: the mic inside the coil with its port through the board, the tag, the
@@ -77,6 +77,7 @@ PLACE = dict(ant.PLACE, **{
     'R9': (53.8, 9.4, 180, False),     # VDD pad under C5's VDD track
     'SW1': (59.5, 5.25, 90, False),
     'J1': (63.3, 5.25, 90, False),     # pads along the stick: SWDIO SWCLK GND VDD TX
+    'H1': (ant.L - 3.5, 5.25, 0, False),   # keyring: 1.9 mm web to the end, 1.5 mm past the + contact
 })
 
 # The mic's GND ring (pad 3, round the port) tied to its GND pad 2: the router can't get in
@@ -99,7 +100,8 @@ BOOST = [
 BOOST_VIAS = []
 # Router-only keepouts (User.2, KiCadRoutingTools --keepout; DRC ignores the layer): the SW gap
 # between L1 and U3, or the router rips SW up to push a signal through there.
-ROUTER_KEEPOUTS = [(50.15, 3.15, 50.85, 3.95)]
+ROUTER_KEEPOUTS = [(50.15, 3.15, 50.85, 3.95),
+                   (ant.L - 6.1, 0.0, ant.L, ant.W)]   # nothing round the keyring hole: a steel ring wears its edge
 # The cell to U2's ADC pin (7, bottom row), which the router can't reach between its neighbours:
 # down to In2, along under the bottom row's fan-out to U3's EN pin (3). (net, layer, width, points)
 VCELL_ADC = [('/VCELL', 'F', 0.15, ['U2.7', (45.0, 8.3)]),

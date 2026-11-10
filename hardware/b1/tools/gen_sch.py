@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Generate hardware/b1/b1.kicad_sch from the tables below.
 
-B1: rev A done properly, as a stick (docs/rev-b.md, "B1 stick"). 10.5 x 76.5 mm, an AAA cell on
+B1: rev A done properly, as a stick (docs/rev-b.md, "B1 stick"). 10.5 x 82.5 mm, an AAA cell on
 the back between two spring contacts, a TLV61220 boost converter making 3.0 V from it, the NFC
 coil in the tip (../lib/antenna.py, identical to the NFC test board's), and on the parts face:
 CH32L103 MCU, IM66D130M PDM mic at the tip, NT3H2111 tag, four LEDs, button.
@@ -129,6 +129,9 @@ PARTS = {
     'J1': ('Connector_Generic:Conn_01x05', 'PROG', 'dbfob:TestPads_1x05_P2.54mm_D1.2mm', '', '',
            'pads for a pogo clip / WCH-LinkE: 1 SWDIO, 2 SWCLK, 3 GND, 4 VDD, 5 TX',
            (30, 90, 0), {'1': 'SWDIO', '2': 'SWCLK', '3': 'GND', '4': 'VDD', '5': 'TX'}, False),
+    # at the far end, opposite the mic: the stick hangs mic-down from a split ring
+    'H1': ('Mechanical:MountingHole', 'keyring', 'MountingHole:MountingHole_3.2mm_M3', '', '',
+           'keyring hole, 3.2 mm NPTH', (30, 110, 0), {}, False),
 }
 # LED bar as rev A: four low-Vf AlInGaP/GaP parts, deliberately dim; now from the regulated 3.0 V. D4's cathode goes to PA10: reverse-biased and timed, it senses ambient light.
 LEDS = [  # ref, net, colour, LCSC, MPN, R, R LCSC, cathode net
@@ -255,7 +258,7 @@ def main():
     for ref in sorted(PARTS, key=lambda k: (re.sub(r'\d', '', k), int(re.sub(r'\D', '', k) or 0))):
         lib_id, value, fp, lcsc, mpn, note, (x, y, r), nets, dnp = PARTS[ref]
         x, y = snap(x), snap(y)
-        in_bom = lib_id not in ('Device:NetTie_2', 'Jumper:SolderJumper_2_Open')   # copper, not parts
+        in_bom = lib_id not in ('Device:NetTie_2', 'Jumper:SolderJumper_2_Open', 'Mechanical:MountingHole')   # not parts
         body += symbol(ref, lib_id, value, fp, lcsc, mpn, note, x, y, r, in_bom=in_bom, dnp=dnp)
         for pin, net in nets.items():
             tx, ty, pa = tip(lib_id, pin, x, y, r)
