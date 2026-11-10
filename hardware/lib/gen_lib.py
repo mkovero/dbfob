@@ -178,15 +178,16 @@ def im66d130m():
     nsmd = ' (solder_mask_margin 0.05)'
     pads = [smd(n, x, y, 0.42, 0.625, name, 'rect').replace(' (uuid', nsmd + ' (uuid') for n, x, y in
             (('1', -1.15, 0.555), ('2', -0.55, 0.555), ('4', -0.55, -0.555), ('5', -1.15, -0.555))]
-    # GND ring: outer 1.4 as fig. 15, inner 1.0 instead of 0.76 so the 0.5 mm port keeps 0.25 mm
-    # hole-to-copper. The mic's own ring is 0.8 / 1.3, so the seal band is still 1.0..1.3.
-    rm, rw = (1.4 + 1.0) / 4, (1.4 - 1.0) / 2
+    # GND ring: inner 1.0 instead of fig. 15's 0.76 so the 0.5 mm port keeps 0.25 mm hole-to-copper,
+    # outer 1.5 instead of 1.4 to win back width. The mic's own ring is 0.8 / 1.3, so the seal band
+    # is 1.0..1.3.
+    rm, rw = (1.5 + 1.0) / 4, (1.5 - 1.0) / 2
     pads.append(f'\t(pad "3" smd custom (at {f(px)} {f(-rm)}) (size {f(rw)} {f(rw)}) (layers "F.Cu" "F.Mask") '
                 f'(zone_connect 0){nsmd} (options (clearance outline) (anchor circle)) (primitives (gr_circle '
                 f'(center 0 {f(rm)}) (end {f(rm)} {f(rm)}) (width {f(rw)}) (fill no))) (uuid "{uid(name, "ring")}"))')
     # paste: three ring segments with 0.1 mm vents at 60, 180 and 300 degrees, as fig. 15 but
-    # inside the narrower copper ring
-    ri, ro, vent = 0.52, 0.68, 0.1
+    # inside the narrower copper ring; 0.21 mm wide (fig. 15: 0.24) so a 0.12 mm stencil releases
+    ri, ro, vent = 0.52, 0.73, 0.1
     for k, (a0, a1) in enumerate(((60, 180), (180, 300), (300, 420))):
         da = math.degrees(vent / 2 / ri)
         arc = lambda r, a, b: [(r * math.cos(math.radians(t)), -r * math.sin(math.radians(t)))

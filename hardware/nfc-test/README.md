@@ -58,3 +58,7 @@ Power the tag side from a 3 V supply on V and G (or a host MCU, which also gets 
 Record f0, the trim value, the read distance and the LED distance for each step. The trim value from step 3 (or 4) goes on B1's pads.
 
 **Why the coil is under 2.75 µH.** 13.56 MHz needs 2.75 µH with the tag's 50 pF (44–56 pF). The coil is short of that on purpose: the cell, its contacts and a phone pull the tuning about, and a parallel trim cap can only pull the resonance down.
+
+**What it doesn't copy.** The coil, LA/LB, tag, trim pads, outline, stack-up and cell are B1's exactly. B1's mic and its lines are not: the mic's lid sits inside the coil, with two 11 mm tracks beside it, a 12 mm GND track under it, and four more nets crossing under the turns at the cell end. The cell's steel can is the bigger effect, but check B1's resonance again (VNA, step 2) before its C1/C2 value is final.
+
+**Ordering note:** In1 and In2 are empty on purpose (same stack-up as B1). JLC may ask about blank inner layers on a 4-layer order: confirm.

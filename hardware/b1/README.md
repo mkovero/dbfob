@@ -13,7 +13,7 @@ Along the stick from the tip:
 - **The tip, 24 mm:** the NFC coil, from [../lib/antenna.py](../lib/antenna.py), shared with the test board. It has 9 turns of 0.15 mm track with a 0.15 mm gap, about 2.25 µH in air (NXP AN11276). The mic MK1 sits inside it, with its port through the board, and C6/R8 sit beside it. The coil's inner end meets LB at net tie NT1; LB crosses under the turns on B.Cu.
 - **Just past the coil:** the tag U1, trim pads C1/C2 and C3.
 - **The middle:** the tag's pull-ups, then the LED bar (LED at the top edge, its resistor below), then the MCU U2.
-- **The far end:** the boost converter U3 with L1 and C5/C7/R9/R10, then the button, then the programming pads.
+- **The far end:** the boost converter U3 with L1 over it and C5 under it, so the switching and output loops stay on F.Cu (hand-drawn), then the button, then the programming pads.
 - **Back:** the AAA cell between two MYOUNG MY-AAA-07 spring contacts, hand-fitted, + towards the far end. Everything past the coil sits under the cell.
 - **No planes or pours on any layer.** Copper near the loop detunes it, so GND is tracks. Every layer under the coil is kept clear, apart from a band at its cell end where LB and the mic's nets cross under the turns.
 
@@ -53,9 +53,9 @@ Along the stick from the tip:
 
 - **Button on WKUP.** With EWUP set, PA0 is forced to an input with pull-down in Standby, so the button goes to VDD and needs no resistor. Not PB13: it shares a pad with PB6 = CC1, and some lots force CC1's 5.1 kΩ pull-down on in Standby (datasheet table 3-8-1 note 3). For the same reason NFC_VCC is on PB14, not PB13.
 - Pins sharing a pad inside the chip (PB1/PB10, PA10/PB7, PA11/PA13, PA12/PA14): only one of each pair may drive. Keep CC2_PD off, or PA10 gets 5.1 kΩ to ground.
-- **Power.** The boost runs all the time, and the MCU's Standby sets the floor: about 0.5 µA into the converter, 5 µA at its output and 2.5 µA in the divider. VCELL (0.9–1.8 V) is always under VDD, so PA7 reads it directly.
+- **Power.** The boost runs all the time, and the MCU's Standby sets the floor: about 0.5 µA into the converter, 5 µA at its output and 2.5 µA in the divider. VCELL (0.9–1.8 V) is always under VDD, so PA7 reads it directly. It is the boost's input node, with the inductor's ripple on it and no RC filter: average many ADC samples, or take them while the converter idles.
 - **Programming.** A WCH-LinkE on J1 feeds 3.3 V into VDD past the converter, which doesn't feed back into the cell. The cell can stay in.
-- **Firmware notes:** PA4 is also SPI1_NSS (use SSM=1, SSOE=0). Set PB2 (no pin on this package) as a pull-down input in low power. Turn I2C2 off and set SDA/SCL to analog before dropping NFC_VCC.
+- **Firmware notes:** PA4 is also SPI1_NSS (use SSM=1, SSOE=0). Set PB2 (no pin on this package) as a pull-down input in low power. Turn I2C2 off and set SDA/SCL to analog before dropping NFC_VCC. Likewise set MIC_CLK/MIC_DATA (PA5/PA6) low or analog before PA4 drops MIC_PWR: a high clock would feed the mic's supply through its ESD diode and sink about 20 mA through R8 into PA4. PA0 (BTN) has no series resistor: never drive it as an output, or a press shorts VDD into it.
 
 **Not yet shown on the bench:**
 - Waking Standby by an EXTI event on FD (PB0). The reference manual says any EXTI event wakes Standby, but no example does it. If it doesn't work, FD wakes from Stop (about 4.5 µA) instead.
@@ -71,7 +71,7 @@ python3 hardware/b1/tools/make_pcb.py    # antenna + placement + hand vias, the 
 python3 hardware/b1/tools/fab.py         # -> production/
 ```
 
-Same procedure as rev A ([../README.md](../README.md)). Routing is signals first, then GND, VDD and VCELL, with the router's mps ordering and `--via-proximity-cost 0`. At the default (tenfold via cost near pads), the MCU's bottom pins never drop to the inner layers. The router's result swings with small changes: rerun after any placement edit and check that it is still clean.
+Same procedure as rev A ([../README.md](../README.md)). Routing is signals first, then GND, VDD and VCELL, with the router's inside_out ordering and `--via-proximity-cost 0`. At the default (tenfold via cost near pads), the MCU's bottom pins never drop to the inner layers. Drawn by hand before routing: the boost's SW, GND and VDD loops, U2's decoupling feed (pin 19 to C4), and VCELL to U2's ADC pin (through In2, which the router couldn't reach). The router reshapes SW even though it isn't routing that net, so a User.2 polygon (KiCadRoutingTools `--keepout`) keeps other nets out of SW's gap, and `restore_sw()` puts the straight track back after routing. The router's result swings with small changes: rerun after any placement edit and check that it is still clean.
 
 **State at commit:**
 - **ERC:** clean, apart from the library-table warnings and two whitelisted pin-to-pin notes: NFC_VCC, a GPIO-driven supply as on rev A, and PA7 reading the power-flagged VCELL.
@@ -87,4 +87,5 @@ Same procedure as rev A ([../README.md](../README.md)). Routing is signals first
 - 4 layers at 1.0 mm: check JLC's stack-up price against the test board's, since both use it.
 - U2's GND via sits in the exposed pad, between the paste windows: expect a little solder wicking.
 - No keyring hole in the PCB: the case carries it.
+- No reverse-cell protection: a reversed AAA puts −1.5 V on the TLV61220 (abs. min −0.3 V). The case must key the cell's direction.
 - Fit C1/C2 with the value found on the test board.
