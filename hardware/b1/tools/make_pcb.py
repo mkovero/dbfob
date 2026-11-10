@@ -12,7 +12,7 @@ Board: the stick, 10.5 x 82.5 x 1.0 mm, 4 layers, every machine-placed part on t
 outline and the antenna block (coil in the tip, the LB crossover, tag, trim pads, the AAA
 contacts on the back) come from ../lib/antenna.py, identical to the NFC test board's. Along
 the stick from the tip: the mic inside the coil with its port through the board, the tag, the
-LED bar, the MCU, the boost converter, the button, the programming pads. Everything past the
+LED bar, the MCU, the boost converter, the Tag-Connect footprint, the button, the keyring hole. Everything past the
 coil sits under the cell, which lies on the back.
 
 Four layers because two would not route in 10.5 mm: the MCU's fan-out, the tag's lines and the
@@ -75,8 +75,10 @@ PLACE = dict(ant.PLACE, **{
     'C5': (52.3, 7.8, 180, False),
     'R10': (50.6, 9.4, 180, False),    # FB divider in a row below, R10's GND end by U3's GND side
     'R9': (53.8, 9.4, 180, False),     # VDD pad under C5's VDD track
-    'SW1': (59.5, 5.25, 90, False),
-    'J1': (63.3, 5.25, 90, False),     # pads along the stick: SWDIO SWCLK GND VDD TX
+    # Tag-Connect TC2050-NL across the stick: its guide holes (y 1.44 / 9.06) land between the
+    # cell contacts, where the back has no pads; the plug's pins come out under the cell
+    'J1': (63.5, 5.25, 90, False),
+    'SW1': (69.5, 5.25, 90, False),
     'H1': (ant.L - 3.5, 5.25, 0, False),   # keyring: 1.9 mm web to the end, 1.5 mm past the + contact
 })
 
@@ -101,7 +103,9 @@ BOOST_VIAS = []
 # Router-only keepouts (User.2, KiCadRoutingTools --keepout; DRC ignores the layer): the SW gap
 # between L1 and U3, or the router rips SW up to push a signal through there.
 ROUTER_KEEPOUTS = [(50.15, 3.15, 50.85, 3.95),
-                   (ant.L - 6.1, 0.0, ant.L, ant.W)]   # nothing round the keyring hole: a steel ring wears its edge
+                   (ant.L - 6.1, 0.0, ant.L, ant.W),   # nothing round the keyring hole: a steel ring wears its edge
+                   # J1's guide holes: the router knows pad clearance, not the 0.25 mm hole clearance
+                   (62.48 - 1.1, 0.0, 64.52 + 1.1, 2.55), (63.5 - 1.1, 7.95, 63.5 + 1.1, ant.W)]
 # The cell to U2's ADC pin (7, bottom row), which the router can't reach between its neighbours:
 # down to In2, along under the bottom row's fan-out to U3's EN pin (3). (net, layer, width, points)
 VCELL_ADC = [('/VCELL', 'F', 0.15, ['U2.7', (45.0, 8.3)]),
@@ -109,11 +113,9 @@ VCELL_ADC = [('/VCELL', 'F', 0.15, ['U2.7', (45.0, 8.3)]),
              ('/VCELL', 'F', 0.15, [(49.2, 6.2), 'U3.3'])]
 VCELL_VIAS = [('/VCELL', (45.0, 8.3)), ('/VCELL', (49.2, 6.2))]
 
-SILK_F = [  # text, x, y, size
+SILK_F = [  # text, x, y, size, angle
     # 1.0 mm: JLC's minimum legend height
-    ('D', 63.30, 3.6, 1.0), ('C', 65.84, 3.6, 1.0), ('G', 68.38, 3.6, 1.0), ('+', 70.92, 3.6, 1.0),
-    ('T', 73.46, 3.6, 1.0),
-    ('dbfob B1', 67.8, 8.4, 1.0),
+    ('dbfob B1', 74.6, 5.25, 1.0, 90),     # across the stick, between SW1 and the keyring
 ]
 SILK_B = [
     ('AAA', 44.0, 9.4, 1.0),
@@ -159,9 +161,10 @@ def write_project():
     return open(PRO).read()
 
 
-def text(board, s, x, y, size, layer, mirror=False):
+def text(board, s, x, y, size, layer, mirror=False, angle=0):
     t = pcbnew.PCB_TEXT(board)
     t.SetText(s); t.SetPosition(mm(x, y)); t.SetLayer(layer)
+    if angle: t.SetTextAngleDegrees(angle)
     t.SetTextSize(pcbnew.VECTOR2I(pcbnew.FromMM(size), pcbnew.FromMM(size)))
     t.SetTextThickness(pcbnew.FromMM(max(0.15, size * 0.15)))
     if mirror: t.SetMirrored(True)
@@ -250,7 +253,7 @@ def build():
         for a, b in zip(pts, pts[1:]): track(board, nets[net], layer, a, b, width)
     for net, (x, y) in VCELL_VIAS: via(board, nets[net], x, y)
 
-    for s, x, y, size in SILK_F: text(board, s, x, y, size, pcbnew.F_SilkS)
+    for s, x, y, size, a in SILK_F: text(board, s, x, y, size, pcbnew.F_SilkS, angle=a)
     for s, x, y, size in SILK_B: text(board, s, x, y, size, pcbnew.B_SilkS, mirror=True)
     ds = board.GetDesignSettings()
     ds.SetAuxOrigin(mm(0, H)); ds.SetGridOrigin(mm(0, H))
@@ -384,10 +387,18 @@ def remove_dangling():
 ALLOWED_DRC = {'lib_footprint_issues'}
 
 
+def allowed(x):
+    """J1's guide holes sit in BT1's courtyard on purpose: the plug's pins come out under the
+    cell, so the cell comes out to program."""
+    if x['type'] in ALLOWED_DRC: return True
+    d = [i['description'] for i in x.get('items', [])]
+    return x['type'] == 'npth_inside_courtyard' and d == ['NPTH pad of J1', 'Footprint BT1']
+
+
 def gate(d):
     out = []
     for x in d['violations']:
-        if x['type'] not in ALLOWED_DRC:
+        if not allowed(x):
             out.append(f"{x['severity']} {x['type']}: {x['description'][:70]} "
                        + '; '.join(i['description'][:50] for i in x.get('items', [])[:2]))
     out += [f"unconnected: {x['description'][:70]}" for x in d.get('unconnected_items', [])]

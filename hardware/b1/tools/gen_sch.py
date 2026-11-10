@@ -124,11 +124,15 @@ PARTS = {
     'BT1': ('Device:Battery_Cell', 'AAA', 'dbfob:BatteryContacts_MYOUNG_MY-AAA-07_1xAAA', '',
             'MY-AAA-07', 'two spring contacts, hand-fit on the back (LCSC C6937109); + towards the far end',
             (40, 140, 0), {'1': 'VCELL', '2': 'GND'}, False),
-    # VDD on pad 4: a WCH-LinkE at 3.3 V feeds VDD past the converter (its rectifier blocks the
-    # way back), so the cell can stay in.
-    'J1': ('Connector_Generic:Conn_01x05', 'PROG', 'dbfob:TestPads_1x05_P2.54mm_D1.2mm', '', '',
-           'pads for a pogo clip / WCH-LinkE: 1 SWDIO, 2 SWCLK, 3 GND, 4 VDD, 5 TX',
-           (30, 90, 0), {'1': 'SWDIO', '2': 'SWCLK', '3': 'GND', '4': 'VDD', '5': 'TX'}, False),
+    # Tag-Connect TC2050-IDC-NL pads (no part fitted), ARM Cortex 10-pin pinout: 1 VTref = VDD,
+    # 2 SWDIO, 3/5/9 GND, 4 SWCLK, 6 SWO = TX (the dB stream), 7 key, 8 NC, 10 nRESET (the
+    # CH32L103F8U6 has no NRST pin). A probe that powers pin 1 feeds VDD past the converter (its
+    # rectifier blocks the way back). The plug's guide pins come out under the cell: cell out.
+    'J1': ('Connector_Generic:Conn_02x05_Odd_Even', 'PROG',
+           'Connector:Tag-Connect_TC2050-IDC-NL_2x05_P1.27mm_Vertical', '', '',
+           'Tag-Connect TC2050-IDC-NL footprint, ARM 10-pin SWD: 1 VDD, 2 SWDIO, 4 SWCLK, 6 TX, 3/5/9 GND',
+           (30, 90, 0), {'1': 'VDD', '2': 'SWDIO', '3': 'GND', '4': 'SWCLK', '5': 'GND', '6': 'TX', '9': 'GND'},
+           False),
     # at the far end, opposite the mic: the stick hangs mic-down from a split ring
     'H1': ('Mechanical:MountingHole', 'keyring', 'MountingHole:MountingHole_3.2mm_M3', '', '',
            'keyring hole, 3.2 mm NPTH', (30, 110, 0), {}, False),
@@ -150,7 +154,7 @@ for i, (d, net, col, lcsc, mpn, rv, rl, k) in enumerate(LEDS):
 # The cell's contacts are passive pins, and MIC_VDD / NFC_VCC come from GPIOs: flag them for ERC
 FLAGS = {'#FLG01': ('VCELL', (40, 120)), '#FLG02': ('GND', (100, 150)), '#FLG03': ('MIC_VDD', (230, 40)),
          '#FLG04': ('NFC_VCC', (270, 100))}
-NOCONNECT = {'U1': ['7'], 'U2': ['11', '13']}
+NOCONNECT = {'U1': ['7'], 'U2': ['11', '13'], 'J1': ['7', '8', '10']}
 TEXT = [
     ('dbfob B1 - AAA stick with NFC readout', (20, 20), 2.5),
     ('PDM mic on SPI1: PA5 SCK -> CLK at 1.5 MHz, PA6 MISO <- DATA. Mic powered from PA4 (via R8/C6) while measuring.', (20, 158), 1.5),
@@ -258,7 +262,7 @@ def main():
     for ref in sorted(PARTS, key=lambda k: (re.sub(r'\d', '', k), int(re.sub(r'\D', '', k) or 0))):
         lib_id, value, fp, lcsc, mpn, note, (x, y, r), nets, dnp = PARTS[ref]
         x, y = snap(x), snap(y)
-        in_bom = lib_id not in ('Device:NetTie_2', 'Jumper:SolderJumper_2_Open', 'Mechanical:MountingHole')   # not parts
+        in_bom = lib_id not in ('Device:NetTie_2', 'Jumper:SolderJumper_2_Open', 'Mechanical:MountingHole') and ref != 'J1'   # not parts
         body += symbol(ref, lib_id, value, fp, lcsc, mpn, note, x, y, r, in_bom=in_bom, dnp=dnp)
         for pin, net in nets.items():
             tx, ty, pa = tip(lib_id, pin, x, y, r)

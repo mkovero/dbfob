@@ -13,7 +13,7 @@ Along the stick from the tip:
 - **The tip, 24 mm:** the NFC coil, from [../lib/antenna.py](../lib/antenna.py), shared with the test board. It has 9 turns of 0.15 mm track with a 0.15 mm gap, about 2.25 µH in air (NXP AN11276). The mic MK1 sits inside it, with its port through the board, and C6/R8 sit beside it. The coil's inner end meets LB at net tie NT1; LB crosses under the turns on B.Cu.
 - **Just past the coil:** the tag U1, trim pads C1/C2 and C3.
 - **The middle:** the tag's pull-ups, then the LED bar (LED at the top edge, its resistor below), then the MCU U2.
-- **The far end:** the boost converter U3 with L1 over it and C5 under it, so the switching and output loops stay on F.Cu (hand-drawn), then the button, the programming pads and the keyring hole H1 (3.2 mm NPTH, 1.9 mm web to the end, no copper within 1 mm), past the cell's + contact. The stick hangs mic-down.
+- **The far end:** the boost converter U3 with L1 over it and C5 under it, so the switching and output loops stay on F.Cu (hand-drawn), then the Tag-Connect programming footprint J1, the button and the keyring hole H1 (3.2 mm NPTH, 1.9 mm web to the end, no copper within 1 mm), past the cell's + contact. The stick hangs mic-down.
 - **Back:** the AAA cell between two MYOUNG MY-AAA-07 spring contacts, hand-fitted, + towards the far end. Everything past the coil sits under the cell.
 - **No planes or pours on any layer.** Copper near the loop detunes it, so GND is tracks. Every layer under the coil is kept clear, apart from a band at its cell end where LB and the mic's nets cross under the turns.
 
@@ -36,7 +36,7 @@ Along the stick from the tip:
 | SW1 | TS-1187A, C318884 | measure button, PA0/WKUP to VDD: no resistor |
 | BT1 | 2 × MY-AAA-07 (C6937109) | **hand-fit on the back**, so JLC assembly stays one-sided |
 | H1 | 3.2 mm NPTH | keyring, at the far end |
-| J1 | five 1.2 mm pads, 2.54 mm | `D C G + T` = SWDIO, SWCLK, GND, VDD, TX: WCH-LinkE pogo clip + the dB stream |
+| J1 | Tag-Connect TC2050-IDC-NL footprint (KiCad stock), no part | 2 × 5 pogo pads at 1.27 mm and 3 guide holes, across the stick. ARM Cortex 10-pin pinout: 1 VDD (VTref), 2 SWDIO, 4 SWCLK, 6 TX (SWO slot: the dB stream), 3/5/9 GND; 7, 8, 10 not connected (no NRST pin) |
 
 **MCU pins** (full table in `tools/gen_sch.py`):
 
@@ -55,7 +55,7 @@ Along the stick from the tip:
 - **Button on WKUP.** With EWUP set, PA0 is forced to an input with pull-down in Standby, so the button goes to VDD and needs no resistor. Not PB13: it shares a pad with PB6 = CC1, and some lots force CC1's 5.1 kΩ pull-down on in Standby (datasheet table 3-8-1 note 3). For the same reason NFC_VCC is on PB14, not PB13.
 - Pins sharing a pad inside the chip (PB1/PB10, PA10/PB7, PA11/PA13, PA12/PA14): only one of each pair may drive. Keep CC2_PD off, or PA10 gets 5.1 kΩ to ground.
 - **Power.** The boost runs all the time, and the MCU's Standby sets the floor: about 0.5 µA into the converter, 5 µA at its output and 2.5 µA in the divider. VCELL (0.9–1.8 V) is always under VDD, so PA7 reads it directly. It is the boost's input node, with the inductor's ripple on it and no RC filter: average many ADC samples, or take them while the converter idles.
-- **Programming.** A WCH-LinkE on J1 feeds 3.3 V into VDD past the converter, which doesn't feed back into the cell. The cell can stay in.
+- **Programming.** A TC2050-IDC-NL cable on J1. Its guide pins come out of the back under the cell, so **take the cell out to program**. A probe that drives pin 1 (VTref) at 3.3 V powers VDD past the converter, which doesn't feed back into the cell. A sense-only probe (J-Link, ST-Link) needs 3 V on pin 1 from a bench supply. The WCH-LinkE has no 10-pin Cortex header, so it needs an adapter or flying leads to the cable's IDC end.
 - **Firmware notes:** PA4 is also SPI1_NSS (use SSM=1, SSOE=0). Set PB2 (no pin on this package) as a pull-down input in low power. Turn I2C2 off and set SDA/SCL to analog before dropping NFC_VCC. Likewise set MIC_CLK/MIC_DATA (PA5/PA6) low or analog before PA4 drops MIC_PWR: a high clock would feed the mic's supply through its ESD diode and sink about 20 mA through R8 into PA4. PA0 (BTN) has no series resistor: never drive it as an output, or a press shorts VDD into it.
 
 **Not yet shown on the bench:**

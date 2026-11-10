@@ -5,7 +5,7 @@
   hardware/b1/production/b1-gerbers.zip       upload this as the PCB (ENIG: the mic's NSMD pads)
   hardware/b1/production/bom_jlc.csv          machine-placed parts
   hardware/b1/production/cpl_jlc.csv          their placements, checked by ../tools/check_cpl.py
-  hardware/b1/production/bom_manual.csv       hand-fitted: BT1 (two AAA contacts, back), C1/C2 trim (DNP); J1 is pads only
+  hardware/b1/production/bom_manual.csv       hand-fitted: BT1 (two AAA contacts, back), C1/C2 trim (DNP); J1 is a Tag-Connect footprint, no part
   hardware/b1/production/render-top.png / render-bottom.png
 
 Everything is staged and only replaces production/ once ERC, DRC, parity and the CPL check pass.
@@ -55,7 +55,8 @@ def preflight():
                         '-o', drc, PCB], capture_output=True)
         d = json.load(open(drc))
     out += [f"DRC {v['severity']} {v['type']}: {v['description'][:70]}" for v in d['violations']
-            if v['type'] != 'lib_footprint_issues']
+            if v['type'] != 'lib_footprint_issues' and not (       # J1's guide holes under the cell, on purpose
+                v['type'] == 'npth_inside_courtyard' and [i['description'] for i in v['items']] == ['NPTH pad of J1', 'Footprint BT1'])]
     out += [f"unconnected: {v['description'][:70]}" for v in d.get('unconnected_items', [])]
     out += [f"parity {v['type']}: {v['description'][:70]}" for v in d.get('schematic_parity', [])]
     return out
