@@ -88,6 +88,6 @@ Same procedure as rev A ([../README.md](../README.md)). Routing is signals first
 - **Check JLC's DFM preview** for the mic: its rotation, and that the copper ring round the 0.5 mm port isn't trimmed (JLC may remove thin copper rings at NPTHs).
 - 4 layers at 1.0 mm: check JLC's stack-up price against the test board's, since both use it.
 - U2's GND via sits in the exposed pad, between the paste windows: expect a little solder wicking.
-- The keyring hole is in the PCB: the case needs a matching hole, and the ring should pull on the case rather than on the 1.0 mm board. The case must also leave J1's clip holes reachable from both sides, or programming happens before casing.
+- The keyring hole is in the PCB: the case needs a matching hole, and the ring should pull on the case rather than on the 1.0 mm board. Programming happens before casing, so the case can cover J1.
 - No reverse-cell protection: a reversed AAA puts −1.5 V on the TLV61220 (abs. min −0.3 V). The case must key the cell's direction.
 - Fit C1/C2 with the value found on the test board.
