@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Generate hardware/b1/b1.kicad_sch from the tables below.
 
-B1: rev A done properly, as a stick (docs/rev-b.md, "B1 stick"). 10.5 x 93 mm, an AAA cell on
+B1: rev A done properly, as a stick (docs/rev-b.md, "B1 stick"). 10.5 x 94 mm, an AAA cell on
 the back between two spring contacts, a TLV61220 boost converter making 3.0 V from it, the NFC
 coil in the tip (../lib/antenna.py, identical to the NFC test board's), and on the parts face:
 CH32L103 MCU, IM66D130M PDM mic at the tip, NT3H2111 tag, four LEDs, button.

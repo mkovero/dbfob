@@ -8,11 +8,11 @@ under our fab rules, UUIDs derive from content, DRC with schematic parity is the
   python3 hardware/b1/tools/make_pcb.py
   python3 hardware/b1/tools/fab.py
 
-Board: the stick, 10.5 x 93 x 1.0 mm, 4 layers, every machine-placed part on the front. The
+Board: the stick, 10.5 x 94 x 1.0 mm, 4 layers, every machine-placed part on the front. The
 outline and the antenna block (coil in the tip, the LB crossover, tag, trim pads, the AAA
 contacts on the back) come from ../lib/antenna.py, identical to the NFC test board's. Along
 the stick from the tip: the mic inside the coil with its port through the board, the tag, the
-LED bar, the MCU, the boost converter, the button, the keyring hole, the Tag-Connect footprint. Everything past the
+LED bar, the MCU, the boost converter, the button, the Tag-Connect footprint, the keyring hole. Everything past the
 coil sits under the cell, which lies on the back.
 
 Four layers because two would not route in 10.5 mm: the MCU's fan-out, the tag's lines and the
@@ -22,7 +22,7 @@ detunes it, so GND is tracks like everything else, and every layer under the coi
 apart from the band at its cell end, where LB and the mic's nets cross under the turns.
 Hand-drawn: a via in U2's exposed pad, the mic's GND ring tied to its GND pad, and the boost
 converter's switching and output loops.
-Routing: signals first, then the power nets, with the router's inside_out net ordering and no extra via
+Routing: signals first, then the power nets, with the router's inside_out net ordering, backward direction and no extra via
 cost near pads (the default tenfold one keeps the MCU's bottom pins off the inner layers).
 """
 import json, math, os, re, shutil, subprocess, sys, tempfile, uuid
@@ -76,10 +76,10 @@ PLACE = dict(ant.PLACE, **{
     'R10': (50.6, 9.4, 180, False),    # FB divider in a row below, R10's GND end by U3's GND side
     'R9': (53.8, 9.4, 180, False),     # VDD pad under C5's VDD track
     'SW1': (69.5, 5.25, 90, False),
-    # past the cell's + contact (x 75.9), where the back is free: the keyring hole, then the
-    # Tag-Connect TC2050-IDC footprint, whose plug clips latch through the board from behind
-    'H1': (79.0, 5.25, 0, False),      # 1.5 mm past the + contact
-    'J1': (88.0, 5.25, 0, False),      # courtyard from H1's to 0.25 mm short of the end
+    # past the cell's + contact (x 75.9), where the back is free: the Tag-Connect TC2050-IDC
+    # footprint, whose plug clips latch through the board from behind, then the keyring hole
+    'J1': (82.4, 5.25, 0, False),      # clip holes 1.5 mm past the + contact
+    'H1': (90.6, 5.25, 0, False),      # courtyard touching J1's, 1.8 mm web to the end
 })
 
 # The mic's GND ring (pad 3, round the port) tied to its GND pad 2: the router can't get in
@@ -89,7 +89,7 @@ RING_TIE = ['MK1.2', (4.36 + 0.6 * math.cos(math.radians(40)), 5.25 - 0.6 * math
 # The boost converter's hot loops, drawn by hand (TLV61220 DS 12.1: output cap as close as possible
 # to VOUT and GND). The SOT-23-6 has GND (2) and VOUT (5) on opposite sides, so GND runs from pin 2
 # down the channel between the pad columns to C5, VDD round the right of pin 4. SW is drawn
-# whole, kept from the router, and put back after it (restore_sw); FB and EN are left to the
+# whole, kept from the router, and put back after it (restore_hand); FB and EN are left to the
 # router. (net, width, points)
 BOOST = [
     ('/SW', 0.4, ['L1.2', 'U3.1']),
@@ -99,12 +99,19 @@ BOOST = [
     ('/FB', 0.2, ['R9.2', 'R10.1']),
     ('/VDD', 0.2, ['U2.19', (45.0, 2.675), 'C4.1']),   # U2's decoupling, over pin 20
     ('/GND', 0.3, ['C3.2', (29.675, 0.85)]),           # C3 (tag decoupling) sits behind the tag's top row
+    ('/VDD', 0.2, ['J1.1', (80.0, 8.6)]),              # J1 pin 1, boxed in by the clip and guide holes
+    # FD from U2's bottom row along the bottom edge to R3 and the tag, kept from the router like SW:
+    # otherwise another net takes the edge and FD's pin is boxed in
+    ('/FD', 0.15, ['U2.8', (45.4, 7.95), (45.55, 8.1), (45.55, 8.5), (45.22, 8.83), (36.0, 8.83),
+                   (33.45, 6.28), (33.45, 5.22), (32.95, 4.72), (31.9, 4.72), 'R3.2', 'U1.4']),
 ]
-BOOST_VIAS = [('/GND', (29.675, 0.85))]                # ... so its GND drops to the inner layers here
+HAND_NETS = ('/SW', '/FD')   # drawn whole, kept from the router, put back after it (restore_hand)
+BOOST_VIAS = [('/GND', (29.675, 0.85)),               # ... so its GND drops to the inner layers here
+              ('/VDD', (80.0, 8.6))]
 # Router-only keepouts (User.2, KiCadRoutingTools --keepout; DRC ignores the layer): the SW gap
 # between L1 and U3, or the router rips SW up to push a signal through there.
-ROUTER_KEEPOUTS = [(50.15, 3.15, 50.85, 3.95),
-                   (79.0 - 2.6, 2.65, 79.0 + 2.6, 7.85)]   # 1 mm round the keyring hole: a steel ring wears its edge
+ROUTER_KEEPOUTS = [(49.85, 2.85, 51.15, 4.25),   # it checks via centres, so a via radius wider
+                   (90.6 - 2.6, 0.0, ant.L, ant.W)]   # 1 mm round the keyring hole: a steel ring wears its edge
 # The router knows pad clearance (0.15) but not the 0.25 mm hole clearance, so J1's and H1's NPTH
 # pads are grown by this much in diameter while it routes, then put back (restore_npth).
 NPTH_GROW = 0.2
@@ -256,7 +263,7 @@ def build():
         s.SetWidth(pcbnew.FromMM(0.05)); s.SetFilled(False); board.Add(s)
     for net, side, width, path in VCELL_ADC:
         pts = [pad(p) if isinstance(p, str) else mm(*p) for p in path]
-        layer = {'F': pcbnew.F_Cu, 'In2': pcbnew.In2_Cu}[side]
+        layer = {'F': pcbnew.F_Cu, 'In1': pcbnew.In1_Cu, 'In2': pcbnew.In2_Cu}[side]
         for a, b in zip(pts, pts[1:]): track(board, nets[net], layer, a, b, width)
     for net, (x, y) in VCELL_VIAS: via(board, nets[net], x, y)
 
@@ -315,8 +322,8 @@ def stabilise_uuids(path):
 def route(keep_pro):
     """Signals first, then the power nets around them (one pass lets GND wall in the tag's pins)."""
     board = pcbnew.LoadBoard(PCB)
-    # the antenna nets and SW are drawn by hand; the router gets the rest (net names from the API)
-    nets = sorted(str(n) for n in board.GetNetsByName().keys() if str(n) and str(n) not in ('/LA', '/LB', '/SW'))
+    # the antenna nets, SW and FD are drawn by hand; the router gets the rest (net names from the API)
+    nets = sorted(str(n) for n in board.GetNetsByName().keys() if str(n) and str(n) not in ('/LA', '/LB', *HAND_NETS))
     py = os.path.join(KRT, '.venv', 'bin', 'python')
     groups = [[n for n in nets if n not in POWER], [n for n in nets if n in POWER]]
     if POWER_FIRST: groups.reverse()
@@ -331,7 +338,7 @@ def route(keep_pro):
                                 '--same-net-pad-clearance', '0.2', '--board-edge-clearance', '0.5',
                                 '--hole-to-hole-clearance', '0.25', '--max-ripup', '200',
                                 '--keepout', '--via-proximity-cost', '0',   # the MCU's pins must drop to the inner layers
-                                *ROUTER_ARGS, '--ordering', os.environ.get('ORDERING%d' % k, os.environ.get('ORDERING', 'inside_out')), '--direction', os.environ.get('DIRECTION', 'forward')],
+                                *ROUTER_ARGS, '--ordering', os.environ.get('ORDERING%d' % k, os.environ.get('ORDERING', 'inside_out')), '--direction', os.environ.get('DIRECTION', 'backward')],
                                capture_output=True, text=True, cwd=KRT)
             log = r.stdout + r.stderr
             if r.returncode or not os.path.exists(out):
@@ -343,21 +350,20 @@ def route(keep_pro):
                 print('  router:', l[:200])
 
 
-def restore_sw():
-    """Put SW back as drawn. The router reshapes it even though SW isn't in its net list; the
-    User.2 keepout keeps every other net out of its gap, so the straight track always fits."""
+def restore_hand():
+    """Put the hand nets (SW, FD) back as drawn. The router reshapes them even though they aren't
+    in its net list; SW's User.2 keepout keeps every other net out of its gap."""
     pro, text_ = open(PRO).read(), open(PCB).read()
     for a, e, kind, b in reversed(_top_blocks(text_, ('segment', 'via'))):
-        if '(net "/SW")' in b: text_ = text_[:a] + text_[e:]
+        if any(f'(net "{n}")' in b for n in HAND_NETS): text_ = text_[:a] + text_[e:]
     open(PCB, 'w').write(text_)
     board = pcbnew.LoadBoard(PCB)
-    net = board.FindNet('/SW')
     fps = {f.GetReference(): f for f in board.GetFootprints()}
     pad = lambda p: next(q for q in fps[p.split('.')[0]].Pads() if q.GetNumber() == p.split('.')[1]).GetPosition()
     for n, width, path in BOOST:
-        if n != '/SW': continue
+        if n not in HAND_NETS: continue
         pts = [pad(p) if isinstance(p, str) else mm(*p) for p in path]
-        for a, b in zip(pts, pts[1:]): track(board, net, pcbnew.F_Cu, a, b, width)
+        for a, b in zip(pts, pts[1:]): track(board, board.FindNet(n), pcbnew.F_Cu, a, b, width)
     board.Save(PCB)
     open(PRO, 'w').write(pro)     # saving rewrites the project file
 
@@ -430,7 +436,7 @@ def main():
     if '--no-route' in sys.argv:
         print('placed:', PCB); return
     route(keep)
-    restore_sw()
+    restore_hand()
     restore_npth()
     stabilise_uuids(PCB)
     rules = lambda t: (json.loads(t)['net_settings']['classes'], json.loads(t)['board']['design_settings']['rules'])

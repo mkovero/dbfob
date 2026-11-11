@@ -1,6 +1,6 @@
 # B1 (rev B)
 
-A stick, 10.5 × 93 × 1.0 mm, 4 layers, with the mic at the tip and one AAA cell on the back: rev A's metering, with the log readable by tapping a phone. Scope and part choices are in [docs/rev-b.md](../../docs/rev-b.md#b1-stick-aaa-instead-of-cr2032-decided-2026-11-09).
+A stick, 10.5 × 94 × 1.0 mm, 4 layers, with the mic at the tip and one AAA cell on the back: rev A's metering, with the log readable by tapping a phone. Scope and part choices are in [docs/rev-b.md](../../docs/rev-b.md#b1-stick-aaa-instead-of-cr2032-decided-2026-11-09).
 
 ![top render](production/render-top.png)
 
@@ -13,7 +13,7 @@ Along the stick from the tip:
 - **The tip, 24 mm:** the NFC coil, from [../lib/antenna.py](../lib/antenna.py), shared with the test board. It has 9 turns of 0.15 mm track with a 0.15 mm gap, about 2.25 µH in air (NXP AN11276). The mic MK1 sits inside it, with its port through the board, and C6/R8 sit beside it. The coil's inner end meets LB at net tie NT1; LB crosses under the turns on B.Cu.
 - **Just past the coil:** the tag U1, trim pads C1/C2 and C3.
 - **The middle:** the tag's pull-ups, then the LED bar (LED at the top edge, its resistor below), then the MCU U2.
-- **The far end:** the boost converter U3 with L1 over it and C5 under it, so the switching and output loops stay on F.Cu (hand-drawn), then the button. Past the cell's + contact, where the back is free: the keyring hole H1 (3.2 mm NPTH, no copper within 1 mm), then the Tag-Connect footprint J1 at the very end.
+- **The far end:** the boost converter U3 with L1 over it and C5 under it, so the switching and output loops stay on F.Cu (hand-drawn), then the button. Past the cell's + contact, where the back is free: the Tag-Connect footprint J1, then the keyring hole H1 at the very end (3.2 mm NPTH, no copper within 1 mm, 1.8 mm web).
 - **Back:** the AAA cell between two MYOUNG MY-AAA-07 spring contacts, hand-fitted, + towards the far end. Everything past the coil sits under the cell.
 - **No planes or pours on any layer.** Copper near the loop detunes it, so GND is tracks. Every layer under the coil is kept clear, apart from a band at its cell end where LB and the mic's nets cross under the turns.
 
@@ -35,8 +35,8 @@ Along the stick from the tip:
 | D1–D4, R4–R7 | as rev A | each on its own hardware PWM channel; D4's cathode on PA10 for ambient-light sensing |
 | SW1 | TS-1187A, C318884 | measure button, PA0/WKUP to VDD: no resistor |
 | BT1 | 2 × MY-AAA-07 (C6937109) | **hand-fit on the back**, so JLC assembly stays one-sided |
-| H1 | 3.2 mm NPTH | keyring, 1.5 mm past the + contact |
-| J1 | Tag-Connect TC2050-IDC footprint (KiCad stock `TC2050-IDC-FP`, for the legged plug), no part | 2 × 5 pogo pads at 1.27 mm, 3 guide holes and 4 clip holes (2.4 mm), along the stick at the far end. ARM Cortex 10-pin pinout: 1 VDD (VTref), 2 SWDIO, 4 SWCLK, 6 TX (SWO slot: the dB stream), 3/5/9 GND; 7, 8, 10 not connected (no NRST pin) |
+| H1 | 3.2 mm NPTH | keyring, at the very end |
+| J1 | Tag-Connect TC2050-IDC footprint (KiCad stock `TC2050-IDC-FP`, for the legged plug), no part | 2 × 5 pogo pads at 1.27 mm, 3 guide holes and 4 clip holes (2.4 mm), along the stick just past the + contact. ARM Cortex 10-pin pinout: 1 VDD (VTref), 2 SWDIO, 4 SWCLK, 6 TX (SWO slot: the dB stream), 3/5/9 GND; 7, 8, 10 not connected (no NRST pin) |
 
 **MCU pins** (full table in `tools/gen_sch.py`):
 
@@ -72,7 +72,7 @@ python3 hardware/b1/tools/make_pcb.py    # antenna + placement + hand vias, the 
 python3 hardware/b1/tools/fab.py         # -> production/
 ```
 
-Same procedure as rev A ([../README.md](../README.md)). Routing is signals first, then GND, VDD and VCELL, with the router's inside_out ordering and `--via-proximity-cost 0`. At the default (tenfold via cost near pads), the MCU's bottom pins never drop to the inner layers. Drawn by hand before routing: the boost's SW, GND and VDD loops, U2's decoupling feed (pin 19 to C4), and VCELL to U2's ADC pin (through In2, which the router couldn't reach). The router reshapes SW even though it isn't routing that net, so a User.2 polygon (KiCadRoutingTools `--keepout`) keeps other nets out of SW's gap, and `restore_sw()` puts the straight track back after routing. The router's result swings with small changes: rerun after any placement edit and check that it is still clean.
+Same procedure as rev A ([../README.md](../README.md)). Routing is signals first, then GND, VDD and VCELL, with the router's inside_out ordering, backward direction and `--via-proximity-cost 0`. At the default (tenfold via cost near pads), the MCU's bottom pins never drop to the inner layers. Drawn by hand before routing: the boost's SW, GND and VDD loops, U2's decoupling feed (pin 19 to C4), and VCELL to U2's ADC pin (through In2, which the router couldn't reach). SW and FD (U2's bottom-row pin 8 along the bottom edge to the tag) are drawn whole and kept from the router, which reshapes them anyway; `restore_hand()` puts them back after routing, and a User.2 polygon (KiCadRoutingTools `--keepout`) keeps other nets out of SW's gap. Also by hand: a GND via for C3, boxed in behind the tag's top row, and a VDD stub from J1 pin 1, boxed in by the Tag-Connect's holes. The router doesn't know the 0.25 mm copper-to-hole clearance, so J1's and H1's NPTH pads are grown 0.2 mm while it routes (`restore_npth()`). The router's result swings with small changes: rerun after any placement edit and check that it is still clean.
 
 **State at commit:**
 - **ERC:** clean, apart from the library-table warnings and two whitelisted pin-to-pin notes: NFC_VCC, a GPIO-driven supply as on rev A, and PA7 reading the power-flagged VCELL.
