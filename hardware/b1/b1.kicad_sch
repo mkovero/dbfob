@@ -2863,7 +2863,7 @@
 			(at 33.48 94.9 0)
 			(effects (font (size 1.27 1.27)))
 		)
-		(property "Footprint" "Connector:Tag-Connect_TC2050-IDC-NL_2x05_P1.27mm_Vertical"
+		(property "Footprint" "Connector:Tag-Connect_TC2050-IDC-FP_2x05_P1.27mm_Vertical"
 			(at 30.48 88.9 0)
 			(effects (font (size 1.27 1.27)) (hide yes))
 		)
@@ -2879,7 +2879,7 @@
 			(at 30.48 88.9 0)
 			(effects (font (size 1.27 1.27)) (hide yes))
 		)
-		(property "Note" "Tag-Connect TC2050-IDC-NL footprint, ARM 10-pin SWD: 1 VDD, 2 SWDIO, 4 SWCLK, 6 TX, 3/5/9 GND"
+		(property "Note" "Tag-Connect TC2050-IDC (legged) footprint, ARM 10-pin SWD: 1 VDD, 2 SWDIO, 4 SWCLK, 6 TX, 3/5/9 GND"
 			(at 30.48 88.9 0)
 			(effects (font (size 1.27 1.27)) (hide yes))
 		)

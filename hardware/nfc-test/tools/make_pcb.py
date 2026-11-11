@@ -8,7 +8,7 @@ routes under our fab rules, UUIDs derive from content, DRC with schematic parity
   python3 hardware/nfc-test/tools/make_pcb.py
   python3 hardware/nfc-test/tools/fab.py
 
-Board: B1's stick, 10.5 x 82.5 x 1.0 mm, 4 layers as B1 (the inner two empty here, so the coil
+Board: B1's stick, 10.5 x 93 x 1.0 mm, 4 layers as B1 (the inner two empty here, so the coil
 sees the same stack-up), with B1's outline and antenna block exactly as B1 has
 them (../lib/antenna.py): the coil in the tip, its crossover, the tag, the trim pads and the AAA
 contacts on the back. Past the tag: the pull-ups where B1 has them, the field LED, and six pads

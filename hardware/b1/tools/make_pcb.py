@@ -8,11 +8,11 @@ under our fab rules, UUIDs derive from content, DRC with schematic parity is the
   python3 hardware/b1/tools/make_pcb.py
   python3 hardware/b1/tools/fab.py
 
-Board: the stick, 10.5 x 82.5 x 1.0 mm, 4 layers, every machine-placed part on the front. The
+Board: the stick, 10.5 x 93 x 1.0 mm, 4 layers, every machine-placed part on the front. The
 outline and the antenna block (coil in the tip, the LB crossover, tag, trim pads, the AAA
 contacts on the back) come from ../lib/antenna.py, identical to the NFC test board's. Along
 the stick from the tip: the mic inside the coil with its port through the board, the tag, the
-LED bar, the MCU, the boost converter, the Tag-Connect footprint, the button, the keyring hole. Everything past the
+LED bar, the MCU, the boost converter, the button, the keyring hole, the Tag-Connect footprint. Everything past the
 coil sits under the cell, which lies on the back.
 
 Four layers because two would not route in 10.5 mm: the MCU's fan-out, the tag's lines and the
@@ -75,11 +75,11 @@ PLACE = dict(ant.PLACE, **{
     'C5': (52.3, 7.8, 180, False),
     'R10': (50.6, 9.4, 180, False),    # FB divider in a row below, R10's GND end by U3's GND side
     'R9': (53.8, 9.4, 180, False),     # VDD pad under C5's VDD track
-    # Tag-Connect TC2050-NL across the stick: its guide holes (y 1.44 / 9.06) land between the
-    # cell contacts, where the back has no pads; the plug's pins come out under the cell
-    'J1': (63.5, 5.25, 90, False),
     'SW1': (69.5, 5.25, 90, False),
-    'H1': (ant.L - 3.5, 5.25, 0, False),   # keyring: 1.9 mm web to the end, 1.5 mm past the + contact
+    # past the cell's + contact (x 75.9), where the back is free: the keyring hole, then the
+    # Tag-Connect TC2050-IDC footprint, whose plug clips latch through the board from behind
+    'H1': (79.0, 5.25, 0, False),      # 1.5 mm past the + contact
+    'J1': (88.0, 5.25, 0, False),      # courtyard from H1's to 0.25 mm short of the end
 })
 
 # The mic's GND ring (pad 3, round the port) tied to its GND pad 2: the router can't get in
@@ -98,14 +98,16 @@ BOOST = [
     ('/VDD', 0.2, [(54.4, 7.8), 'R9.1']),
     ('/FB', 0.2, ['R9.2', 'R10.1']),
     ('/VDD', 0.2, ['U2.19', (45.0, 2.675), 'C4.1']),   # U2's decoupling, over pin 20
+    ('/GND', 0.3, ['C3.2', (29.675, 0.85)]),           # C3 (tag decoupling) sits behind the tag's top row
 ]
-BOOST_VIAS = []
+BOOST_VIAS = [('/GND', (29.675, 0.85))]                # ... so its GND drops to the inner layers here
 # Router-only keepouts (User.2, KiCadRoutingTools --keepout; DRC ignores the layer): the SW gap
 # between L1 and U3, or the router rips SW up to push a signal through there.
 ROUTER_KEEPOUTS = [(50.15, 3.15, 50.85, 3.95),
-                   (ant.L - 6.1, 0.0, ant.L, ant.W),   # nothing round the keyring hole: a steel ring wears its edge
-                   # J1's guide holes: the router knows pad clearance, not the 0.25 mm hole clearance
-                   (62.48 - 1.1, 0.0, 64.52 + 1.1, 2.55), (63.5 - 1.1, 7.95, 63.5 + 1.1, ant.W)]
+                   (79.0 - 2.6, 2.65, 79.0 + 2.6, 7.85)]   # 1 mm round the keyring hole: a steel ring wears its edge
+# The router knows pad clearance (0.15) but not the 0.25 mm hole clearance, so J1's and H1's NPTH
+# pads are grown by this much in diameter while it routes, then put back (restore_npth).
+NPTH_GROW = 0.2
 # The cell to U2's ADC pin (7, bottom row), which the router can't reach between its neighbours:
 # down to In2, along under the bottom row's fan-out to U3's EN pin (3). (net, layer, width, points)
 VCELL_ADC = [('/VCELL', 'F', 0.15, ['U2.7', (45.0, 8.3)]),
@@ -227,6 +229,11 @@ def build():
         for p in fp.Pads():
             net = pins.get((ref, p.GetNumber()))
             if net in nets: p.SetNet(nets[net])
+        if ref in ('J1', 'H1'):
+            for p in fp.Pads():
+                if p.GetAttribute() == pcbnew.PAD_ATTRIB_NPTH:
+                    d = p.GetDrillSize().x + pcbnew.FromMM(NPTH_GROW)
+                    p.SetSize(pcbnew.VECTOR2I(d, d))
         fps[ref] = fp
     ant.outline(board, mm)
     for i, box in enumerate(ant.KEEPOUTS):
@@ -355,6 +362,19 @@ def restore_sw():
     open(PRO, 'w').write(pro)     # saving rewrites the project file
 
 
+def restore_npth():
+    """Shrink the NPTH pads grown for routing back to their drill."""
+    t = open(PCB).read()
+    out, last, k = [], 0, 0
+    for m in re.finditer(r'(\(pad "" np_thru_hole circle\s+\(at [^)]*\)\s+)\(size ([\d.]+) [\d.]+\)(\s+\(drill )([\d.]+)\)', t):
+        a, d = float(m.group(2)), float(m.group(4))
+        if abs(a - d - NPTH_GROW) < 1e-4:
+            out += [t[last:m.start()], m.group(1), f'(size {m.group(4)} {m.group(4)})', m.group(3), m.group(4), ')']
+            last, k = m.end(), k + 1
+    open(PCB, 'w').write(''.join(out) + t[last:])
+    assert k == 8, f'restore_npth: {k} pads'      # J1's seven, H1's one
+
+
 def drc():
     with tempfile.TemporaryDirectory() as td:
         out = os.path.join(td, 'd.json')
@@ -388,11 +408,7 @@ ALLOWED_DRC = {'lib_footprint_issues'}
 
 
 def allowed(x):
-    """J1's guide holes sit in BT1's courtyard on purpose: the plug's pins come out under the
-    cell, so the cell comes out to program."""
-    if x['type'] in ALLOWED_DRC: return True
-    d = [i['description'] for i in x.get('items', [])]
-    return x['type'] == 'npth_inside_courtyard' and d == ['NPTH pad of J1', 'Footprint BT1']
+    return x['type'] in ALLOWED_DRC
 
 
 def gate(d):
@@ -415,6 +431,7 @@ def main():
         print('placed:', PCB); return
     route(keep)
     restore_sw()
+    restore_npth()
     stabilise_uuids(PCB)
     rules = lambda t: (json.loads(t)['net_settings']['classes'], json.loads(t)['board']['design_settings']['rules'])
     if rules(open(PRO).read()) != rules(keep): raise SystemExit('project rules changed underneath us')

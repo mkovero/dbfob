@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Generate hardware/b1/b1.kicad_sch from the tables below.
 
-B1: rev A done properly, as a stick (docs/rev-b.md, "B1 stick"). 10.5 x 82.5 mm, an AAA cell on
+B1: rev A done properly, as a stick (docs/rev-b.md, "B1 stick"). 10.5 x 93 mm, an AAA cell on
 the back between two spring contacts, a TLV61220 boost converter making 3.0 V from it, the NFC
 coil in the tip (../lib/antenna.py, identical to the NFC test board's), and on the parts face:
 CH32L103 MCU, IM66D130M PDM mic at the tip, NT3H2111 tag, four LEDs, button.
@@ -124,13 +124,13 @@ PARTS = {
     'BT1': ('Device:Battery_Cell', 'AAA', 'dbfob:BatteryContacts_MYOUNG_MY-AAA-07_1xAAA', '',
             'MY-AAA-07', 'two spring contacts, hand-fit on the back (LCSC C6937109); + towards the far end',
             (40, 140, 0), {'1': 'VCELL', '2': 'GND'}, False),
-    # Tag-Connect TC2050-IDC-NL pads (no part fitted), ARM Cortex 10-pin pinout: 1 VTref = VDD,
-    # 2 SWDIO, 3/5/9 GND, 4 SWCLK, 6 SWO = TX (the dB stream), 7 key, 8 NC, 10 nRESET (the
-    # CH32L103F8U6 has no NRST pin). A probe that powers pin 1 feeds VDD past the converter (its
-    # rectifier blocks the way back). The plug's guide pins come out under the cell: cell out.
+    # Tag-Connect TC2050-IDC (legged plug: its clips latch through the board) footprint, no part
+    # fitted. ARM Cortex 10-pin pinout: 1 VTref = VDD, 2 SWDIO, 3/5/9 GND, 4 SWCLK, 6 SWO = TX
+    # (the dB stream), 7 key, 8 NC, 10 nRESET (the CH32L103F8U6 has no NRST pin). A probe that
+    # powers pin 1 feeds VDD past the converter (its rectifier blocks the way back).
     'J1': ('Connector_Generic:Conn_02x05_Odd_Even', 'PROG',
-           'Connector:Tag-Connect_TC2050-IDC-NL_2x05_P1.27mm_Vertical', '', '',
-           'Tag-Connect TC2050-IDC-NL footprint, ARM 10-pin SWD: 1 VDD, 2 SWDIO, 4 SWCLK, 6 TX, 3/5/9 GND',
+           'Connector:Tag-Connect_TC2050-IDC-FP_2x05_P1.27mm_Vertical', '', '',
+           'Tag-Connect TC2050-IDC (legged) footprint, ARM 10-pin SWD: 1 VDD, 2 SWDIO, 4 SWCLK, 6 TX, 3/5/9 GND',
            (30, 90, 0), {'1': 'VDD', '2': 'SWDIO', '3': 'GND', '4': 'SWCLK', '5': 'GND', '6': 'TX', '9': 'GND'},
            False),
     # at the far end, opposite the mic: the stick hangs mic-down from a split ring

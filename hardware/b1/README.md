@@ -1,6 +1,6 @@
 # B1 (rev B)
 
-A stick, 10.5 × 82.5 × 1.0 mm, 4 layers, with the mic at the tip and one AAA cell on the back: rev A's metering, with the log readable by tapping a phone. Scope and part choices are in [docs/rev-b.md](../../docs/rev-b.md#b1-stick-aaa-instead-of-cr2032-decided-2026-11-09).
+A stick, 10.5 × 93 × 1.0 mm, 4 layers, with the mic at the tip and one AAA cell on the back: rev A's metering, with the log readable by tapping a phone. Scope and part choices are in [docs/rev-b.md](../../docs/rev-b.md#b1-stick-aaa-instead-of-cr2032-decided-2026-11-09).
 
 ![top render](production/render-top.png)
 
@@ -13,7 +13,7 @@ Along the stick from the tip:
 - **The tip, 24 mm:** the NFC coil, from [../lib/antenna.py](../lib/antenna.py), shared with the test board. It has 9 turns of 0.15 mm track with a 0.15 mm gap, about 2.25 µH in air (NXP AN11276). The mic MK1 sits inside it, with its port through the board, and C6/R8 sit beside it. The coil's inner end meets LB at net tie NT1; LB crosses under the turns on B.Cu.
 - **Just past the coil:** the tag U1, trim pads C1/C2 and C3.
 - **The middle:** the tag's pull-ups, then the LED bar (LED at the top edge, its resistor below), then the MCU U2.
-- **The far end:** the boost converter U3 with L1 over it and C5 under it, so the switching and output loops stay on F.Cu (hand-drawn), then the Tag-Connect programming footprint J1, the button and the keyring hole H1 (3.2 mm NPTH, 1.9 mm web to the end, no copper within 1 mm), past the cell's + contact. The stick hangs mic-down.
+- **The far end:** the boost converter U3 with L1 over it and C5 under it, so the switching and output loops stay on F.Cu (hand-drawn), then the button. Past the cell's + contact, where the back is free: the keyring hole H1 (3.2 mm NPTH, no copper within 1 mm), then the Tag-Connect footprint J1 at the very end.
 - **Back:** the AAA cell between two MYOUNG MY-AAA-07 spring contacts, hand-fitted, + towards the far end. Everything past the coil sits under the cell.
 - **No planes or pours on any layer.** Copper near the loop detunes it, so GND is tracks. Every layer under the coil is kept clear, apart from a band at its cell end where LB and the mic's nets cross under the turns.
 
@@ -35,8 +35,8 @@ Along the stick from the tip:
 | D1–D4, R4–R7 | as rev A | each on its own hardware PWM channel; D4's cathode on PA10 for ambient-light sensing |
 | SW1 | TS-1187A, C318884 | measure button, PA0/WKUP to VDD: no resistor |
 | BT1 | 2 × MY-AAA-07 (C6937109) | **hand-fit on the back**, so JLC assembly stays one-sided |
-| H1 | 3.2 mm NPTH | keyring, at the far end |
-| J1 | Tag-Connect TC2050-IDC-NL footprint (KiCad stock), no part | 2 × 5 pogo pads at 1.27 mm and 3 guide holes, across the stick. ARM Cortex 10-pin pinout: 1 VDD (VTref), 2 SWDIO, 4 SWCLK, 6 TX (SWO slot: the dB stream), 3/5/9 GND; 7, 8, 10 not connected (no NRST pin) |
+| H1 | 3.2 mm NPTH | keyring, 1.5 mm past the + contact |
+| J1 | Tag-Connect TC2050-IDC footprint (KiCad stock `TC2050-IDC-FP`, for the legged plug), no part | 2 × 5 pogo pads at 1.27 mm, 3 guide holes and 4 clip holes (2.4 mm), along the stick at the far end. ARM Cortex 10-pin pinout: 1 VDD (VTref), 2 SWDIO, 4 SWCLK, 6 TX (SWO slot: the dB stream), 3/5/9 GND; 7, 8, 10 not connected (no NRST pin) |
 
 **MCU pins** (full table in `tools/gen_sch.py`):
 
@@ -55,7 +55,7 @@ Along the stick from the tip:
 - **Button on WKUP.** With EWUP set, PA0 is forced to an input with pull-down in Standby, so the button goes to VDD and needs no resistor. Not PB13: it shares a pad with PB6 = CC1, and some lots force CC1's 5.1 kΩ pull-down on in Standby (datasheet table 3-8-1 note 3). For the same reason NFC_VCC is on PB14, not PB13.
 - Pins sharing a pad inside the chip (PB1/PB10, PA10/PB7, PA11/PA13, PA12/PA14): only one of each pair may drive. Keep CC2_PD off, or PA10 gets 5.1 kΩ to ground.
 - **Power.** The boost runs all the time, and the MCU's Standby sets the floor: about 0.5 µA into the converter, 5 µA at its output and 2.5 µA in the divider. VCELL (0.9–1.8 V) is always under VDD, so PA7 reads it directly. It is the boost's input node, with the inductor's ripple on it and no RC filter: average many ADC samples, or take them while the converter idles.
-- **Programming.** A TC2050-IDC-NL cable on J1. Its guide pins come out of the back under the cell, so **take the cell out to program**. A probe that drives pin 1 (VTref) at 3.3 V powers VDD past the converter, which doesn't feed back into the cell. A sense-only probe (J-Link, ST-Link) needs 3 V on pin 1 from a bench supply. The WCH-LinkE has no 10-pin Cortex header, so it needs an adapter or flying leads to the cable's IDC end.
+- **Programming.** A legged TC2050-IDC cable on J1: its clips latch through the board from behind, past the cell, so the cell can stay in. A probe that drives pin 1 (VTref) at 3.3 V powers VDD past the converter, which doesn't feed back into the cell. A sense-only probe (J-Link, ST-Link) just reads the boost's 3.0 V. 
 - **Firmware notes:** PA4 is also SPI1_NSS (use SSM=1, SSOE=0). Set PB2 (no pin on this package) as a pull-down input in low power. Turn I2C2 off and set SDA/SCL to analog before dropping NFC_VCC. Likewise set MIC_CLK/MIC_DATA (PA5/PA6) low or analog before PA4 drops MIC_PWR: a high clock would feed the mic's supply through its ESD diode and sink about 20 mA through R8 into PA4. PA0 (BTN) has no series resistor: never drive it as an output, or a press shorts VDD into it.
 
 **Not yet shown on the bench:**
@@ -88,6 +88,6 @@ Same procedure as rev A ([../README.md](../README.md)). Routing is signals first
 - **Check JLC's DFM preview** for the mic: its rotation, and that the copper ring round the 0.5 mm port isn't trimmed (JLC may remove thin copper rings at NPTHs).
 - 4 layers at 1.0 mm: check JLC's stack-up price against the test board's, since both use it.
 - U2's GND via sits in the exposed pad, between the paste windows: expect a little solder wicking.
-- The keyring hole is in the PCB: the case needs a matching hole, and the ring should pull on the case rather than on the 1.0 mm board's 1.9 mm web.
+- The keyring hole is in the PCB: the case needs a matching hole, and the ring should pull on the case rather than on the 1.0 mm board. The case must also leave J1's clip holes reachable from both sides, or programming happens before casing.
 - No reverse-cell protection: a reversed AAA puts −1.5 V on the TLV61220 (abs. min −0.3 V). The case must key the cell's direction.
 - Fit C1/C2 with the value found on the test board.

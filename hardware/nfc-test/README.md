@@ -1,6 +1,6 @@
 # NFC test board (for rev B / B1)
 
-10.5 × 82.5 mm, 1.0 mm thick, 4 layers like B1 (the inner two are empty here, so the coil sees the same stack-up): B1's stick outline. It answers one question before B1 is trusted: **does B1's NFC antenna read on a phone with the AAA cell beside it, and with what trim?** This is [experiment 4](../../docs/rev-b.md#experiments-before-any-board).
+10.5 × 93 mm, 1.0 mm thick, 4 layers like B1 (the inner two are empty here, so the coil sees the same stack-up): B1's stick outline. It answers one question before B1 is trusted: **does B1's NFC antenna read on a phone with the AAA cell beside it, and with what trim?** This is [experiment 4](../../docs/rev-b.md#experiments-before-any-board).
 
 ![top render](production/render-top.png)
 
@@ -59,6 +59,6 @@ Record f0, the trim value, the read distance and the LED distance for each step.
 
 **Why the coil is under 2.75 µH.** 13.56 MHz needs 2.75 µH with the tag's 50 pF (44–56 pF). The coil is short of that on purpose: the cell, its contacts and a phone pull the tuning about, and a parallel trim cap can only pull the resonance down.
 
-**What it doesn't copy.** The coil, LA/LB, tag, trim pads, outline, stack-up and cell are B1's exactly. B1's keyring hole (50 mm from the coil) and its mic and lines are not: the mic's lid sits inside the coil, with two 11 mm tracks beside it, a 12 mm GND track under it, and four more nets crossing under the turns at the cell end. The cell's steel can is the bigger effect, but check B1's resonance again (VNA, step 2) before its C1/C2 value is final.
+**What it doesn't copy.** The coil, LA/LB, tag, trim pads, outline, stack-up and cell are B1's exactly. B1's keyring hole and Tag-Connect footprint (over 50 mm from the coil) and its mic and lines are not: the mic's lid sits inside the coil, with two 11 mm tracks beside it, a 12 mm GND track under it, and four more nets crossing under the turns at the cell end. The cell's steel can is the bigger effect, but check B1's resonance again (VNA, step 2) before its C1/C2 value is final.
 
 **Ordering note:** In1 and In2 are empty on purpose (same stack-up as B1). JLC may ask about blank inner layers on a 4-layer order: confirm.
