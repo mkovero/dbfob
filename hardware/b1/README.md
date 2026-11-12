@@ -4,13 +4,13 @@ A stick, 10.5 × 94 × 1.0 mm, 4 layers, with the mic at the tip and one AAA cel
 
 ![top render](production/render-top.png)
 
-**Status: redrawn as the AAA stick on 2026-11-09, not ordered.** The first draft (2026-11-03) was a 30 × 26 mm CR2032 board. B1 goes in the same order as the [NFC test board](../nfc-test/README.md), which carries the identical antenna, outline and cell. The trim value found on the test board goes onto B1's C1/C2.
+**Status: redrawn as the AAA stick on 2026-11-09, not ordered.** The first draft (2026-11-03) was a 30 × 26 mm CR2032 board. The [NFC test board](../nfc-test/README.md) shares its antenna, outline and cell but was dropped from the order on 2026-11-12: B1 finds its own trim (see [On the bench](#on-the-bench-nfc)).
 
 ## What's on it
 
 Along the stick from the tip:
 
-- **The tip, 24 mm:** the NFC coil, from [../lib/antenna.py](../lib/antenna.py), shared with the test board. It has 9 turns of 0.15 mm track with a 0.15 mm gap, about 2.25 µH in air (NXP AN11276). The mic MK1 sits inside it, with its port through the board, and C6/R8 sit beside it. The coil's inner end meets LB at net tie NT1; LB crosses under the turns on B.Cu.
+- **The tip, 24 mm:** the NFC coil, from [../lib/antenna.py](../lib/antenna.py), shared with the (unordered) test board. It has 9 turns of 0.15 mm track with a 0.15 mm gap, about 2.25 µH in air (NXP AN11276). The mic MK1 sits inside it, with its port through the board, and C6/R8 sit beside it. The coil's inner end meets LB at net tie NT1; LB crosses under the turns on B.Cu.
 - **Just past the coil:** the tag U1, trim pads C1/C2 and C3.
 - **The middle:** the tag's pull-ups, then the LED bar (LED at the top edge, its resistor below), then the MCU U2.
 - **The far end:** the boost converter U3 with L1 over it and C5 under it, so the switching and output loops stay on F.Cu (hand-drawn), then the button. Past the cell's + contact, where the back is free: the Tag-Connect footprint J1, then the keyring hole H1 at the very end (3.2 mm NPTH, no copper within 1 mm, 1.8 mm web).
@@ -28,7 +28,7 @@ Along the stick from the tip:
 | MK1 | IM66D130M, C52053030 | **20 at JLC on 2026-11-09** (0 on 2026-11-03): order early. 0.5 mm port (NPTH) through the board, inside the coil |
 | R8, C6 | 100 Ω, 1 µF (C15849) | mic supply from PA4, filtered against the boost's burst ripple |
 | U1 | NT3H2111W0FHKH, C710403 | NTAG I2C plus 1k, powered from PB14 |
-| C1, C2 | 0603 trim, **not fitted** | C0G, value from the NFC test board |
+| C1, C2 | 0603 trim, **not fitted** | C0G, value found on the bench |
 | C3, C4 | 100 nF | tag and MCU decoupling |
 | R1, R2 | 4.7 kΩ | SDA / SCL pull-ups to NFC_VCC |
 | R3 | 100 kΩ | FD pull-up to VDD |
@@ -60,8 +60,17 @@ Along the stick from the tip:
 
 **Not yet shown on the bench:**
 - Waking Standby by an EXTI event on FD (PB0). The reference manual says any EXTI event wakes Standby, but no example does it. If it doesn't work, FD wakes from Stop (about 4.5 µA) instead.
-- R3 (100 kΩ) against the tag's FD leakage (10 µA max). Measure FD current with VCC off on the test board; keep 100 kΩ only if it is well under 1 µA.
+- R3 (100 kΩ) against the tag's FD leakage (10 µA max). Measure FD current with NFC_VCC off (PB0 as an analog input, meter in series with R3 or across it); keep 100 kΩ only if it is well under 1 µA.
 - The boost's ripple at the mic, and the converter's real standby draw from an AAA.
+
+## On the bench: NFC
+
+Experiment 4 runs here (the test board was dropped). The tag runs from the phone's field, so it needs no firmware for steps 1–3.
+
+1. **No cell, C1/C2 empty.** Tap with an Android (NXP TagInfo) and an iPhone; write a URL with NFC Tools. Note the read distance.
+2. **Find the resonance.** With a NanoVNA and a small pickup loop, read the S11 dip f0; trim **C = 50 pF × ((f0 / 13.56 MHz)² − 1)** in C1 (C0G). Without a VNA, try 0, 4.7, 10, 15 and 22 pF and keep the longest read distance.
+3. **Fit the cell** (alkaline and lithium AAA) and repeat 1–2: the cell's effect. The value from here (or in the case) goes on every board.
+4. **Locked iPhone:** with the screen on, a tap should open the URL with no app.
 
 ## Regenerate
 
@@ -83,11 +92,11 @@ Same procedure as rev A ([../README.md](../README.md)). Routing is signals first
 ## Before ordering
 
 - Stock on 2026-11-10: CH32L103F8U6 119 (708 on 11-03, 481 on 11-09: falling fast), TLV61220 10 665, IM66D130M 20, MY-AAA-07 3 594. Recheck the MCU and the mic on order day.
-- Extended parts (JLC setup fee each): D1–D3, L1, MK1, U1, U2, U3 on B1; U1 on the test board. The rest are Basic.
+- Extended parts (JLC setup fee each): D1–D3, L1, MK1, U1, U2, U3. The rest are Basic.
 - **ENIG finish:** the mic's pads are NSMD (0.05 mm mask clearance on them).
 - **Check JLC's DFM preview** for the mic: its rotation, and that the copper ring round the 0.5 mm port isn't trimmed (JLC may remove thin copper rings at NPTHs).
-- 4 layers at 1.0 mm: check JLC's stack-up price against the test board's, since both use it.
+- 4 layers at 1.0 mm.
 - U2's GND via sits in the exposed pad, between the paste windows: expect a little solder wicking.
 - The keyring hole is in the PCB: the case needs a matching hole, and the ring should pull on the case rather than on the 1.0 mm board. Programming happens before casing, so the case can cover J1.
 - No reverse-cell protection: a reversed AAA puts −1.5 V on the TLV61220 (abs. min −0.3 V). The case must key the cell's direction.
-- Fit C1/C2 with the value found on the test board.
+- Assemble a few boards: one becomes the antenna unit for the trim search below.

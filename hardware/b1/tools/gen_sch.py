@@ -104,7 +104,7 @@ PARTS = {
     'NT1': ('Device:NetTie_2', 'antenna', 'NetTie:NetTie-2_SMD_Pad0.5mm', '', '',
             'inner end of the PCB coil: 9 turns, 0.15 mm / 0.15 mm, about 2.25 uH in air',
             (160, 90, 0), {'1': 'LA', '2': 'LB'}, False),
-    'C1': ('Device:C', 'tune C0G', C_FP, '', '', 'not fitted: antenna trim, value from the NFC test board',
+    'C1': ('Device:C', 'tune C0G', C_FP, '', '', 'not fitted: antenna trim, value found on the bench',
            (160, 110, 0), {'1': 'LA', '2': 'LB'}, True),
     'C2': ('Device:C', 'tune C0G', C_FP, '', '', 'not fitted: second trim position',
            (175, 110, 0), {'1': 'LA', '2': 'LB'}, True),

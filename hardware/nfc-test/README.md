@@ -1,5 +1,7 @@
 # NFC test board (for rev B / B1)
 
+**Dropped on 2026-11-12, not ordered.** Shipped in the same order as B1 it could not steer B1's layout, and B1 answers the same question itself: its tag runs from the phone's field with no firmware, over the same antenna and cell, with its own mic and lines in place (see [B1's bench steps](../b1/README.md#on-the-bench-nfc)). Kept as a draft; it still imports [../lib/antenna.py](../lib/antenna.py) but its board files are not regenerated when that changes.
+
 10.5 × 94 mm, 1.0 mm thick, 4 layers like B1 (the inner two are empty here, so the coil sees the same stack-up): B1's stick outline. It answers one question before B1 is trusted: **does B1's NFC antenna read on a phone with the AAA cell beside it, and with what trim?** This is [experiment 4](../../docs/rev-b.md#experiments-before-any-board).
 
 ![top render](production/render-top.png)

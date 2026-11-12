@@ -79,7 +79,7 @@ Two directions are on the table:
 - **Devkit for experiment 4 (none on hand yet).**
   - MikroE NFC Tag 2 Click (MIKROE-2462) carries the NT3H2111 and an on-board antenna. Retired at SparkFun; still listed at some distributors.
   - NXP's explorer kit (OM23221ARD) is marked no longer manufactured.
-  - **Chosen: our own test board,** [hardware/nfc-test](../hardware/nfc-test/README.md). It has the NT3H2111, B1's antenna at full size and B1's holder behind it, so it tests the actual antenna over the actual cell, which no Click board does. It ships in the same order as B1, so B1 copies its antenna and trim pads, and the bench result sets B1's trim cap.
+  - **Chosen: B1 itself.** The tag reads from the phone's field with no firmware, and B1 carries the real antenna over the real cell, with unfitted trim pads, which no Click board does. A separate test board, [hardware/nfc-test](../hardware/nfc-test/README.md) (same antenna, tag and cell), was drawn for the same order but **dropped on 2026-11-12**: shipped together it could not steer B1, and B1 answers the same question with its own mic and lines in place. It stays as an unordered draft.
 - **Phones.**
   - **iPhone** ([Apple](https://developer.apple.com/documentation/corenfc/adding-support-for-background-tag-reading)):
     - Needs an XS or later, with the screen on and the phone unlocked at least once since boot.
@@ -199,7 +199,7 @@ Raised 2026-11-09: the 30 × 26 mm fob is square and wide in the hand. The wish 
 | CR1220/1225, AAAA | ~14 mm | 35–50 mAh | Too little capacity |
 | ER14250 (1/2AA Li-SOCl2) | ~16 mm | ~1200 mAh | 3.67 V fresh, over the mic's 3.465 V maximum |
 
-**Decided 2026-11-09: the AAA stick.** B1 and the NFC test board were not ordered yet; both are redrawn as the stick, sharing the new antenna (see [hardware/b1](../hardware/b1/README.md) and [hardware/nfc-test](../hardware/nfc-test/README.md)).
+**Decided 2026-11-09: the AAA stick.** B1 and the NFC test board were not ordered yet; both are redrawn as the stick, sharing the new antenna (see [hardware/b1](../hardware/b1/README.md) and [hardware/nfc-test](../hardware/nfc-test/README.md)). The test board was dropped on 2026-11-12: experiment 4 runs on B1.
 
 **Cell.** Energizer L92 (Li-FeS2, FR03): 10.5 × 44.5 mm, about 1250 mAh, 1.5 V, −40 to 60 °C, 15–20 years shelf life ([datasheet](https://www.farnell.com/datasheets/83413.pdf)). Through the boost converter, alkaline and NiMH AAAs work too. A cell the user buys anywhere also settles the EU removability rule.
 
@@ -422,7 +422,7 @@ If B2 happens, BLE is enough, as long as the fob computes the spectrum and sends
    - Measure the 1/3-octave response from 100 Hz to 20 kHz against the reference.
    - This decides whether a sealed case and full band are compatible, and whether 20 kHz is worth anything.
 4. **NFC readout in one evening.**
-   - **On [hardware/nfc-test](../hardware/nfc-test/README.md)** (B1's stick antenna and cell contacts): the dose summary in a tag URL, **with and without the AAA cell in place**.
+   - **On [B1](../hardware/b1/README.md)** (the test board was dropped on 2026-11-12): find the trim on C1/C2, then the dose summary in a tag URL, **with and without the AAA cell in place**.
    - Tap with an iPhone (screen on, and locked) and an Android, and confirm the page opens with no app.
    - This decides the readout for both directions.
 5. ~~Qi~~: dropped 2026-11-03, see [Wireless charging](#wireless-charging).

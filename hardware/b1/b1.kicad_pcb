@@ -377,7 +377,7 @@
 				)
 			)
 		)
-		(property "Note" "not fitted: antenna trim, value from the NFC test board"
+		(property "Note" "not fitted: antenna trim, value found on the bench"
 			(at 0 0 90)
 			(layer "F.Fab")
 			(hide yes)

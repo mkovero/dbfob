@@ -1,3 +1,3 @@
 Designator,Value,MPN,Footprint,Note
 BT1,AAA,MY-AAA-07,BatteryContacts_MYOUNG_MY-AAA-07_1xAAA,"two spring contacts, hand-fit on the back (LCSC C6937109); + towards the far end"
-"C1,C2",tune C0G,,C_0603_1608Metric,"not fitted: antenna trim, value from the NFC test board,not fitted: second trim position"
+"C1,C2",tune C0G,,C_0603_1608Metric,"not fitted: antenna trim, value found on the bench,not fitted: second trim position"

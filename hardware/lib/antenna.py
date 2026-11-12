@@ -1,9 +1,8 @@
 """The stick's NFC antenna block, shared by hardware/b1 and hardware/nfc-test so the two are identical.
 
-Both boards are ordered together, so the test board cannot steer B1's layout. It measures B1's
-antenna instead, and the trim value found on it goes onto B1's C1/C2. For that to hold, every
-piece of copper that sets the tuning is defined here once, together with the board outline and
-the cell beside the coil. Board mm, x along the stick from the mic tip (x = 0), y across it
+The test board was dropped from the order on 2026-11-12 (B1 finds its own trim on C1/C2); it
+stays as a draft. Every piece of copper that sets the tuning is defined here once, together
+with the board outline and the cell beside the coil. Board mm, x along the stick from the mic tip (x = 0), y across it
 (0..W, y down); parts on F.Cu, the AAA cell on the back:
 
   - the coil fills the tip, 23 x 9.3 mm: a 9-turn rectangular spiral of LA track on F.Cu, corners
@@ -13,8 +12,7 @@ the cell beside the coil. Board mm, x along the stick from the mic tip (x = 0), 
   - the tag U1 (NT3H2111) sits just past the coil with trim pads C1/C2 bridging the LA and LB
     lanes in front of it, and C3 (tag VCC decoupling) beside it;
   - the cell lies on the back between two MYOUNG MY-AAA-07 spring contacts, its near end about
-    1.4 mm past the coil's end. Its steel can shifts the tuning, which is why the test board
-    carries it too.
+    1.4 mm past the coil's end. Its steel can shifts the tuning.
 
 Inductance by NXP AN11276's rectangular-coil formula (N^1.8 fit): about 2.25 uH in air against
 2.75 uH for 13.56 MHz with the tag's 50 pF. Deliberately short: the cell, its contacts and a

@@ -2213,7 +2213,7 @@
 			(at 160.02 109.22 0)
 			(effects (font (size 1.27 1.27)) (hide yes))
 		)
-		(property "Note" "not fitted: antenna trim, value from the NFC test board"
+		(property "Note" "not fitted: antenna trim, value found on the bench"
 			(at 160.02 109.22 0)
 			(effects (font (size 1.27 1.27)) (hide yes))
 		)
