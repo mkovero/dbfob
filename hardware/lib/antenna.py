@@ -23,8 +23,7 @@ and check_coil() asserts the gap between turns, and between the vias and the tur
 """
 import math
 
-W, L = 10.5, 94.0            # the stick's board: width (y) and length (x), tip at x = 0; past the cell
-                             # contacts B1 has its Tag-Connect footprint, then the keyring hole at the end
+W, L = 10.5, 76.5            # the stick's board: width (y) and length (x), tip at x = 0
 TURNS = 9
 TW = 0.15                    # coil track width
 PITCH = 0.30                 # 0.15 mm gap

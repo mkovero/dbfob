@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Generate hardware/b1/b1.kicad_sch from the tables below.
 
-B1: rev A done properly, as a stick (docs/rev-b.md, "B1 stick"). 10.5 x 94 mm, an AAA cell on
+B1: rev A done properly, as a stick (docs/rev-b.md, "B1 stick"). 10.5 x 76.5 mm, an AAA cell on
 the back between two spring contacts, a TLV61220 boost converter making 3.0 V from it, the NFC
 coil in the tip (../lib/antenna.py, identical to the NFC test board's), and on the parts face:
 CH32L103 MCU, IM66D130M PDM mic at the tip, NT3H2111 tag, four LEDs, button.
@@ -133,9 +133,6 @@ PARTS = {
            'Tag-Connect TC2050-IDC (legged) footprint, ARM 10-pin SWD: 1 VDD, 2 SWDIO, 4 SWCLK, 6 TX, 3/5/9 GND',
            (30, 90, 0), {'1': 'VDD', '2': 'SWDIO', '3': 'GND', '4': 'SWCLK', '5': 'GND', '6': 'TX', '9': 'GND'},
            False),
-    # at the far end, opposite the mic: the stick hangs mic-down from a split ring
-    'H1': ('Mechanical:MountingHole', 'keyring', 'MountingHole:MountingHole_3.2mm_M3', '', '',
-           'keyring hole, 3.2 mm NPTH', (30, 110, 0), {}, False),
 }
 # LED bar as rev A: four low-Vf AlInGaP/GaP parts, deliberately dim; now from the regulated 3.0 V. D4's cathode goes to PA10: reverse-biased and timed, it senses ambient light.
 LEDS = [  # ref, net, colour, LCSC, MPN, R, R LCSC, cathode net

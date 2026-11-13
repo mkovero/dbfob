@@ -8,12 +8,12 @@ under our fab rules, UUIDs derive from content, DRC with schematic parity is the
   python3 hardware/b1/tools/make_pcb.py
   python3 hardware/b1/tools/fab.py
 
-Board: the stick, 10.5 x 94 x 1.0 mm, 4 layers, every machine-placed part on the front. The
+Board: the stick, 10.5 x 76.5 x 1.0 mm, 4 layers, every machine-placed part on the front. The
 outline and the antenna block (coil in the tip, the LB crossover, tag, trim pads, the AAA
 contacts on the back) come from ../lib/antenna.py, identical to the NFC test board's. Along
 the stick from the tip: the mic inside the coil with its port through the board, the tag, the
-LED bar, the MCU, the boost converter, the button, the Tag-Connect footprint, the keyring hole. Everything past the
-coil sits under the cell, which lies on the back.
+LED bar, the Tag-Connect footprint, the MCU, the boost converter, the button. The keyring is the
+case's job. Everything past the coil sits under the cell, which lies on the back.
 
 Four layers because two would not route in 10.5 mm: the MCU's fan-out, the tag's lines and the
 mic's lines out of the coil share one corridor, and the cell contacts' pads fill the middle of
@@ -22,7 +22,7 @@ detunes it, so GND is tracks like everything else, and every layer under the coi
 apart from the band at its cell end, where LB and the mic's nets cross under the turns.
 Hand-drawn: a via in U2's exposed pad, the mic's GND ring tied to its GND pad, and the boost
 converter's switching and output loops.
-Routing: signals first, then the power nets, with the router's inside_out net ordering, backward direction and no extra via
+Routing: signals first, then the power nets, with the router's inside_out net ordering, forward direction and no extra via
 cost near pads (the default tenfold one keeps the MCU's bottom pins off the inner layers).
 """
 import json, math, os, re, shutil, subprocess, sys, tempfile, uuid
@@ -50,6 +50,15 @@ LAYERS = ['F.Cu', 'In1.Cu', 'In2.Cu', 'B.Cu']   # 4 layers, no planes: the inner
 POWER_FIRST = os.environ.get('POWER_FIRST') == '1'
 ROUTER_ARGS = os.environ.get('ROUTER_ARGS', '').split()
 
+# The Tag-Connect TC2050-IDC footprint (legged plug: its clips latch through the board and hook on
+# the back, where the cell lies, so the cell comes out to program). Its holes go through the gap
+# between the cell contacts' base pads (x 41.2 to 59.7 on the back); the MCU and the boost
+# converter sit past it on the front, MCU_DX further along than in the 94 mm draft.
+J1X, J1ROT = 47.0, 180
+MCU_DX = 11.0
+# J1 pin 1 (VDD) is boxed in by the pads and holes: a stub out between two clip holes to a via
+J1_VDD_VIA = (J1X + 2.0, 2.5) if J1ROT == 180 else (J1X - 2.0, 8.0)
+
 # The antenna block (coil, LB crossover, NT1, U1, C1-C3, BT1) is ../lib/antenna.py's.
 PLACE = dict(ant.PLACE, **{
     # mic at the tip inside the coil, pads towards the cell end; port at x 4.36
@@ -64,22 +73,19 @@ PLACE = dict(ant.PLACE, **{
     # edge, anode down onto its resistor, whose U2 end faces the middle of the stick.
     'D1': (34.6, 1.9, 270, False), 'D2': (36.4, 1.9, 270, False), 'D3': (38.2, 1.9, 270, False), 'D4': (40.0, 1.9, 270, False),
     'R4': (34.6, 5.0, 90, False), 'R5': (36.4, 5.0, 90, False), 'R6': (38.2, 5.0, 90, False), 'R7': (40.0, 5.0, 90, False),
-    'U2': (45.4, 5.25, 0, False),
-    'C4': (42.3, 1.9, 90, False),      # VDD decoupling, top left of U2, fed from pin 19 by hand (BOOST)
+    'J1': (J1X, 5.25, J1ROT, False),
+    'U2': (45.4 + MCU_DX, 5.25, 0, False),
+    'C4': (42.3 + MCU_DX, 1.9, 90, False),      # VDD decoupling, top left of U2, fed from pin 19 by hand (BOOST)
     # boost: L1 over U3, SW (pin 1) top left, VBAT (pin 6) top right, VOUT (5) and FB (4) right
-    'U3': (51.5, 5.25, 0, False),
-    'L1': (51.5, 2.2, 180, False),
-    'C7': (54.7, 2.4, 90, False),
+    'U3': (51.5 + MCU_DX, 5.25, 0, False),
+    'L1': (51.5 + MCU_DX, 2.2, 180, False),
+    'C7': (54.7 + MCU_DX, 2.4, 90, False),
     # output cap across the bottom of U3: GND pad under the channel between U3's pad columns, VDD
     # pad on the right, so the output loop stays on F.Cu (see BOOST)
-    'C5': (52.3, 7.8, 180, False),
-    'R10': (50.6, 9.4, 180, False),    # FB divider in a row below, R10's GND end by U3's GND side
-    'R9': (53.8, 9.4, 180, False),     # VDD pad under C5's VDD track
+    'C5': (52.3 + MCU_DX, 7.8, 180, False),
+    'R10': (50.6 + MCU_DX, 9.4, 180, False),    # FB divider in a row below, R10's GND end by U3's GND side
+    'R9': (53.8 + MCU_DX, 9.4, 180, False),     # VDD pad under C5's VDD track
     'SW1': (69.5, 5.25, 90, False),
-    # past the cell's + contact (x 75.9), where the back is free: the Tag-Connect TC2050-IDC
-    # footprint, whose plug clips latch through the board from behind, then the keyring hole
-    'J1': (82.4, 5.25, 0, False),      # clip holes 1.5 mm past the + contact
-    'H1': (90.6, 5.25, 0, False),      # courtyard touching J1's, 1.8 mm web to the end
 })
 
 # The mic's GND ring (pad 3, round the port) tied to its GND pad 2: the router can't get in
@@ -93,41 +99,43 @@ RING_TIE = ['MK1.2', (4.36 + 0.6 * math.cos(math.radians(40)), 5.25 - 0.6 * math
 # router. (net, width, points)
 BOOST = [
     ('/SW', 0.4, ['L1.2', 'U3.1']),
-    ('/GND', 0.3, ['U3.2', (51.5, 5.25), (51.5, 7.8), 'C5.2']),
-    ('/VDD', 0.3, ['U3.5', (54.4, 5.25), (54.4, 7.8), 'C5.1']),
-    ('/VDD', 0.2, [(54.4, 7.8), 'R9.1']),
+    ('/GND', 0.3, ['U3.2', (51.5 + MCU_DX, 5.25), (51.5 + MCU_DX, 7.8), 'C5.2']),
+    ('/VDD', 0.3, ['U3.5', (54.4 + MCU_DX, 5.25), (54.4 + MCU_DX, 7.8), 'C5.1']),
+    ('/VDD', 0.2, [(54.4 + MCU_DX, 7.8), 'R9.1']),
     ('/FB', 0.2, ['R9.2', 'R10.1']),
-    ('/VDD', 0.2, ['U2.19', (45.0, 2.675), 'C4.1']),   # U2's decoupling, over pin 20
+    ('/VDD', 0.2, ['U2.19', (45.0 + MCU_DX, 2.675), 'C4.1']),   # U2's decoupling, over pin 20
     ('/GND', 0.3, ['C3.2', (29.675, 0.85)]),           # C3 (tag decoupling) sits behind the tag's top row
-    ('/VDD', 0.2, ['J1.1', (80.0, 8.6)]),              # J1 pin 1, boxed in by the clip and guide holes
+    ('/VDD', 0.2, ['J1.1', J1_VDD_VIA]),
+    ('/GND', 0.15, ['J1.3', 'J1.9']),                   # diagonal neighbours, between pins 2 and 8
     # FD from U2's bottom row along the bottom edge to R3 and the tag, kept from the router like SW:
-    # otherwise another net takes the edge and FD's pin is boxed in
-    ('/FD', 0.15, ['U2.8', (45.4, 7.95), (45.55, 8.1), (45.55, 8.5), (45.22, 8.83), (36.0, 8.83),
+    # otherwise another net takes the edge and FD's pin is boxed in. It passes J1 along the very edge, below its clip holes.
+    ('/FD', 0.15, ['U2.8', (45.4 + MCU_DX, 7.95), (45.55 + MCU_DX, 8.1), (45.55 + MCU_DX, 8.5),
+                   (45.22 + MCU_DX, 8.83), (41.6 + MCU_DX, 8.83), (40.555 + MCU_DX, 9.875),
+                   (41.0, 9.875), (39.955, 8.83), (36.0, 8.83),
                    (33.45, 6.28), (33.45, 5.22), (32.95, 4.72), (31.9, 4.72), 'R3.2', 'U1.4']),
 ]
 HAND_NETS = ('/SW', '/FD')   # drawn whole, kept from the router, put back after it (restore_hand)
 BOOST_VIAS = [('/GND', (29.675, 0.85)),               # ... so its GND drops to the inner layers here
-              ('/VDD', (80.0, 8.6))]
+              ('/VDD', J1_VDD_VIA)]
 # Router-only keepouts (User.2, KiCadRoutingTools --keepout; DRC ignores the layer): the SW gap
 # between L1 and U3, or the router rips SW up to push a signal through there.
-ROUTER_KEEPOUTS = [(49.85, 2.85, 51.15, 4.25),   # it checks via centres, so a via radius wider
-                   (90.6 - 2.6, 0.0, ant.L, ant.W)]   # 1 mm round the keyring hole: a steel ring wears its edge
-# The router knows pad clearance (0.15) but not the 0.25 mm hole clearance, so J1's and H1's NPTH
+ROUTER_KEEPOUTS = [(49.85 + MCU_DX, 2.85, 51.15 + MCU_DX, 4.25)]   # it checks via centres, so a via radius wider
+# The router knows pad clearance (0.15) but not the 0.25 mm hole clearance, so J1's NPTH
 # pads are grown by this much in diameter while it routes, then put back (restore_npth).
 NPTH_GROW = 0.2
 # The cell to U2's ADC pin (7, bottom row), which the router can't reach between its neighbours:
 # down to In2, along under the bottom row's fan-out to U3's EN pin (3). (net, layer, width, points)
-VCELL_ADC = [('/VCELL', 'F', 0.15, ['U2.7', (45.0, 8.3)]),
-             ('/VCELL', 'In2', 0.15, [(45.0, 8.3), (47.1, 8.3), (49.2, 6.2)]),
-             ('/VCELL', 'F', 0.15, [(49.2, 6.2), 'U3.3'])]
-VCELL_VIAS = [('/VCELL', (45.0, 8.3)), ('/VCELL', (49.2, 6.2))]
+VCELL_ADC = [('/VCELL', 'F', 0.15, ['U2.7', (45.0 + MCU_DX, 8.3)]),
+             ('/VCELL', 'In2', 0.15, [(45.0 + MCU_DX, 8.3), (47.1 + MCU_DX, 8.3), (49.2 + MCU_DX, 6.2)]),
+             ('/VCELL', 'F', 0.15, [(49.2 + MCU_DX, 6.2), 'U3.3'])]
+VCELL_VIAS = [('/VCELL', (45.0 + MCU_DX, 8.3)), ('/VCELL', (49.2 + MCU_DX, 6.2))]
 
 SILK_F = [  # text, x, y, size, angle
     # 1.0 mm: JLC's minimum legend height
-    ('dbfob B1', 74.6, 5.25, 1.0, 90),     # across the stick, between SW1 and the keyring
+    ('dbfob B1', 74.6, 5.25, 1.0, 90),     # across the stick, past SW1
 ]
 SILK_B = [
-    ('AAA', 44.0, 9.4, 1.0),
+    ('AAA', 33.0, 9.4, 1.0),
 ]
 
 
@@ -236,7 +244,7 @@ def build():
         for p in fp.Pads():
             net = pins.get((ref, p.GetNumber()))
             if net in nets: p.SetNet(nets[net])
-        if ref in ('J1', 'H1'):
+        if ref == 'J1':
             for p in fp.Pads():
                 if p.GetAttribute() == pcbnew.PAD_ATTRIB_NPTH:
                     d = p.GetDrillSize().x + pcbnew.FromMM(NPTH_GROW)
@@ -338,7 +346,7 @@ def route(keep_pro):
                                 '--same-net-pad-clearance', '0.2', '--board-edge-clearance', '0.5',
                                 '--hole-to-hole-clearance', '0.25', '--max-ripup', '200',
                                 '--keepout', '--via-proximity-cost', '0',   # the MCU's pins must drop to the inner layers
-                                *ROUTER_ARGS, '--ordering', os.environ.get('ORDERING%d' % k, os.environ.get('ORDERING', 'inside_out')), '--direction', os.environ.get('DIRECTION', 'backward')],
+                                *ROUTER_ARGS, '--ordering', os.environ.get('ORDERING%d' % k, os.environ.get('ORDERING', 'inside_out')), '--direction', os.environ.get('DIRECTION', 'forward')],
                                capture_output=True, text=True, cwd=KRT)
             log = r.stdout + r.stderr
             if r.returncode or not os.path.exists(out):
@@ -378,7 +386,7 @@ def restore_npth():
             out += [t[last:m.start()], m.group(1), f'(size {m.group(4)} {m.group(4)})', m.group(3), m.group(4), ')']
             last, k = m.end(), k + 1
     open(PCB, 'w').write(''.join(out) + t[last:])
-    assert k == 8, f'restore_npth: {k} pads'      # J1's seven, H1's one
+    assert k == 7, f'restore_npth: {k} pads'      # J1's seven
 
 
 def drc():
@@ -414,6 +422,10 @@ ALLOWED_DRC = {'lib_footprint_issues'}
 
 
 def allowed(x):
+    # J1's guide and clip holes lie under the cell, inside BT1's courtyard: the cell comes out to program
+    if x['type'] == 'npth_inside_courtyard':
+        d = [i['description'] for i in x.get('items', [])]
+        return any('NPTH pad of J1' in t for t in d) and any('Footprint BT1' in t for t in d)
     return x['type'] in ALLOWED_DRC
 
 
