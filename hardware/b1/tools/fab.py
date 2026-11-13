@@ -55,8 +55,9 @@ def preflight():
                         '-o', drc, PCB], capture_output=True)
         d = json.load(open(drc))
     out += [f"DRC {v['severity']} {v['type']}: {v['description'][:70]}" for v in d['violations']
-            if v['type'] != 'lib_footprint_issues' and not (       # J1's holes under the cell, on purpose
-                v['type'] == 'npth_inside_courtyard' and [i['description'] for i in v['items']] == ['NPTH pad of J1', 'Footprint BT1'])]
+            if v['type'] != 'lib_footprint_issues' and not (       # J1's and H1's holes in BT1's courtyard, on purpose
+                v['type'] == 'npth_inside_courtyard' and [i['description'] for i in v['items']] in (
+                    ['NPTH pad of J1', 'Footprint BT1'], ['NPTH pad of H1', 'Footprint BT1']))]
     out += [f"unconnected: {v['description'][:70]}" for v in d.get('unconnected_items', [])]
     out += [f"parity {v['type']}: {v['description'][:70]}" for v in d.get('schematic_parity', [])]
     return out

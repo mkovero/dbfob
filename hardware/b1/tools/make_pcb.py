@@ -12,8 +12,8 @@ Board: the stick, 10.5 x 76.5 x 1.0 mm, 4 layers, every machine-placed part on t
 outline and the antenna block (coil in the tip, the LB crossover, tag, trim pads, the AAA
 contacts on the back) come from ../lib/antenna.py, identical to the NFC test board's. Along
 the stick from the tip: the mic inside the coil with its port through the board, the tag, the
-LED bar, the Tag-Connect footprint, the MCU, the boost converter, the button. The keyring is the
-case's job. Everything past the coil sits under the cell, which lies on the back.
+LED bar, the Tag-Connect footprint, the MCU, the boost converter, the button, a 1 mm thread hole in the
+corner. A keyring is the case's job. Everything past the coil sits under the cell, which lies on the back.
 
 Four layers because two would not route in 10.5 mm: the MCU's fan-out, the tag's lines and the
 mic's lines out of the coil share one corridor, and the cell contacts' pads fill the middle of
@@ -86,6 +86,9 @@ PLACE = dict(ant.PLACE, **{
     'R10': (50.6 + MCU_DX, 9.4, 180, False),    # FB divider in a row below, R10's GND end by U3's GND side
     'R9': (53.8 + MCU_DX, 9.4, 180, False),     # VDD pad under C5's VDD track
     'SW1': (69.5, 5.25, 90, False),
+    # thread hole in the top corner past the button: 0.9 mm web to the side, 1.2 mm to the end,
+    # 2 mm from the + contact's foot pad on the back
+    'H1': (74.8, 1.4, 0, False),
 })
 
 # The mic's GND ring (pad 3, round the port) tied to its GND pad 2: the router can't get in
@@ -120,7 +123,7 @@ BOOST_VIAS = [('/GND', (29.675, 0.85)),               # ... so its GND drops to 
 # Router-only keepouts (User.2, KiCadRoutingTools --keepout; DRC ignores the layer): the SW gap
 # between L1 and U3, or the router rips SW up to push a signal through there.
 ROUTER_KEEPOUTS = [(49.85 + MCU_DX, 2.85, 51.15 + MCU_DX, 4.25)]   # it checks via centres, so a via radius wider
-# The router knows pad clearance (0.15) but not the 0.25 mm hole clearance, so J1's NPTH
+# The router knows pad clearance (0.15) but not the 0.25 mm hole clearance, so J1's and H1's NPTH
 # pads are grown by this much in diameter while it routes, then put back (restore_npth).
 NPTH_GROW = 0.2
 # The cell to U2's ADC pin (7, bottom row), which the router can't reach between its neighbours:
@@ -132,7 +135,7 @@ VCELL_VIAS = [('/VCELL', (45.0 + MCU_DX, 8.3)), ('/VCELL', (49.2 + MCU_DX, 6.2))
 
 SILK_F = [  # text, x, y, size, angle
     # 1.0 mm: JLC's minimum legend height
-    ('dbfob B1', 74.6, 5.25, 1.0, 90),     # across the stick, past SW1
+    ('dbfob B1', 74.6, 5.65, 1.0, 90),     # across the stick, past SW1, clear of H1
 ]
 SILK_B = [
     ('AAA', 33.0, 9.4, 1.0),
@@ -244,7 +247,7 @@ def build():
         for p in fp.Pads():
             net = pins.get((ref, p.GetNumber()))
             if net in nets: p.SetNet(nets[net])
-        if ref == 'J1':
+        if ref in ('J1', 'H1'):
             for p in fp.Pads():
                 if p.GetAttribute() == pcbnew.PAD_ATTRIB_NPTH:
                     d = p.GetDrillSize().x + pcbnew.FromMM(NPTH_GROW)
@@ -386,7 +389,7 @@ def restore_npth():
             out += [t[last:m.start()], m.group(1), f'(size {m.group(4)} {m.group(4)})', m.group(3), m.group(4), ')']
             last, k = m.end(), k + 1
     open(PCB, 'w').write(''.join(out) + t[last:])
-    assert k == 7, f'restore_npth: {k} pads'      # J1's seven
+    assert k == 8, f'restore_npth: {k} pads'      # J1's seven, H1's one
 
 
 def drc():
@@ -422,10 +425,12 @@ ALLOWED_DRC = {'lib_footprint_issues'}
 
 
 def allowed(x):
-    # J1's guide and clip holes lie under the cell, inside BT1's courtyard: the cell comes out to program
+    # J1's guide and clip holes lie under the cell, inside BT1's courtyard: the cell comes out to
+    # program. H1 sits in the courtyard's far corner, outside the + contact's plate (x 71.7) and
+    # 2 mm from its foot pad.
     if x['type'] == 'npth_inside_courtyard':
         d = [i['description'] for i in x.get('items', [])]
-        return any('NPTH pad of J1' in t for t in d) and any('Footprint BT1' in t for t in d)
+        return any(f'NPTH pad of {r}' in t for t in d for r in ('J1', 'H1')) and any('Footprint BT1' in t for t in d)
     return x['type'] in ALLOWED_DRC
 
 

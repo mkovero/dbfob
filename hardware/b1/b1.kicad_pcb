@@ -2511,6 +2511,115 @@
 			)
 		)
 	)
+	(footprint "dbfob:MountingHole_1.0mm"
+		(layer "F.Cu")
+		(uuid "b034f7f1-aad5-53e2-868e-9e009ddeee84")
+		(at 174.8 101.4)
+		(descr "1.0 mm NPTH, for a thread or thin wire")
+		(property "Reference" "H1"
+			(at 0 -1.4 0)
+			(layer "F.Fab")
+			(uuid "1f19e8bf-cd33-59a3-a6db-a471ea1b1dcb")
+			(effects
+				(font
+					(size 0.8 0.8)
+					(thickness 0.12)
+				)
+			)
+		)
+		(property "Value" "thread"
+			(at 0 1.4 0)
+			(layer "F.Fab")
+			(uuid "7e6ec9fd-1503-534c-95e1-5efe35adbbce")
+			(effects
+				(font
+					(size 0.8 0.8)
+					(thickness 0.12)
+				)
+			)
+		)
+		(property "Datasheet" ""
+			(at 0 0 0)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "9dbdbb83-36fa-547e-894c-7e825880faad")
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Description" ""
+			(at 0 0 0)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "b1de5e3b-0807-5627-b81e-0d54c46bac4e")
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "LCSC" ""
+			(at 0 0 0)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "b320fc0a-7140-526b-bf3c-3abc55cff5f2")
+			(effects
+				(font
+					(size 1.27 1.27)
+					(thickness 0.15)
+				)
+			)
+		)
+		(property "MPN" ""
+			(at 0 0 0)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "728bdaae-68ba-5da0-969c-b355b0adfe11")
+			(effects
+				(font
+					(size 1.27 1.27)
+					(thickness 0.15)
+				)
+			)
+		)
+		(property "Note" "thread hole, 1.0 mm NPTH"
+			(at 0 0 0)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "ad55577f-14c1-5079-9bf4-cb7e4d54554f")
+			(effects
+				(font
+					(size 1.27 1.27)
+					(thickness 0.15)
+				)
+			)
+		)
+		(sheetname "/")
+		(sheetfile "b1.kicad_sch")
+		(attr exclude_from_pos_files exclude_from_bom)
+		(duplicate_pad_numbers_are_jumpers no)
+		(fp_circle
+			(center 0 0)
+			(end 0.75 0)
+			(stroke
+				(width 0.05)
+				(type solid)
+			)
+			(fill no)
+			(layer "F.CrtYd")
+			(uuid "740fc499-b0b9-585f-9ab8-bceb8cf1816b")
+		)
+		(pad "" np_thru_hole circle
+			(at 0 0)
+			(size 1 1)
+			(drill 1)
+			(layers "*.Cu" "*.Mask")
+			(uuid "47ce72b3-fbff-52c6-8efe-42f7f1ee8d69")
+		)
+		(embedded_fonts no)
+	)
 	(footprint "Connector:Tag-Connect_TC2050-IDC-FP_2x05_P1.27mm_Vertical"
 		(layer "F.Cu")
 		(uuid "c76dd7d8-b3fd-577a-bbfe-b9ac3643da03")
@@ -7012,7 +7121,7 @@
 		(uuid "64725593-8afc-527f-869f-0f0443f4f499")
 	)
 	(gr_text "dbfob B1"
-		(at 174.6 105.25 90)
+		(at 174.6 105.65 90)
 		(layer "F.SilkS")
 		(uuid "4865f643-695a-578a-bbf0-f8f2017e2ba3")
 		(effects
