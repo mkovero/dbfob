@@ -56,7 +56,7 @@ ROUTER_ARGS = os.environ.get('ROUTER_ARGS', '').split()
 # it and U2 after it; the boost converter sits between the + contact's base and foot pads.
 J1X, J1ROT = 50.25, 180
 U2X = 57.3        # U2 between J1's holes and the + contact's base pad, where vias can go all round
-BOOST_DX = 19.5   # the boost converter between the + contact's base and foot pads, out to the end
+BOOST_DX = 12.0   # the boost converter right after U2, over the + contact's base pad (VCELL vias may go into it)
 # J1 pin 1 (VDD) is boxed in by the pads and holes: a stub out between two clip holes to a via
 J1_VDD_VIA = (J1X - 1.9, 2.9)
 
@@ -87,6 +87,9 @@ PLACE = dict(ant.PLACE, **{
     'R10': (50.6 + BOOST_DX, 9.4, 180, False),    # FB divider in a row below, R10's GND end by U3's GND side
     'R9': (53.8 + BOOST_DX, 9.4, 180, False),     # VDD pad under C5's VDD track
     'SW1': (42.3, 5.25, 90, False),
+    # ring slot in the far corner, past the + contact's plate (x 71.7). A slot counts as board edge:
+    # 0.5 mm clear of the contact's foot pad, 0.75 mm web to the side, 0.9 mm to the end
+    'H1': (74.05, 2.1, 0, False),
 })
 
 # The mic's GND ring (pad 3, round the port) tied to its GND pad 2: the router can't get in
@@ -126,12 +129,12 @@ ROUTER_KEEPOUTS = [(49.85 + BOOST_DX, 2.85, 51.15 + BOOST_DX, 4.25)]   # it chec
 # pads are grown by this much in diameter while it routes, then put back (restore_npth).
 NPTH_GROW = 0.2
 # The cell to U2's ADC pin (7, bottom row), which the router can't reach between its neighbours:
-# down to In2, along the bottom edge under the + contact's base pad to U3's EN pin (3). (net, layer, width, points)
+# down to In2, along the bottom edge past U2's escape vias, up to a via in the + contact's base pad by U3's EN pin (3). (net, layer, width, points)
 VCELL_ADC = [('/VCELL', 'F', 0.15, ['U2.7', (U2X - 0.4, 8.3)]),
-             ('/VCELL', 'In2', 0.15, [(U2X - 0.4, 8.3), (U2X + 0.9, 9.6), (46.5 + BOOST_DX, 9.6),
-                                      (49.2 + BOOST_DX, 6.9), (49.2 + BOOST_DX, 6.2)]),
-             ('/VCELL', 'F', 0.15, [(49.2 + BOOST_DX, 6.2), 'U3.3'])]
-VCELL_VIAS = [('/VCELL', (U2X - 0.4, 8.3)), ('/VCELL', (49.2 + BOOST_DX, 6.2))]
+             ('/VCELL', 'In2', 0.15, [(U2X - 0.4, 8.3), (U2X + 0.9, 9.6), (49.5 + BOOST_DX, 9.6),
+                                      (50.3 + BOOST_DX, 8.8), (50.3 + BOOST_DX, 7.4)]),
+             ('/VCELL', 'F', 0.15, [(50.3 + BOOST_DX, 7.4), 'U3.3'])]
+VCELL_VIAS = [('/VCELL', (U2X - 0.4, 8.3)), ('/VCELL', (50.3 + BOOST_DX, 7.4))]   # the second one in the + pad
 # U2's right column faces the + contact's base pad (no vias there): LED_R (14) and NFC_VCC (12) out
 # on F.Cu over it, down to vias in the strip below the pad, LED_R round the outside.
 U2_ESCAPE = [('/NFC_VCC', 'F', 0.15, ['U2.12', (U2X + 2.15, 5.65), (U2X + 2.15, 8.6)]),
@@ -263,11 +266,11 @@ def build():
         for p in fp.Pads():
             net = pins.get((ref, p.GetNumber()))
             if net in nets: p.SetNet(nets[net])
-        if ref == 'J1':
+        if ref in ('J1', 'H1'):
             for p in fp.Pads():
                 if p.GetAttribute() == pcbnew.PAD_ATTRIB_NPTH:
-                    d = p.GetDrillSize().x + pcbnew.FromMM(NPTH_GROW)
-                    p.SetSize(pcbnew.VECTOR2I(d, d))
+                    g = pcbnew.FromMM(NPTH_GROW)
+                    p.SetSize(pcbnew.VECTOR2I(p.GetDrillSize().x + g, p.GetDrillSize().y + g))
         fps[ref] = fp
     ant.outline(board, mm)
     for i, box in enumerate(ant.KEEPOUTS):
@@ -402,13 +405,15 @@ def restore_npth():
     """Shrink the NPTH pads grown for routing back to their drill."""
     t = open(PCB).read()
     out, last, k = [], 0, 0
-    for m in re.finditer(r'(\(pad "" np_thru_hole circle\s+\(at [^)]*\)\s+)\(size ([\d.]+) [\d.]+\)(\s+\(drill )([\d.]+)\)', t):
-        a, d = float(m.group(2)), float(m.group(4))
-        if abs(a - d - NPTH_GROW) < 1e-4:
-            out += [t[last:m.start()], m.group(1), f'(size {m.group(4)} {m.group(4)})', m.group(3), m.group(4), ')']
+    for m in re.finditer(r'(\(pad "" np_thru_hole (?:circle|oval)\s+\(at [^)]*\)\s+)\(size ([\d.]+) ([\d.]+)\)'
+                         r'(\s+\(drill (?:oval )?)([\d.]+)(?: ([\d.]+))?\)', t):
+        dx = m.group(5); dy = m.group(6) or dx
+        if abs(float(m.group(2)) - float(dx) - NPTH_GROW) < 1e-4:
+            out += [t[last:m.start()], m.group(1), f'(size {dx} {dy})', m.group(4), m.group(5),
+                    f' {m.group(6)}' if m.group(6) else '', ')']
             last, k = m.end(), k + 1
     open(PCB, 'w').write(''.join(out) + t[last:])
-    assert k == 7, f'restore_npth: {k} pads'      # J1's seven
+    assert k == 8, f'restore_npth: {k} pads'      # J1's seven, H1's slot
 
 
 def drc():
@@ -449,7 +454,7 @@ def allowed(x):
     # J1 is on the back, so its courtyard and keepout (no vias between its pads) overlap BT1's too
     d = [i['description'] for i in x.get('items', [])]
     if x['type'] == 'npth_inside_courtyard':
-        return any('NPTH pad of J1' in t for t in d) and any('Footprint BT1' in t for t in d)
+        return any(f'NPTH pad of {r}' in t for t in d for r in ('J1', 'H1')) and any('Footprint BT1' in t for t in d)
     if x['type'] in ('courtyards_overlap', 'items_not_allowed'):
         return any('J1' in t for t in d + [x['description']]) and any('Footprint BT1' in t for t in d)
     return x['type'] in ALLOWED_DRC

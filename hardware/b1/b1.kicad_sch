@@ -1436,6 +1436,105 @@
 			)
 			(embedded_fonts no)
 		)
+			(symbol "Mechanical:MountingHole"
+			(pin_names
+				(offset 1.016)
+			)
+			(exclude_from_sim no)
+			(in_bom no)
+			(on_board yes)
+			(in_pos_files yes)
+			(duplicate_pin_numbers_are_jumpers no)
+			(property "Reference" "H"
+				(at 0 5.08 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Value" "MountingHole"
+				(at 0 3.175 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Footprint" ""
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Datasheet" ""
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Description" "Mounting Hole without connection"
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "ki_keywords" "mounting hole"
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "ki_fp_filters" "MountingHole*"
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(symbol "MountingHole_0_1"
+				(circle
+					(center 0 0)
+					(radius 1.27)
+					(stroke
+						(width 1.27)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+			)
+			(embedded_fonts no)
+		)
 			(symbol "Switch:SW_Push"
 			(pin_numbers
 				(hide yes)
@@ -2707,6 +2806,45 @@
 		(fields_autoplaced yes)
 		(effects (font (size 1.27 1.27)) (justify right bottom))
 		(uuid "c3b47806-21fb-5361-b4f0-96959c9c2c17")
+	)
+	(symbol
+		(lib_id "Mechanical:MountingHole")
+		(at 30.48 109.22 0)
+		(unit 1)
+		(exclude_from_sim no)
+		(in_bom no)
+		(on_board yes)
+		(dnp no)
+		(uuid "66330567-be0e-5a81-9d05-07a3a2820374")
+		(property "Reference" "H1"
+			(at 33.48 103.22 0)
+			(effects (font (size 1.27 1.27)))
+		)
+		(property "Value" "ring"
+			(at 33.48 115.22 0)
+			(effects (font (size 1.27 1.27)))
+		)
+		(property "Footprint" "dbfob:Slot_2.7x3.1mm"
+			(at 30.48 109.22 0)
+			(effects (font (size 1.27 1.27)) (hide yes))
+		)
+		(property "Datasheet" ""
+			(at 30.48 109.22 0)
+			(effects (font (size 1.27 1.27)) (hide yes))
+		)
+		(property "LCSC" ""
+			(at 30.48 109.22 0)
+			(effects (font (size 1.27 1.27)) (hide yes))
+		)
+		(property "MPN" ""
+			(at 30.48 109.22 0)
+			(effects (font (size 1.27 1.27)) (hide yes))
+		)
+		(property "Note" "ring / cord slot, 2.7 x 3.1 mm NPTH"
+			(at 30.48 109.22 0)
+			(effects (font (size 1.27 1.27)) (hide yes))
+		)
+		(instances (project "b1" (path "/20f8934c-30b5-5975-96bf-813a8789ed2a" (reference "H1") (unit 1))))
 	)
 	(symbol
 		(lib_id "Connector_Generic:Conn_02x05_Odd_Even")

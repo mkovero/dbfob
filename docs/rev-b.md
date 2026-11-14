@@ -259,7 +259,7 @@ TLV61220 at 3.0 V: FB is 0.5 V, R1 = 1 MΩ, R2 = 200 kΩ. The datasheet wants at
 **Settled in the redraw:**
 - Coil: Sunlord MPL2016S4R7MHT (C98335), 4.7 µH in 2.0 × 1.6 mm.
 - Cell contacts: hand-fitted on the back, so JLC assembly stays one-sided.
-- Board 10.5 × 76.5 × 1.0 mm. Button about mid-stick, then a Tag-Connect TC2050-IDC (legged) footprint with its pads on the back, its holes between the cell contacts' base pads, so the cell comes out to program; the MCU just past it and the boost converter at the far end (2026-11-14; a 94 mm draft had the Tag-Connect and a keyring hole past the + contact). The keyring goes on the case; the drawn antenna is 9 turns of 0.15/0.15 mm in 23 × 9.3 mm, about 2.25 µH.
+- Board 10.5 × 76.5 × 1.0 mm. Button about mid-stick, then a Tag-Connect TC2050-IDC (legged) footprint with its pads on the back, its holes between the cell contacts' base pads, so the cell comes out to program; the MCU and the boost converter just past it, and a 2.7 × 3.1 mm ring slot in the far corner (2026-11-14; a 94 mm draft had the Tag-Connect and a keyring hole past the + contact). A keyring with keys goes on the case; the drawn antenna is 9 turns of 0.15/0.15 mm in 23 × 9.3 mm, about 2.25 µH.
 - 4 layers. Two would not route in 10.5 mm: the MCU's fan-out, the tag's lines and the mic's lines share one corridor, and the cell contacts' pads fill the middle of the back. The inner layers carry signals only, with no planes, and every layer under the coil stays clear. The NFC test board is 4 layers too (inner ones empty), so the coil sees the same stack-up.
 
 **Still open:**

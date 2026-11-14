@@ -38,7 +38,7 @@ def j1_under_cell(v):
     overlap BT1's courtyard on purpose."""
     d = [i['description'] for i in v.get('items', [])]
     if v['type'] == 'npth_inside_courtyard':
-        return d == ['NPTH pad of J1', 'Footprint BT1']
+        return d in (['NPTH pad of J1', 'Footprint BT1'], ['NPTH pad of H1', 'Footprint BT1'])   # H1 past the plate
     if v['type'] in ('courtyards_overlap', 'items_not_allowed'):
         return any('J1' in t for t in d + [v['description']]) and 'Footprint BT1' in d
     return False

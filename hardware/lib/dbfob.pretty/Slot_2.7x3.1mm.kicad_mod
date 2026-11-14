@@ -1,0 +1,11 @@
+(footprint "Slot_2.7x3.1mm"
+	(version 20240108)
+	(generator "dbfob_gen_lib")
+	(layer "F.Cu")
+	(descr "2.7 x 3.1 mm NPTH slot, for a small split ring or cord")
+	(attr exclude_from_pos_files exclude_from_bom)
+	(property "Reference" "REF**" (at 0 -2.2 0) (layer "F.Fab") (uuid "74df7a8a-8eed-5dcd-aa70-21c73924e8a3") (effects (font (size 0.8 0.8) (thickness 0.12))))
+	(property "Value" "Slot_2.7x3.1mm" (at 0 2.2 0) (layer "F.Fab") (uuid "49a2a811-6ef1-5fbe-9f89-175f3e8f15fb") (effects (font (size 0.8 0.8) (thickness 0.12))))
+	(fp_rect (start -1.8 -1.6) (end 1.8 1.6) (stroke (width 0.05) (type solid)) (fill no) (layer "F.CrtYd") (uuid "e9eff8ad-db4e-5813-a29b-81d385bde5e8"))
+	(pad "" np_thru_hole oval (at 0 0) (size 3.1 2.7) (drill oval 3.1 2.7) (layers "*.Cu" "*.Mask") (uuid "c8bf7b2f-ef52-528f-a0d4-753dc8a12021"))
+)
