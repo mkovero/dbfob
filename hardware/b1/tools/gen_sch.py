@@ -133,9 +133,6 @@ PARTS = {
            'Tag-Connect TC2050-IDC (legged) footprint, ARM 10-pin SWD: 1 VDD, 2 SWDIO, 4 SWCLK, 6 TX, 3/5/9 GND',
            (30, 90, 0), {'1': 'VDD', '2': 'SWDIO', '3': 'GND', '4': 'SWCLK', '5': 'GND', '6': 'TX', '9': 'GND'},
            False),
-    # a ring hole in the far corner, past the button, for carrying the stick without a case
-    'H1': ('Mechanical:MountingHole', 'ring', 'dbfob:MountingHole_2.7mm', '', '',
-           'ring / cord hole, 2.7 mm NPTH', (30, 110, 0), {}, False),
 }
 # LED bar as rev A: four low-Vf AlInGaP/GaP parts, deliberately dim; now from the regulated 3.0 V. D4's cathode goes to PA10: reverse-biased and timed, it senses ambient light.
 LEDS = [  # ref, net, colour, LCSC, MPN, R, R LCSC, cathode net

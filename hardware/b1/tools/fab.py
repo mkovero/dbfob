@@ -33,6 +33,17 @@ JLC_FRAME = {'SOT-23-6': (180, (0, 0))}
 def run(*a): subprocess.run(['kicad-cli', *a], check=True, capture_output=True)
 
 
+def j1_under_cell(v):
+    """J1 sits on the back under the cell (it comes out to program): its holes, courtyard and keepout
+    overlap BT1's courtyard on purpose."""
+    d = [i['description'] for i in v.get('items', [])]
+    if v['type'] == 'npth_inside_courtyard':
+        return d == ['NPTH pad of J1', 'Footprint BT1']
+    if v['type'] in ('courtyards_overlap', 'items_not_allowed'):
+        return any('J1' in t for t in d + [v['description']]) and 'Footprint BT1' in d
+    return False
+
+
 def preflight():
     out = []
     with tempfile.TemporaryDirectory() as td:
@@ -55,9 +66,7 @@ def preflight():
                         '-o', drc, PCB], capture_output=True)
         d = json.load(open(drc))
     out += [f"DRC {v['severity']} {v['type']}: {v['description'][:70]}" for v in d['violations']
-            if v['type'] != 'lib_footprint_issues' and not (       # J1's and H1's holes in BT1's courtyard, on purpose
-                v['type'] == 'npth_inside_courtyard' and [i['description'] for i in v['items']] in (
-                    ['NPTH pad of J1', 'Footprint BT1'], ['NPTH pad of H1', 'Footprint BT1']))]
+            if v['type'] != 'lib_footprint_issues' and not j1_under_cell(v)]
     out += [f"unconnected: {v['description'][:70]}" for v in d.get('unconnected_items', [])]
     out += [f"parity {v['type']}: {v['description'][:70]}" for v in d.get('schematic_parity', [])]
     return out

@@ -50,14 +50,15 @@ LAYERS = ['F.Cu', 'In1.Cu', 'In2.Cu', 'B.Cu']   # 4 layers, no planes: the inner
 POWER_FIRST = os.environ.get('POWER_FIRST') == '1'
 ROUTER_ARGS = os.environ.get('ROUTER_ARGS', '').split()
 
-# The Tag-Connect TC2050-IDC footprint (legged plug: its clips latch through the board and hook on
-# the back, where the cell lies, so the cell comes out to program). Its holes go through the gap
-# between the cell contacts' base pads (x 41.2 to 59.7 on the back); the MCU and the boost
-# converter sit past it on the front, MCU_DX further along than in the 94 mm draft.
-J1X, J1ROT = 47.0, 180
-MCU_DX = 11.0
+# The Tag-Connect TC2050-IDC footprint (legged plug, pads on the back: the cell comes out and the
+# plug goes on from the back, its clips latching on the front). Its holes go through the gap
+# between the cell contacts' base pads (x 41.2 to 59.7 on the back), with the button tipward of
+# it and U2 after it; the boost converter sits between the + contact's base and foot pads.
+J1X, J1ROT = 50.25, 180
+U2X = 57.3        # U2 between J1's holes and the + contact's base pad, where vias can go all round
+BOOST_DX = 19.5   # the boost converter between the + contact's base and foot pads, out to the end
 # J1 pin 1 (VDD) is boxed in by the pads and holes: a stub out between two clip holes to a via
-J1_VDD_VIA = (J1X + 2.0, 2.5) if J1ROT == 180 else (J1X - 2.0, 8.0)
+J1_VDD_VIA = (J1X - 1.9, 2.9)
 
 # The antenna block (coil, LB crossover, NT1, U1, C1-C3, BT1) is ../lib/antenna.py's.
 PLACE = dict(ant.PLACE, **{
@@ -71,24 +72,21 @@ PLACE = dict(ant.PLACE, **{
     'R2': (32.0, 5.7, 180, False),     # SCL
     # LED bar right after the tag, green to red. Each column: the LED at the top, cathode to the
     # edge, anode down onto its resistor, whose U2 end faces the middle of the stick.
-    'D1': (34.6, 1.9, 270, False), 'D2': (36.4, 1.9, 270, False), 'D3': (38.2, 1.9, 270, False), 'D4': (40.0, 1.9, 270, False),
-    'R4': (34.6, 5.0, 90, False), 'R5': (36.4, 5.0, 90, False), 'R6': (38.2, 5.0, 90, False), 'R7': (40.0, 5.0, 90, False),
-    'J1': (J1X, 5.25, J1ROT, False),
-    'U2': (45.4 + MCU_DX, 5.25, 0, False),
-    'C4': (42.3 + MCU_DX, 1.9, 90, False),      # VDD decoupling, top left of U2, fed from pin 19 by hand (BOOST)
+    'D1': (34.25, 1.9, 270, False), 'D2': (35.75, 1.9, 270, False), 'D3': (37.25, 1.9, 270, False), 'D4': (38.75, 1.9, 270, False),
+    'R4': (34.25, 5.0, 90, False), 'R5': (35.75, 5.0, 90, False), 'R6': (37.25, 5.0, 90, False), 'R7': (38.75, 5.0, 90, False),
+    'J1': (J1X, 5.25, J1ROT, True),
+    'U2': (U2X, 5.25, 0, False),
+    'C4': (U2X + 0.375, 1.3, 0, False),   # VDD decoupling along the top edge, pad 1 straight over pin 19 (BOOST)
     # boost: L1 over U3, SW (pin 1) top left, VBAT (pin 6) top right, VOUT (5) and FB (4) right
-    'U3': (51.5 + MCU_DX, 5.25, 0, False),
-    'L1': (51.5 + MCU_DX, 2.2, 180, False),
-    'C7': (54.7 + MCU_DX, 2.4, 90, False),
+    'U3': (51.5 + BOOST_DX, 5.25, 0, False),
+    'L1': (51.5 + BOOST_DX, 2.2, 180, False),
+    'C7': (54.7 + BOOST_DX, 2.4, 90, False),
     # output cap across the bottom of U3: GND pad under the channel between U3's pad columns, VDD
     # pad on the right, so the output loop stays on F.Cu (see BOOST)
-    'C5': (52.3 + MCU_DX, 7.8, 180, False),
-    'R10': (50.6 + MCU_DX, 9.4, 180, False),    # FB divider in a row below, R10's GND end by U3's GND side
-    'R9': (53.8 + MCU_DX, 9.4, 180, False),     # VDD pad under C5's VDD track
-    'SW1': (69.5, 5.25, 90, False),
-    # ring hole in the top corner past the button: 0.9 mm web to the side and to the end, 0.35 mm
-    # from the + contact's foot pad on the back (y 3.95), which sets its size; 1.15 mm past SW1's pad
-    'H1': (74.25, 2.25, 0, False),
+    'C5': (52.3 + BOOST_DX, 7.8, 180, False),
+    'R10': (50.6 + BOOST_DX, 9.4, 180, False),    # FB divider in a row below, R10's GND end by U3's GND side
+    'R9': (53.8 + BOOST_DX, 9.4, 180, False),     # VDD pad under C5's VDD track
+    'SW1': (42.3, 5.25, 90, False),
 })
 
 # The mic's GND ring (pad 3, round the port) tied to its GND pad 2: the router can't get in
@@ -102,43 +100,50 @@ RING_TIE = ['MK1.2', (4.36 + 0.6 * math.cos(math.radians(40)), 5.25 - 0.6 * math
 # router. (net, width, points)
 BOOST = [
     ('/SW', 0.4, ['L1.2', 'U3.1']),
-    ('/GND', 0.3, ['U3.2', (51.5 + MCU_DX, 5.25), (51.5 + MCU_DX, 7.8), 'C5.2']),
-    ('/VDD', 0.3, ['U3.5', (54.4 + MCU_DX, 5.25), (54.4 + MCU_DX, 7.8), 'C5.1']),
-    ('/VDD', 0.2, [(54.4 + MCU_DX, 7.8), 'R9.1']),
+    ('/GND', 0.3, ['U3.2', (51.5 + BOOST_DX, 5.25), (51.5 + BOOST_DX, 7.8), 'C5.2']),
+    ('/VDD', 0.3, ['U3.5', (54.4 + BOOST_DX, 5.25), (54.4 + BOOST_DX, 7.8), 'C5.1']),
+    ('/VDD', 0.2, [(54.4 + BOOST_DX, 7.8), 'R9.1']),
     ('/FB', 0.2, ['R9.2', 'R10.1']),
-    ('/VDD', 0.2, ['U2.19', (45.0 + MCU_DX, 2.675), 'C4.1']),   # U2's decoupling, over pin 20
+    ('/VDD', 0.2, ['U2.19', 'C4.1']),                  # U2's decoupling, straight up
     ('/GND', 0.3, ['C3.2', (29.675, 0.85)]),           # C3 (tag decoupling) sits behind the tag's top row
-    ('/VDD', 0.2, ['J1.1', J1_VDD_VIA]),
-    ('/GND', 0.15, ['J1.3', 'J1.9']),                   # diagonal neighbours, between pins 2 and 8
     # FD from U2's bottom row along the bottom edge to R3 and the tag, kept from the router like SW:
-    # otherwise another net takes the edge and FD's pin is boxed in. It passes J1 along the very edge, below its clip holes.
-    ('/FD', 0.15, ['U2.8', (45.4 + MCU_DX, 7.95), (45.55 + MCU_DX, 8.1), (45.55 + MCU_DX, 8.5),
-                   (45.22 + MCU_DX, 8.83), (41.6 + MCU_DX, 8.83), (40.555 + MCU_DX, 9.875),
-                   (41.0, 9.875), (39.955, 8.83), (36.0, 8.83),
+    # otherwise another net takes the edge and FD's pin is boxed in. It runs along the very edge under SW1.
+    ('/FD', 0.15, ['U2.8', (U2X, 7.95), (U2X + 0.15, 8.1), (U2X + 0.15, 9.4),
+                   (U2X - 0.325, 9.875), (39.9, 9.875), (38.855, 8.83), (36.0, 8.83),
                    (33.45, 6.28), (33.45, 5.22), (32.95, 4.72), (31.9, 4.72), 'R3.2', 'U1.4']),
 ]
+# J1's pads are on the back: pin 1 up between two clip holes to its via, GND pins 3 and 9
+# (diagonal neighbours, between pins 2 and 8) joined. Drawn on B.Cu.
+J1_HAND = [('/VDD', 0.2, ['J1.1', J1_VDD_VIA]),
+           ('/GND', 0.15, ['J1.3', 'J1.9'])]
 HAND_NETS = ('/SW', '/FD')   # drawn whole, kept from the router, put back after it (restore_hand)
 BOOST_VIAS = [('/GND', (29.675, 0.85)),               # ... so its GND drops to the inner layers here
               ('/VDD', J1_VDD_VIA)]
 # Router-only keepouts (User.2, KiCadRoutingTools --keepout; DRC ignores the layer): the SW gap
 # between L1 and U3, or the router rips SW up to push a signal through there.
-ROUTER_KEEPOUTS = [(49.85 + MCU_DX, 2.85, 51.15 + MCU_DX, 4.25)]   # it checks via centres, so a via radius wider
+ROUTER_KEEPOUTS = [(49.85 + BOOST_DX, 2.85, 51.15 + BOOST_DX, 4.25)]   # it checks via centres, so a via radius wider
 # The router knows pad clearance (0.15) but not the 0.25 mm hole clearance, so J1's and H1's NPTH
 # pads are grown by this much in diameter while it routes, then put back (restore_npth).
 NPTH_GROW = 0.2
 # The cell to U2's ADC pin (7, bottom row), which the router can't reach between its neighbours:
-# down to In2, along under the bottom row's fan-out to U3's EN pin (3). (net, layer, width, points)
-VCELL_ADC = [('/VCELL', 'F', 0.15, ['U2.7', (45.0 + MCU_DX, 8.3)]),
-             ('/VCELL', 'In2', 0.15, [(45.0 + MCU_DX, 8.3), (47.1 + MCU_DX, 8.3), (49.2 + MCU_DX, 6.2)]),
-             ('/VCELL', 'F', 0.15, [(49.2 + MCU_DX, 6.2), 'U3.3'])]
-VCELL_VIAS = [('/VCELL', (45.0 + MCU_DX, 8.3)), ('/VCELL', (49.2 + MCU_DX, 6.2))]
+# down to In2, along the bottom edge under the + contact's base pad to U3's EN pin (3). (net, layer, width, points)
+VCELL_ADC = [('/VCELL', 'F', 0.15, ['U2.7', (U2X - 0.4, 8.3)]),
+             ('/VCELL', 'In2', 0.15, [(U2X - 0.4, 8.3), (U2X + 0.9, 9.6), (46.5 + BOOST_DX, 9.6),
+                                      (49.2 + BOOST_DX, 6.9), (49.2 + BOOST_DX, 6.2)]),
+             ('/VCELL', 'F', 0.15, [(49.2 + BOOST_DX, 6.2), 'U3.3'])]
+VCELL_VIAS = [('/VCELL', (U2X - 0.4, 8.3)), ('/VCELL', (49.2 + BOOST_DX, 6.2))]
+# U2's right column faces the + contact's base pad (no vias there): LED_R (14) and NFC_VCC (12) out
+# on F.Cu over it, down to vias in the strip below the pad, LED_R round the outside.
+U2_ESCAPE = [('/NFC_VCC', 'F', 0.15, ['U2.12', (U2X + 2.15, 5.65), (U2X + 2.15, 8.6)]),
+              ('/LED_R', 'F', 0.15, ['U2.14', (U2X + 2.75, 4.85), (U2X + 2.75, 8.0), (U2X + 3.35, 8.6)])]
+U2_VIAS = [('/NFC_VCC', (U2X + 2.15, 8.6)), ('/LED_R', (U2X + 3.35, 8.6))]
 
 SILK_F = [  # text, x, y, size, angle
     # 1.0 mm: JLC's minimum legend height
 ]
 SILK_B = [
     ('AAA', 33.0, 9.4, 1.0),
-    ('dbfob B1', 55.5, 9.6, 1.0),          # under the cell, between J1's holes and the + contact
+    ('dbfob B1', 12.0, 9.6, 1.0),          # under the coil (no copper there on the back)
 ]
 
 
@@ -240,6 +245,17 @@ def build():
         x, y, r, back = PLACE[ref]
         fp.SetPosition(mm(x, y)); fp.SetOrientationDegrees(r)
         fp.Reference().SetLayer(pcbnew.F_Fab)
+        if ref in ('D1', 'D2', 'D3', 'D4'):
+            # the LED bar is closer set than the silk outline allows: keep only the cathode bar, shortened
+            gs = fp.GraphicalItems()     # indexed: SWIG iterators are broken on Python 3.14
+            for g in [gs[i] for i in range(len(gs)) if gs[i].GetLayer() == pcbnew.F_SilkS]:
+                c = g.Cast()
+                if c.GetLength() > pcbnew.FromMM(1.5): fp.Remove(g); continue
+                a, e = c.GetStart(), c.GetEnd()
+                k = pcbnew.FromMM(0.45) / c.GetLength()
+                mx, my, dx, dy = (a.x + e.x) / 2, (a.y + e.y) / 2, (e.x - a.x) * k, (e.y - a.y) * k
+                c.SetStart(pcbnew.VECTOR2I(round(mx - dx), round(my - dy)))
+                c.SetEnd(pcbnew.VECTOR2I(round(mx + dx), round(my + dy)))
         if 'DNP' in fields or ref in ('C1', 'C2'):
             fp.SetDNP(True)
         board.Add(fp)
@@ -247,7 +263,7 @@ def build():
         for p in fp.Pads():
             net = pins.get((ref, p.GetNumber()))
             if net in nets: p.SetNet(nets[net])
-        if ref in ('J1', 'H1'):
+        if ref == 'J1':
             for p in fp.Pads():
                 if p.GetAttribute() == pcbnew.PAD_ATTRIB_NPTH:
                     d = p.GetDrillSize().x + pcbnew.FromMM(NPTH_GROW)
@@ -268,15 +284,18 @@ def build():
         pts = [pad(p) if isinstance(p, str) else mm(*p) for p in path]
         for a, b in zip(pts, pts[1:]): track(board, nets[net], pcbnew.F_Cu, a, b, width)
     for net, (x, y) in BOOST_VIAS: via(board, nets[net], x, y)
+    for net, width, path in J1_HAND:
+        pts = [pad(p) if isinstance(p, str) else mm(*p) for p in path]
+        for a, b in zip(pts, pts[1:]): track(board, nets[net], pcbnew.B_Cu, a, b, width)
     for x0, y0, x1, y1 in ROUTER_KEEPOUTS:
         s = pcbnew.PCB_SHAPE(board); s.SetShape(pcbnew.SHAPE_T_POLY); s.SetLayer(pcbnew.User_2)
         s.SetPolyPoints([mm(x, y) for x, y in [(x0, y0), (x1, y0), (x1, y1), (x0, y1)]])
         s.SetWidth(pcbnew.FromMM(0.05)); s.SetFilled(False); board.Add(s)
-    for net, side, width, path in VCELL_ADC:
+    for net, side, width, path in VCELL_ADC + U2_ESCAPE:
         pts = [pad(p) if isinstance(p, str) else mm(*p) for p in path]
         layer = {'F': pcbnew.F_Cu, 'In1': pcbnew.In1_Cu, 'In2': pcbnew.In2_Cu}[side]
         for a, b in zip(pts, pts[1:]): track(board, nets[net], layer, a, b, width)
-    for net, (x, y) in VCELL_VIAS: via(board, nets[net], x, y)
+    for net, (x, y) in VCELL_VIAS + U2_VIAS: via(board, nets[net], x, y)
 
     for s, x, y, size, a in SILK_F: text(board, s, x, y, size, pcbnew.F_SilkS, angle=a)
     for s, x, y, size in SILK_B: text(board, s, x, y, size, pcbnew.B_SilkS, mirror=True)
@@ -349,7 +368,7 @@ def route(keep_pro):
                                 '--same-net-pad-clearance', '0.2', '--board-edge-clearance', '0.5',
                                 '--hole-to-hole-clearance', '0.25', '--max-ripup', '200',
                                 '--keepout', '--via-proximity-cost', '0',   # the MCU's pins must drop to the inner layers
-                                *ROUTER_ARGS, '--ordering', os.environ.get('ORDERING%d' % k, os.environ.get('ORDERING', 'inside_out')), '--direction', os.environ.get('DIRECTION', 'forward')],
+                                *ROUTER_ARGS, '--ordering', os.environ.get('ORDERING%d' % k, os.environ.get('ORDERING', 'mps')), '--direction', os.environ.get('DIRECTION', 'backward')],
                                capture_output=True, text=True, cwd=KRT)
             log = r.stdout + r.stderr
             if r.returncode or not os.path.exists(out):
@@ -389,7 +408,7 @@ def restore_npth():
             out += [t[last:m.start()], m.group(1), f'(size {m.group(4)} {m.group(4)})', m.group(3), m.group(4), ')']
             last, k = m.end(), k + 1
     open(PCB, 'w').write(''.join(out) + t[last:])
-    assert k == 8, f'restore_npth: {k} pads'      # J1's seven, H1's one
+    assert k == 7, f'restore_npth: {k} pads'      # J1's seven
 
 
 def drc():
@@ -426,11 +445,13 @@ ALLOWED_DRC = {'lib_footprint_issues'}
 
 def allowed(x):
     # J1's guide and clip holes lie under the cell, inside BT1's courtyard: the cell comes out to
-    # program. H1 sits in the courtyard's far corner, outside the + contact's plate (x 71.7) and
-    # 0.35 mm from its foot pad.
+    # program.
+    # J1 is on the back, so its courtyard and keepout (no vias between its pads) overlap BT1's too
+    d = [i['description'] for i in x.get('items', [])]
     if x['type'] == 'npth_inside_courtyard':
-        d = [i['description'] for i in x.get('items', [])]
-        return any(f'NPTH pad of {r}' in t for t in d for r in ('J1', 'H1')) and any('Footprint BT1' in t for t in d)
+        return any('NPTH pad of J1' in t for t in d) and any('Footprint BT1' in t for t in d)
+    if x['type'] in ('courtyards_overlap', 'items_not_allowed'):
+        return any('J1' in t for t in d + [x['description']]) and any('Footprint BT1' in t for t in d)
     return x['type'] in ALLOWED_DRC
 
 
