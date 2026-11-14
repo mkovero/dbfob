@@ -2511,13 +2511,13 @@
 			)
 		)
 	)
-	(footprint "dbfob:MountingHole_1.0mm"
+	(footprint "dbfob:MountingHole_2.7mm"
 		(layer "F.Cu")
 		(uuid "b034f7f1-aad5-53e2-868e-9e009ddeee84")
-		(at 174.8 101.4)
-		(descr "1.0 mm NPTH, for a thread or thin wire")
+		(at 174.25 102.25)
+		(descr "2.7 mm NPTH, for a small split ring or cord")
 		(property "Reference" "H1"
-			(at 0 -1.4 0)
+			(at 0 -2.2 0)
 			(layer "F.Fab")
 			(uuid "1f19e8bf-cd33-59a3-a6db-a471ea1b1dcb")
 			(effects
@@ -2527,8 +2527,8 @@
 				)
 			)
 		)
-		(property "Value" "thread"
-			(at 0 1.4 0)
+		(property "Value" "ring"
+			(at 0 2.2 0)
 			(layer "F.Fab")
 			(uuid "7e6ec9fd-1503-534c-95e1-5efe35adbbce")
 			(effects
@@ -2584,7 +2584,7 @@
 				)
 			)
 		)
-		(property "Note" "thread hole, 1.0 mm NPTH"
+		(property "Note" "ring / cord hole, 2.7 mm NPTH"
 			(at 0 0 0)
 			(layer "F.Fab")
 			(hide yes)
@@ -2602,7 +2602,7 @@
 		(duplicate_pad_numbers_are_jumpers no)
 		(fp_circle
 			(center 0 0)
-			(end 0.75 0)
+			(end 1.6 0)
 			(stroke
 				(width 0.05)
 				(type solid)
@@ -2613,8 +2613,8 @@
 		)
 		(pad "" np_thru_hole circle
 			(at 0 0)
-			(size 1 1)
-			(drill 1)
+			(size 2.7 2.7)
+			(drill 2.7)
 			(layers "*.Cu" "*.Mask")
 			(uuid "47ce72b3-fbff-52c6-8efe-42f7f1ee8d69")
 		)
@@ -7120,19 +7120,20 @@
 		(layer "User.2")
 		(uuid "64725593-8afc-527f-869f-0f0443f4f499")
 	)
-	(gr_text "dbfob B1"
-		(at 174.6 105.65 90)
-		(layer "F.SilkS")
+	(gr_text "AAA"
+		(at 133 109.4 0)
+		(layer "B.SilkS")
 		(uuid "4865f643-695a-578a-bbf0-f8f2017e2ba3")
 		(effects
 			(font
 				(size 1 1)
 				(thickness 0.15)
 			)
+			(justify mirror)
 		)
 	)
-	(gr_text "AAA"
-		(at 133 109.4 0)
+	(gr_text "dbfob B1"
+		(at 155.5 109.6 0)
 		(layer "B.SilkS")
 		(uuid "c653d2ab-924c-5d72-89d9-5437d799ba13")
 		(effects

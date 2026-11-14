@@ -2820,11 +2820,11 @@
 			(at 33.48 103.22 0)
 			(effects (font (size 1.27 1.27)))
 		)
-		(property "Value" "thread"
+		(property "Value" "ring"
 			(at 33.48 115.22 0)
 			(effects (font (size 1.27 1.27)))
 		)
-		(property "Footprint" "dbfob:MountingHole_1.0mm"
+		(property "Footprint" "dbfob:MountingHole_2.7mm"
 			(at 30.48 109.22 0)
 			(effects (font (size 1.27 1.27)) (hide yes))
 		)
@@ -2840,7 +2840,7 @@
 			(at 30.48 109.22 0)
 			(effects (font (size 1.27 1.27)) (hide yes))
 		)
-		(property "Note" "thread hole, 1.0 mm NPTH"
+		(property "Note" "ring / cord hole, 2.7 mm NPTH"
 			(at 30.48 109.22 0)
 			(effects (font (size 1.27 1.27)) (hide yes))
 		)

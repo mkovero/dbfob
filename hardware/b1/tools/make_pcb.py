@@ -12,7 +12,7 @@ Board: the stick, 10.5 x 76.5 x 1.0 mm, 4 layers, every machine-placed part on t
 outline and the antenna block (coil in the tip, the LB crossover, tag, trim pads, the AAA
 contacts on the back) come from ../lib/antenna.py, identical to the NFC test board's. Along
 the stick from the tip: the mic inside the coil with its port through the board, the tag, the
-LED bar, the Tag-Connect footprint, the MCU, the boost converter, the button, a 1 mm thread hole in the
+LED bar, the Tag-Connect footprint, the MCU, the boost converter, the button, a 2.7 mm ring hole in the
 corner. A keyring is the case's job. Everything past the coil sits under the cell, which lies on the back.
 
 Four layers because two would not route in 10.5 mm: the MCU's fan-out, the tag's lines and the
@@ -86,9 +86,9 @@ PLACE = dict(ant.PLACE, **{
     'R10': (50.6 + MCU_DX, 9.4, 180, False),    # FB divider in a row below, R10's GND end by U3's GND side
     'R9': (53.8 + MCU_DX, 9.4, 180, False),     # VDD pad under C5's VDD track
     'SW1': (69.5, 5.25, 90, False),
-    # thread hole in the top corner past the button: 0.9 mm web to the side, 1.2 mm to the end,
-    # 2 mm from the + contact's foot pad on the back
-    'H1': (74.8, 1.4, 0, False),
+    # ring hole in the top corner past the button: 0.9 mm web to the side and to the end, 0.35 mm
+    # from the + contact's foot pad on the back (y 3.95), which sets its size; 1.15 mm past SW1's pad
+    'H1': (74.25, 2.25, 0, False),
 })
 
 # The mic's GND ring (pad 3, round the port) tied to its GND pad 2: the router can't get in
@@ -135,10 +135,10 @@ VCELL_VIAS = [('/VCELL', (45.0 + MCU_DX, 8.3)), ('/VCELL', (49.2 + MCU_DX, 6.2))
 
 SILK_F = [  # text, x, y, size, angle
     # 1.0 mm: JLC's minimum legend height
-    ('dbfob B1', 74.6, 5.65, 1.0, 90),     # across the stick, past SW1, clear of H1
 ]
 SILK_B = [
     ('AAA', 33.0, 9.4, 1.0),
+    ('dbfob B1', 55.5, 9.6, 1.0),          # under the cell, between J1's holes and the + contact
 ]
 
 
@@ -427,7 +427,7 @@ ALLOWED_DRC = {'lib_footprint_issues'}
 def allowed(x):
     # J1's guide and clip holes lie under the cell, inside BT1's courtyard: the cell comes out to
     # program. H1 sits in the courtyard's far corner, outside the + contact's plate (x 71.7) and
-    # 2 mm from its foot pad.
+    # 0.35 mm from its foot pad.
     if x['type'] == 'npth_inside_courtyard':
         d = [i['description'] for i in x.get('items', [])]
         return any(f'NPTH pad of {r}' in t for t in d for r in ('J1', 'H1')) and any('Footprint BT1' in t for t in d)
