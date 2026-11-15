@@ -34,6 +34,8 @@ R_FP = 'Resistor_SMD:R_0603_1608Metric'
 C_FP = 'Capacitor_SMD:C_0603_1608Metric'
 
 LED_FP = 'LED_SMD:LED_0603_1608Metric'
+LED0805_FP = 'dbfob:LED_0805_2012Metric_narrow'   # 0805: JLC's basic library has green and yellow only in 0805
+R0402_FP = 'Resistor_SMD:R_0402_1005Metric'   # the tag's pull-ups, in a narrow column beside the LED bar
 
 # CH32L103F8U6 pin use (datasheet V2.1 table 2-1-1, QFN20 column). Pins sharing a pad inside the
 # chip (note 8) may have only one of the pair as an output.
@@ -112,12 +114,12 @@ PARTS = {
     'C3': ('Device:C', '100n', C_FP, 'C14663', 'CC0603KRX7R9BB104', 'tag VCC decoupling, by U1 pin 6',
            (240, 100, 0), {'1': 'NFC_VCC', '2': 'GND'}, False),
     # I2C pull-ups go to the tag's supply, so with NFC_VCC low nothing powers the tag through them.
-    'R1': ('Device:R', '4.7k', R_FP, 'C23162', '0603WAF4701T5E', 'SDA pull-up to NFC_VCC',
+    'R1': ('Device:R', '4.7k', R0402_FP, 'C25900', '0402WGF4701TCE', 'SDA pull-up to NFC_VCC',
            (240, 120, 0), {'1': 'NFC_VCC', '2': 'SDA'}, False),
-    'R2': ('Device:R', '4.7k', R_FP, 'C23162', '0603WAF4701T5E', 'SCL pull-up to NFC_VCC',
+    'R2': ('Device:R', '4.7k', R0402_FP, 'C25900', '0402WGF4701TCE', 'SCL pull-up to NFC_VCC',
            (255, 120, 0), {'1': 'NFC_VCC', '2': 'SCL'}, False),
     # FD is open drain and pulls low while a reader's field is on, with or without NFC_VCC.
-    'R3': ('Device:R', '100k', R_FP, 'C25803', '0603WAF1003T5E', 'FD pull-up to VDD: 30 uA only while a field is on',
+    'R3': ('Device:R', '100k', R0402_FP, 'C25741', '0402WGF1003TCE', 'FD pull-up to VDD: 30 uA only while a field is on',
            (255, 140, 0), {'1': 'VDD', '2': 'FD'}, False),
     # to VDD: PA0/WKUP has its own pull-down in Standby (see the pin table)
     'SW1': ('Switch:SW_Push', 'measure', 'Button_Switch_SMD:SW_Push_1P1T_XKB_TS-1187A', 'C318884',
@@ -138,18 +140,20 @@ PARTS = {
     'H1': ('Mechanical:MountingHole', 'ring', 'dbfob:Slot_2.7x3.1mm', '', '',
            'ring / cord slot, 2.7 x 3.1 mm NPTH', (30, 110, 0), {}, False),
 }
-# LED bar as rev A: four low-Vf AlInGaP/GaP parts, deliberately dim; now from the regulated 3.0 V. D4's cathode goes to PA10: reverse-biased and timed, it senses ambient light.
+# LED bar, deliberately dim, from the regulated 3.0 V. All four are JLC basic parts (no extended
+# fee), which means green and yellow in 0805, no orange: green, yellow, red, red. The green is InGaN (2.6-3.1 V
+# at 5 mA), so it runs on little headroom from 3.0 V: tune R4 on the bench. D4's cathode goes to PA10: reverse-biased and timed, it senses ambient light.
 LEDS = [  # ref, net, colour, LCSC, MPN, R, R LCSC, cathode net
-    ('D1', 'LED_G', 'yellow-green 575nm', 'C89809', 'NCD0603C3', '1k', 'C21190', 'GND'),
-    ('D2', 'LED_Y', 'yellow 590nm', 'C2287', 'KT-0603Y', '2.2k', 'C4190', 'GND'),
-    ('D3', 'LED_O', 'orange 605nm', 'C111340', 'KT-0603O', '2.2k', 'C4190', 'GND'),
-    ('D4', 'LED_R', 'red 625nm', 'C2286', 'KT-0603R', '2.2k', 'C4190', 'LED_R_K'),
+    ('D1', 'LED_G', 'green 525nm', 'C2297', 'KT-0805G', '1k', 'C21190', 'GND', LED0805_FP),
+    ('D2', 'LED_Y', 'yellow 590nm', 'C2296', 'KT-0805Y', '2.2k', 'C4190', 'GND', LED0805_FP),
+    ('D3', 'LED_O', 'red 625nm', 'C2286', 'KT-0603R', '2.2k', 'C4190', 'GND', LED_FP),   # net keeps its name: the third (orange) level
+    ('D4', 'LED_R', 'red 625nm', 'C2286', 'KT-0603R', '2.2k', 'C4190', 'LED_R_K', LED_FP),
 ]
-for i, (d, net, col, lcsc, mpn, rv, rl, k) in enumerate(LEDS):
+for i, (d, net, col, lcsc, mpn, rv, rl, k, led_fp) in enumerate(LEDS):
     x = 120 + 25 * i
     PARTS['R%d' % (i + 4)] = ('Device:R', rv, R_FP, rl, '', 'LED current', (x, 30, 0),
                               {'1': net, '2': net + '_A'}, False)
-    PARTS[d] = ('Device:LED', col, LED_FP, lcsc, mpn, '', (x, 50, 90), {'2': net + '_A', '1': k}, False)
+    PARTS[d] = ('Device:LED', col, led_fp, lcsc, mpn, '', (x, 50, 90), {'2': net + '_A', '1': k}, False)
 
 # MIC_VDD and NFC_VCC are driven by GPIOs, which ERC cannot know: flag them
 # The cell's contacts are passive pins, and MIC_VDD / NFC_VCC come from GPIOs: flag them for ERC

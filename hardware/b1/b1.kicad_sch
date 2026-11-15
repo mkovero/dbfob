@@ -2592,11 +2592,11 @@
 			(at 122.38 44.8 0)
 			(effects (font (size 1.27 1.27)))
 		)
-		(property "Value" "yellow-green 575nm"
+		(property "Value" "green 525nm"
 			(at 122.38 56.8 0)
 			(effects (font (size 1.27 1.27)))
 		)
-		(property "Footprint" "LED_SMD:LED_0603_1608Metric"
+		(property "Footprint" "dbfob:LED_0805_2012Metric_narrow"
 			(at 119.38 50.8 0)
 			(effects (font (size 1.27 1.27)) (hide yes))
 		)
@@ -2604,11 +2604,11 @@
 			(at 119.38 50.8 0)
 			(effects (font (size 1.27 1.27)) (hide yes))
 		)
-		(property "LCSC" "C89809"
+		(property "LCSC" "C2297"
 			(at 119.38 50.8 0)
 			(effects (font (size 1.27 1.27)) (hide yes))
 		)
-		(property "MPN" "NCD0603C3"
+		(property "MPN" "KT-0805G"
 			(at 119.38 50.8 0)
 			(effects (font (size 1.27 1.27)) (hide yes))
 		)
@@ -2653,7 +2653,7 @@
 			(at 147.78 56.8 0)
 			(effects (font (size 1.27 1.27)))
 		)
-		(property "Footprint" "LED_SMD:LED_0603_1608Metric"
+		(property "Footprint" "dbfob:LED_0805_2012Metric_narrow"
 			(at 144.78 50.8 0)
 			(effects (font (size 1.27 1.27)) (hide yes))
 		)
@@ -2661,11 +2661,11 @@
 			(at 144.78 50.8 0)
 			(effects (font (size 1.27 1.27)) (hide yes))
 		)
-		(property "LCSC" "C2287"
+		(property "LCSC" "C2296"
 			(at 144.78 50.8 0)
 			(effects (font (size 1.27 1.27)) (hide yes))
 		)
-		(property "MPN" "KT-0603Y"
+		(property "MPN" "KT-0805Y"
 			(at 144.78 50.8 0)
 			(effects (font (size 1.27 1.27)) (hide yes))
 		)
@@ -2706,7 +2706,7 @@
 			(at 173.18 44.8 0)
 			(effects (font (size 1.27 1.27)))
 		)
-		(property "Value" "orange 605nm"
+		(property "Value" "red 625nm"
 			(at 173.18 56.8 0)
 			(effects (font (size 1.27 1.27)))
 		)
@@ -2718,11 +2718,11 @@
 			(at 170.18 50.8 0)
 			(effects (font (size 1.27 1.27)) (hide yes))
 		)
-		(property "LCSC" "C111340"
+		(property "LCSC" "C2286"
 			(at 170.18 50.8 0)
 			(effects (font (size 1.27 1.27)) (hide yes))
 		)
-		(property "MPN" "KT-0603O"
+		(property "MPN" "KT-0603R"
 			(at 170.18 50.8 0)
 			(effects (font (size 1.27 1.27)) (hide yes))
 		)
@@ -3184,7 +3184,7 @@
 			(at 241.76 125.38 0)
 			(effects (font (size 1.27 1.27)))
 		)
-		(property "Footprint" "Resistor_SMD:R_0603_1608Metric"
+		(property "Footprint" "Resistor_SMD:R_0402_1005Metric"
 			(at 238.76 119.38 0)
 			(effects (font (size 1.27 1.27)) (hide yes))
 		)
@@ -3192,11 +3192,11 @@
 			(at 238.76 119.38 0)
 			(effects (font (size 1.27 1.27)) (hide yes))
 		)
-		(property "LCSC" "C23162"
+		(property "LCSC" "C25900"
 			(at 238.76 119.38 0)
 			(effects (font (size 1.27 1.27)) (hide yes))
 		)
-		(property "MPN" "0603WAF4701T5E"
+		(property "MPN" "0402WGF4701TCE"
 			(at 238.76 119.38 0)
 			(effects (font (size 1.27 1.27)) (hide yes))
 		)
@@ -3241,7 +3241,7 @@
 			(at 257 125.38 0)
 			(effects (font (size 1.27 1.27)))
 		)
-		(property "Footprint" "Resistor_SMD:R_0603_1608Metric"
+		(property "Footprint" "Resistor_SMD:R_0402_1005Metric"
 			(at 254 119.38 0)
 			(effects (font (size 1.27 1.27)) (hide yes))
 		)
@@ -3249,11 +3249,11 @@
 			(at 254 119.38 0)
 			(effects (font (size 1.27 1.27)) (hide yes))
 		)
-		(property "LCSC" "C23162"
+		(property "LCSC" "C25900"
 			(at 254 119.38 0)
 			(effects (font (size 1.27 1.27)) (hide yes))
 		)
-		(property "MPN" "0603WAF4701T5E"
+		(property "MPN" "0402WGF4701TCE"
 			(at 254 119.38 0)
 			(effects (font (size 1.27 1.27)) (hide yes))
 		)
@@ -3298,7 +3298,7 @@
 			(at 257 145.7 0)
 			(effects (font (size 1.27 1.27)))
 		)
-		(property "Footprint" "Resistor_SMD:R_0603_1608Metric"
+		(property "Footprint" "Resistor_SMD:R_0402_1005Metric"
 			(at 254 139.7 0)
 			(effects (font (size 1.27 1.27)) (hide yes))
 		)
@@ -3306,11 +3306,11 @@
 			(at 254 139.7 0)
 			(effects (font (size 1.27 1.27)) (hide yes))
 		)
-		(property "LCSC" "C25803"
+		(property "LCSC" "C25741"
 			(at 254 139.7 0)
 			(effects (font (size 1.27 1.27)) (hide yes))
 		)
-		(property "MPN" "0603WAF1003T5E"
+		(property "MPN" "0402WGF1003TCE"
 			(at 254 139.7 0)
 			(effects (font (size 1.27 1.27)) (hide yes))
 		)

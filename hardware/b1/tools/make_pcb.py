@@ -20,8 +20,9 @@ mic's lines out of the coil share one corridor, and the cell contacts' pads fill
 B.Cu. The inner layers carry signals only. No planes or pours anywhere: copper near the loop
 detunes it, so GND is tracks like everything else, and every layer under the coil is kept clear
 apart from the band at its cell end, where LB and the mic's nets cross under the turns.
-Hand-drawn: a via in U2's exposed pad, the mic's GND ring tied to its GND pad, and the boost
-converter's switching and output loops.
+Hand-drawn: a via in U2's exposed pad, the mic's GND ring tied to its GND pad, the boost
+converter's switching and output loops, and escape vias for the tag's pull-ups. FD is drawn as a
+guide along the bottom edge; the router may reshape it.
 Routing: signals first, then the power nets, with the router's mps net ordering, backward direction and no extra via
 cost near pads (the default tenfold one keeps the MCU's bottom pins off the inner layers).
 """
@@ -70,14 +71,15 @@ PLACE = dict(ant.PLACE, **{
     'MK1': (MK1X, 5.25, 270, False),
     'C6': (8.0, 5.25, 90, False),
     'R8': (9.7, 5.25, 90, False),
-    # tag pull-ups right of U1, signal pad left, each level with its pin
-    'R1': (32.0, 2.3, 180, False),     # SDA
-    'R3': (32.0, 4.0, 180, False),     # FD
-    'R2': (32.0, 5.7, 180, False),     # SCL
+    # tag pull-ups (0402) right of U1, signal pad left, each near its pin; a gap between R3 and R2 for FD
+    'R1': (31.15, 3.15, 180, False),   # SDA
+    'R3': (31.15, 4.09, 180, False),   # FD
+    'R2': (31.15, 5.4, 180, False),    # SCL
     # LED bar right after the tag, green to red. Each column: the LED at the top, cathode to the
     # edge, anode down onto its resistor, whose U2 end faces the middle of the stick.
-    'D1': (34.25, 1.9, 270, False), 'D2': (35.75, 1.9, 270, False), 'D3': (37.25, 1.9, 270, False), 'D4': (38.75, 1.9, 270, False),
-    'R4': (34.25, 5.0, 90, False), 'R5': (35.75, 5.0, 90, False), 'R6': (37.25, 5.0, 90, False), 'R7': (38.75, 5.0, 90, False),
+    # D1 and D2 are 0805 (narrow-pad footprint), D3 and D4 0603, where rev B's first layout had them
+    'D1': (33.85, 2.0, 270, False), 'D2': (35.6, 2.0, 270, False), 'D3': (37.25, 1.9, 270, False), 'D4': (38.75, 1.9, 270, False),
+    'R4': (33.85, 5.25, 90, False), 'R5': (35.6, 5.25, 90, False), 'R6': (37.25, 5.0, 90, False), 'R7': (38.75, 5.0, 90, False),
     'J1': (J1X, 5.25, J1ROT, True),
     'U2': (U2X, 5.25, 0, False),
     'C4': (U2X + 0.375, 1.3, 0, False),   # VDD decoupling along the top edge, pad 1 straight over pin 19 (BOOST)
@@ -105,6 +107,7 @@ RING_TIE = ['MK1.2', (MK1X - 0.71 + MIC_RING_R * math.cos(math.radians(40)), 5.2
 # down the channel between the pad columns to C5, VDD round the right of pin 4. SW is drawn
 # whole, kept from the router, and put back after it (restore_hand); FB and EN are left to the
 # router. (net, width, points)
+PULLUP_VIAS = [(32.45, 4.09), (31.66, 6.6), (30.64, 2.15)]   # R3's VDD beside the pad, R2's NFC_VCC below it
 BOOST = [
     ('/SW', 0.4, ['L1.2', 'U3.1']),
     ('/GND', 0.3, ['U3.2', (51.5 + BOOST_DX, 5.25), (51.5 + BOOST_DX, 7.8), 'C5.2']),
@@ -113,19 +116,24 @@ BOOST = [
     ('/FB', 0.2, ['R9.2', 'R10.1']),
     ('/VDD', 0.2, ['U2.19', 'C4.1']),                  # U2's decoupling, straight up
     ('/GND', 0.3, ['C3.2', (29.675, 0.85)]),           # C3 (tag decoupling) sits behind the tag's top row
-    # FD from U2's bottom row along the bottom edge to R3 and the tag, kept from the router like SW:
-    # otherwise another net takes the edge and FD's pin is boxed in. It runs along the very edge under SW1.
+    # the pull-ups' supply pads face the LED bar and are boxed in by FD: each straight to its own via
+    ('/VDD', 0.2, ['R3.1', PULLUP_VIAS[0]]),
+    ('/NFC_VCC', 0.15, ['R2.1', PULLUP_VIAS[1]]),
+    ('/SDA', 0.15, ['R1.2', PULLUP_VIAS[2]]),            # SDA up to a via above its pull-up
+    # FD from U2's bottom row along the bottom edge to R3 and the tag, drawn before the router runs:
+    # otherwise another net takes the edge and FD's pin is boxed in. It runs along the very edge under
+    # SW1. The router may reshape it (it is in its net list), so it is not put back afterwards.
     ('/FD', 0.15, ['U2.8', (U2X, 7.95), (U2X + 0.15, 8.1), (U2X + 0.15, 9.4),
                    (U2X - 0.325, 9.875), (39.9, 9.875), (38.855, 8.83), (36.0, 8.83),
-                   (33.45, 6.28), (33.45, 5.22), (32.95, 4.72), (31.9, 4.72), 'R3.2', 'U1.4']),
+                   (35.0, 8.83), (33.0, 6.83), (33.0, 5.1), (32.645, 4.745), (31.295, 4.745), 'R3.2', 'U1.4']),   # up between the pull-ups and R4, in between R3 and R2
 ]
 # J1's pads are on the back: pin 1 up between two clip holes to its via, GND pins 3 and 9
 # (diagonal neighbours, between pins 2 and 8) joined. Drawn on B.Cu.
 J1_HAND = [('/VDD', 0.2, ['J1.1', J1_VDD_VIA]),
            ('/GND', 0.15, ['J1.3', 'J1.9'])]
-HAND_NETS = ('/SW', '/FD')   # drawn whole, kept from the router, put back after it (restore_hand)
+HAND_NETS = ('/SW',)   # drawn whole, kept from the router, put back after it (restore_hand)
 BOOST_VIAS = [('/GND', (29.675, 0.85)),               # ... so its GND drops to the inner layers here
-              ('/VDD', J1_VDD_VIA)]
+              ('/VDD', J1_VDD_VIA), ('/VDD', PULLUP_VIAS[0]), ('/NFC_VCC', PULLUP_VIAS[1]), ('/SDA', PULLUP_VIAS[2])]
 # Router-only keepouts (User.2, KiCadRoutingTools --keepout; DRC ignores the layer): the SW gap
 # between L1 and U3, or the router rips SW up to push a signal through there.
 ROUTER_KEEPOUTS = [(49.85 + BOOST_DX, 2.85, 51.15 + BOOST_DX, 4.25)]   # it checks via centres, so a via radius wider
@@ -359,7 +367,7 @@ def stabilise_uuids(path):
 def route(keep_pro):
     """Signals first, then the power nets around them (one pass lets GND wall in the tag's pins)."""
     board = pcbnew.LoadBoard(PCB)
-    # the antenna nets, SW and FD are drawn by hand; the router gets the rest (net names from the API)
+    # the antenna nets and SW are drawn by hand; the router gets the rest (net names from the API)
     nets = sorted(str(n) for n in board.GetNetsByName().keys() if str(n) and str(n) not in ('/LA', '/LB', *HAND_NETS))
     py = os.path.join(KRT, '.venv', 'bin', 'python')
     groups = [[n for n in nets if n not in POWER], [n for n in nets if n in POWER]]
@@ -388,7 +396,7 @@ def route(keep_pro):
 
 
 def restore_hand():
-    """Put the hand nets (SW, FD) back as drawn. The router reshapes them even though they aren't
+    """Put the hand nets (SW) back as drawn. The router reshapes them even though they aren't
     in its net list; SW's User.2 keepout keeps every other net out of its gap."""
     pro, text_ = open(PRO).read(), open(PCB).read()
     for a, e, kind, b in reversed(_top_blocks(text_, ('segment', 'via'))):

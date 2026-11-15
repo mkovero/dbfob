@@ -29,6 +29,8 @@ Sources, by part:
                  0.6 to 1.0 mm), so the ring's inner diameter grows from 1.025 to 1.1 mm to keep
                  0.25 mm hole-to-copper; outer 1.625 as drawn. Paste: four ring segments with 0.2 mm
                  vents, as the example stencil.
+  LED_0805_narrow  KiCad's LED_0805_2012Metric with the pads 1.25 mm wide (the LED body's width) instead
+                 of 1.4, so four stand side by side on 1.75 mm. Pad 1 = K, 2 = A, as KiCad's.
   BS-08-B2AA001  MYOUNG CR2032 holder, LCSC C964777: pads and body from the EasyEDA footprint and
                  3D model JLC places it with (pad 1 = +, 3.8 x 3.8 at x +11.02; pad 2 = -, 4.3 x
                  2.8 at x -10.98; body 25.4 x 15.7 x 5.3 mm centred at x -0.34). The holder brings
@@ -263,6 +265,17 @@ def sph0655():
                            'smd', items)
 
 
+def led0805n():
+    name = 'LED_0805_2012Metric_narrow'
+    pads = [smd('1', -0.9375, 0, 0.975, 1.25, name), smd('2', 0.9375, 0, 0.975, 1.25, name)]
+    items = [fp_text('Reference', 'REF**', 0, -1.5, 'F.SilkS'), fp_text('Value', name, 0, 1.5, 'F.Fab'),
+             rect(-1.0, -0.625, 1.0, 0.625, 'F.Fab', 0.1, name),
+             line(-0.7, -0.625, -0.7, 0.625, 'F.Fab', 0.1, name),        # cathode end
+             rect(-1.68, -0.875, 1.68, 0.875, 'F.CrtYd', 0.05, name),
+             line(-1.6, -0.6, -1.6, 0.6, 'F.SilkS', 0.12, name)] + pads   # cathode bar
+    return name, footprint(name, 'LED 0805, pads 1.25 mm wide for a 1.75 mm pitch row; pad 1 = cathode', 'smd', items)
+
+
 def pogo(n):
     """n round SMD test pads on 2.54 mm for a pogo clip, pressed-in pins or soldered wires."""
     name = f'TestPads_1x{n:02d}_P2.54mm_D1.2mm'
@@ -343,7 +356,7 @@ def main():
     open(os.path.join(HERE, 'dbfob.kicad_sym'), 'w').write('\n'.join(sym) + '\n')
     d = os.path.join(HERE, 'dbfob.pretty')
     os.makedirs(d, exist_ok=True)
-    for gen in (xqfn8, im66d130m, sph0655, pogo5, pogo6, slot27, bs08, l2016, aaa_contacts):
+    for gen in (xqfn8, im66d130m, sph0655, led0805n, pogo5, pogo6, slot27, bs08, l2016, aaa_contacts):
         name, text = gen()
         open(os.path.join(d, name + '.kicad_mod'), 'w').write(text)
     print('wrote', os.path.join(HERE, 'dbfob.kicad_sym'), 'and', d)

@@ -30,7 +30,8 @@ PAD_MAP = {
     'BatteryHolder_Keystone_3034_1x20mm': {'1': '1', '3': '1', '2': '2'},
     'SW_Push_1P1T_XKB_TS-1187A': {'1': '1', '2': '1', '3': '2', '4': '2'},
 }
-BY_NAME = {'LED_0603_1608Metric': {'K': '1', 'A': '2'}}   # KiCad LED: 1 = K, 2 = A
+_LED = {'K': '1', 'A': '2', '-': '1', '+': '2'}   # KiCad LED: 1 = K, 2 = A; EasyEDA names the pins K/A or -/+
+BY_NAME = {'LED_0603_1608Metric': _LED, 'LED_0805_2012Metric_narrow': _LED}
 # Parts EasyEDA has no footprint for yet: membership and side are still checked, the geometry
 # can't be. JLC builds the footprint when the part is sourced; check their DFM preview by eye.
 UNCHECKED = {}
