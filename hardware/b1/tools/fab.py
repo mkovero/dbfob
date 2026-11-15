@@ -26,7 +26,7 @@ CHECK = os.path.join(HERE, '..', 'tools', 'check_cpl.py')
 #   0603 R/C/LED, TS-1187A: as rev A, no correction
 #   SOT-23-6 (TLV61220, C111811): EasyEDA's frame is KiCad's turned 180 degrees
 #   MPL2016 (C98335), MY-AAA-07 (hand-fit, back): no correction / not placed
-#   IM66D130M (C52053030): no EasyEDA footprint yet (not stocked); check_cpl.py reports it unchecked
+#   SPH0655LM4H (C22376158): EasyEDA pin 1 top-left, pads at the top, port below, centred: same frame
 JLC_FRAME = {'SOT-23-6': (180, (0, 0))}
 
 

@@ -101,7 +101,11 @@ Two directions are on the table:
 | 4 | Infineon IM66D130A | 130, 2.9–3.3 MHz only | −36 ±1 | 1.62–3.6 | – / 1,100 µA | 3.5 × 2.65, bottom | active, preferred to 2034+ | $0.97 @1k |
 | – | Infineon IM72D128 | **128**: misses the requirement | −36 ±1 | 1.62–3.6 | – / 980 µA | 4 × 3 | active, preferred | best stocked: LCSC C5119248, 3.5k pcs |
 
-- **B1 mic: IM66D130M, decided 2026-10-29.** Availability, specs and current all favour it. The IM67D130A stays only as a drop-in for rev A boards.
+- **Update 2026-11-15: B1 is fitted with the Knowles SPH0655LM4H-1** (LCSC C22376158). JLC assembles the IM66D130M only as Standard PCBA, which the prototype run's budget rules out; the SPH0655LM4H-1 is Economic, 3 630 in stock, $0.76 at qty 1.
+  - Datasheet rev D: AOP 132.5 dB SPL at 10 % THD (130.5 at 1 %), −37 ±1 dBFS, SNR 66 dB(A), 1.65–3.6 V, 750 µA at 1.536 MHz, 3.5 × 2.65 × 0.98 mm, same pin numbering as the IM66D130M.
+  - Normal mode is 1.1–4.8 MHz, so 1.5 MHz stays. Below 0.9 MHz it is in low-power mode with 116 dB AOP: the firmware must never clock it slower.
+  - Lifecycle not checked; Digi-Key lists the part under Syntiant.
+- **B1 mic: IM66D130M, decided 2026-10-29** (superseded, see above)**.** Availability, specs and current all favour it. The IM67D130A stays only as a drop-in for rev A boards.
   - IM66D130M: Mouser stocks it in quantity.
     - Its normal-mode clock band (1.34–1.72 MHz) contains rev A's 1.5 MHz, so the firmware keeps its clock.
     - The sensitivity is 1 dB lower (−37 dBFS), which is one calibration constant.

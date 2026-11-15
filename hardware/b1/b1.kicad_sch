@@ -1842,53 +1842,6 @@
 			)
 			(embedded_fonts no)
 		)
-			(symbol "dbfob:IM66D130M"
-			(pin_names (offset 1.016))
-			(exclude_from_sim no)
-			(in_bom yes)
-			(on_board yes)
-			(property "Reference" "MK" (at -7.62 6.35 0) (effects (font (size 1.27 1.27))))
-			(property "Value" "IM66D130M" (at 0 -11.43 0) (effects (font (size 1.27 1.27))))
-			(property "Footprint" "dbfob:Infineon_IM66D130M_LGA-5_3x2mm" (at 0 0 0) (effects (font (size 1.27 1.27)) (hide yes)))
-			(property "Datasheet" "" (at 0 0 0) (effects (font (size 1.27 1.27)) (hide yes)))
-			(property "Description" "Infineon IM66D130MV01 PDM MEMS microphone, 130 dB SPL AOP, bottom port, 3 x 2 mm" (at 0 0 0) (effects (font (size 1.27 1.27)) (hide yes)))
-			(symbol "IM66D130M_0_1"
-				(rectangle (start -7.62 5.08) (end 7.62 -7.62) (stroke (width 0.254) (type default)) (fill (type background)))
-			)
-			(symbol "IM66D130M_1_1"
-				(pin power_in line
-					(at -10.16 2.54 0)
-					(length 2.54)
-					(name "VDD" (effects (font (size 1.27 1.27))))
-					(number "5" (effects (font (size 1.27 1.27))))
-				)
-				(pin input line
-					(at -10.16 0 0)
-					(length 2.54)
-					(name "CLK" (effects (font (size 1.27 1.27))))
-					(number "4" (effects (font (size 1.27 1.27))))
-				)
-				(pin input line
-					(at -10.16 -2.54 0)
-					(length 2.54)
-					(name "LR" (effects (font (size 1.27 1.27))))
-					(number "2" (effects (font (size 1.27 1.27))))
-				)
-				(pin output line
-					(at 10.16 2.54 180)
-					(length 2.54)
-					(name "DATA" (effects (font (size 1.27 1.27))))
-					(number "1" (effects (font (size 1.27 1.27))))
-				)
-				(pin power_in line
-					(at 0 -10.16 90)
-					(length 2.54)
-					(name "GND" (effects (font (size 1.27 1.27))))
-					(number "3" (effects (font (size 1.27 1.27))))
-				)
-			)
-			(embedded_fonts no)
-		)
 			(symbol "dbfob:NT3H2111W0FHK"
 			(pin_names (offset 1.016))
 			(exclude_from_sim no)
@@ -1950,6 +1903,53 @@
 					(length 2.54)
 					(name "VSS" (effects (font (size 1.27 1.27))))
 					(number "2" (effects (font (size 1.27 1.27))))
+				)
+			)
+			(embedded_fonts no)
+		)
+			(symbol "dbfob:SPH0655LM4H"
+			(pin_names (offset 1.016))
+			(exclude_from_sim no)
+			(in_bom yes)
+			(on_board yes)
+			(property "Reference" "MK" (at -7.62 6.35 0) (effects (font (size 1.27 1.27))))
+			(property "Value" "SPH0655LM4H" (at 0 -11.43 0) (effects (font (size 1.27 1.27))))
+			(property "Footprint" "dbfob:Knowles_SPH0655LM4H_LGA-5_3.5x2.65mm" (at 0 0 0) (effects (font (size 1.27 1.27)) (hide yes)))
+			(property "Datasheet" "" (at 0 0 0) (effects (font (size 1.27 1.27)) (hide yes)))
+			(property "Description" "Knowles SPH0655LM4H-1 PDM MEMS microphone, 132.5 dB SPL AOP in normal mode, bottom port, 3.5 x 2.65 mm" (at 0 0 0) (effects (font (size 1.27 1.27)) (hide yes)))
+			(symbol "SPH0655LM4H_0_1"
+				(rectangle (start -7.62 5.08) (end 7.62 -7.62) (stroke (width 0.254) (type default)) (fill (type background)))
+			)
+			(symbol "SPH0655LM4H_1_1"
+				(pin power_in line
+					(at -10.16 2.54 0)
+					(length 2.54)
+					(name "VDD" (effects (font (size 1.27 1.27))))
+					(number "5" (effects (font (size 1.27 1.27))))
+				)
+				(pin input line
+					(at -10.16 0 0)
+					(length 2.54)
+					(name "CLK" (effects (font (size 1.27 1.27))))
+					(number "4" (effects (font (size 1.27 1.27))))
+				)
+				(pin input line
+					(at -10.16 -2.54 0)
+					(length 2.54)
+					(name "SELECT" (effects (font (size 1.27 1.27))))
+					(number "2" (effects (font (size 1.27 1.27))))
+				)
+				(pin output line
+					(at 10.16 2.54 180)
+					(length 2.54)
+					(name "DATA" (effects (font (size 1.27 1.27))))
+					(number "1" (effects (font (size 1.27 1.27))))
+				)
+				(pin power_in line
+					(at 0 -10.16 90)
+					(length 2.54)
+					(name "GND" (effects (font (size 1.27 1.27))))
+					(number "3" (effects (font (size 1.27 1.27))))
 				)
 			)
 			(embedded_fonts no)
@@ -2498,7 +2498,7 @@
 			(at 231.14 60.96 0)
 			(effects (font (size 1.27 1.27)) (hide yes))
 		)
-		(property "Note" "mic decoupling, next to MK1 (DS table 5 note 2: 1 uF)"
+		(property "Note" "mic decoupling, next to MK1 (DS: 0.1 uF or more)"
 			(at 231.14 60.96 0)
 			(effects (font (size 1.27 1.27)) (hide yes))
 		)
@@ -3027,7 +3027,7 @@
 		(uuid "66812d31-fdd0-59ed-9693-cfe178d7348b")
 	)
 	(symbol
-		(lib_id "dbfob:IM66D130M")
+		(lib_id "dbfob:SPH0655LM4H")
 		(at 200.66 60.96 0)
 		(unit 1)
 		(exclude_from_sim no)
@@ -3039,11 +3039,11 @@
 			(at 203.66 54.96 0)
 			(effects (font (size 1.27 1.27)))
 		)
-		(property "Value" "IM66D130M"
+		(property "Value" "SPH0655LM4H-1"
 			(at 203.66 66.96 0)
 			(effects (font (size 1.27 1.27)))
 		)
-		(property "Footprint" "dbfob:Infineon_IM66D130M_LGA-5_3x2mm"
+		(property "Footprint" "dbfob:Knowles_SPH0655LM4H_LGA-5_3.5x2.65mm"
 			(at 200.66 60.96 0)
 			(effects (font (size 1.27 1.27)) (hide yes))
 		)
@@ -3051,15 +3051,15 @@
 			(at 200.66 60.96 0)
 			(effects (font (size 1.27 1.27)) (hide yes))
 		)
-		(property "LCSC" "C52053030"
+		(property "LCSC" "C22376158"
 			(at 200.66 60.96 0)
 			(effects (font (size 1.27 1.27)) (hide yes))
 		)
-		(property "MPN" "IM66D130MV01XTMA1"
+		(property "MPN" "SPH0655LM4H-1-8"
 			(at 200.66 60.96 0)
 			(effects (font (size 1.27 1.27)) (hide yes))
 		)
-		(property "Note" "bottom port: the 0.5 mm NPTH in the footprint is the sound inlet; 20 at JLC on 2026-11-09, no EasyEDA footprint"
+		(property "Note" "bottom port: the 0.6 mm NPTH in the footprint is the sound inlet"
 			(at 200.66 60.96 0)
 			(effects (font (size 1.27 1.27)) (hide yes))
 		)

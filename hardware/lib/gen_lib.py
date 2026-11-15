@@ -21,6 +21,14 @@ Sources, by part:
                  IM69D130 too). The PCB port is a 0.5 mm NPTH (datasheet: >= 0.375 mm; 0.5 is JLC's
                  smallest NPTH), so the ring's copper-free centre grows from 0.76 to 1.0 mm to keep
                  0.25 mm hole-to-copper. Paste: three ring segments with 0.1 mm vents, as fig. 15.
+  SPH0655LM4H    Knowles SPH0655LM4H-1 datasheet rev D, page 8: pin table and example land pattern
+                 (top view). Origin = body centre (3.5 x 2.65 mm, long axis y). Pads 0.725 x 0.522 at
+                 x +-0.8375, rows 0.125 and 0.947 mm from the top edge (y -1.364, -0.542); the port is
+                 1.04 mm from the bottom edge (y +0.71), with the GND ring (pad 3) round it. Checked
+                 against the EasyEDA footprint of C22376158. PCB port: 0.6 mm NPTH (datasheet note:
+                 0.6 to 1.0 mm), so the ring's inner diameter grows from 1.025 to 1.1 mm to keep
+                 0.25 mm hole-to-copper; outer 1.625 as drawn. Paste: four ring segments with 0.2 mm
+                 vents, as the example stencil.
   BS-08-B2AA001  MYOUNG CR2032 holder, LCSC C964777: pads and body from the EasyEDA footprint and
                  3D model JLC places it with (pad 1 = +, 3.8 x 3.8 at x +11.02; pad 2 = -, 4.3 x
                  2.8 at x -10.98; body 25.4 x 15.7 x 5.3 mm centred at x -0.34). The holder brings
@@ -73,6 +81,10 @@ SYMBOLS = {
                   'Infineon IM66D130MV01 PDM MEMS microphone, 130 dB SPL AOP, bottom port, 3 x 2 mm',
                   [('5', 'VDD', 'power_in', 'L', 0), ('4', 'CLK', 'input', 'L', 1), ('2', 'LR', 'input', 'L', 2),
                    ('1', 'DATA', 'output', 'R', 0), ('3', 'GND', 'power_in', 'B', 0)], 7.62),
+    'SPH0655LM4H': ('MK', 'dbfob:Knowles_SPH0655LM4H_LGA-5_3.5x2.65mm',
+                    'Knowles SPH0655LM4H-1 PDM MEMS microphone, 132.5 dB SPL AOP in normal mode, bottom port, 3.5 x 2.65 mm',
+                    [('5', 'VDD', 'power_in', 'L', 0), ('4', 'CLK', 'input', 'L', 1), ('2', 'SELECT', 'input', 'L', 2),
+                     ('1', 'DATA', 'output', 'R', 0), ('3', 'GND', 'power_in', 'B', 0)], 7.62),
     'NT3H2111W0FHK': ('U', 'dbfob:NXP_XQFN-8_1.6x1.6mm_P0.5mm',
                       'NTAG I2C plus 1k, NFC Forum Type 2 tag with I2C and field detect, XQFN8',
                       [('1', 'LA', 'passive', 'L', 0), ('8', 'LB', 'passive', 'L', 2),
@@ -211,6 +223,46 @@ def im66d130m():
                            'smd', items)
 
 
+def sph0655():
+    """Datasheet rev D page 8, example land pattern (top view): pin 1 top left, 5 top right, 2 and 4
+    below them, the port and its GND ring (pad 3) towards the bottom."""
+    name = 'Knowles_SPH0655LM4H_LGA-5_3.5x2.65mm'
+    py = 1.75 - 1.04                           # ring and port centre: 1.04 mm from the bottom edge
+    pads = [smd(n, x, y, 0.725, 0.522, name, 'rect') for n, x, y in
+            (('1', -0.8375, -1.364), ('5', 0.8375, -1.364), ('2', -0.8375, -0.542), ('4', 0.8375, -0.542))]
+    # GND ring: inner 1.1 instead of 1.025 so the 0.6 mm port keeps 0.25 mm hole-to-copper, outer
+    # 1.625. The mic's own ring is 1.025 / 1.625, so the seal band is 1.1..1.625.
+    di, do = 1.1, 1.625
+    rm, rw = (do + di) / 4, (do - di) / 2
+    pads.append(f'\t(pad "3" smd custom (at {f(-rm)} {f(py)}) (size {f(rw)} {f(rw)}) (layers "F.Cu" "F.Mask") '
+                f'(zone_connect 0) (options (clearance outline) (anchor circle)) (primitives (gr_circle '
+                f'(center {f(rm)} 0) (end {f(2 * rm)} 0) (width {f(rw)}) (fill no))) (uuid "{uid(name, "ring")}"))')
+    # paste: four ring segments with 0.2 mm vents on the diagonals, as the example stencil, 0.02 mm
+    # inside the copper ring each side
+    ri, ro, vent = di / 2 + 0.02, do / 2 - 0.02, 0.2
+    for k, (a0, a1) in enumerate(((45, 135), (135, 225), (225, 315), (315, 405))):
+        da = math.degrees(vent / 2 / ri)
+        arc = lambda r, a, b: [(r * math.cos(math.radians(t)), -r * math.sin(math.radians(t)))
+                               for t in [a + (b - a) * i / 12 for i in range(13)]]
+        pts = arc(ro, a0 + da, a1 - da) + list(reversed(arc(ri, a0 + da, a1 - da)))
+        am = math.radians((a0 + a1) / 2)           # anchor on the segment, not over the port
+        ax, ay = (ri + ro) / 2 * math.cos(am), -(ri + ro) / 2 * math.sin(am)
+        xy = ' '.join(f'(xy {f(x - ax)} {f(y - ay)})' for x, y in pts)
+        pads.append(f'\t(pad "" smd custom (at {f(ax)} {f(py + ay)}) (size 0.1 0.1) (layers "F.Paste") (zone_connect 0) '
+                    f'(options (clearance outline) (anchor circle)) (primitives (gr_poly (pts {xy}) (width 0) '
+                    f'(fill yes))) (uuid "{uid(name, "paste", k)}"))')
+    pads.append(f'\t(pad "" np_thru_hole circle (at 0 {f(py)}) (size 0.6 0.6) (drill 0.6) (layers "*.Cu" "*.Mask") '
+                f'(uuid "{uid(name, "port")}"))')
+    items = [fp_text('Reference', 'REF**', 0, -2.6, 'F.SilkS'), fp_text('Value', name, 0, 2.6, 'F.Fab'),
+             rect(-1.325, -1.75, 1.325, 1.75, 'F.Fab', 0.1, name),
+             rect(-1.6, -2.0, 1.6, 2.0, 'F.CrtYd', 0.05, name),
+             line(-1.45, -1.85, -1.45, 1.85, 'F.SilkS', 0.12, name), line(1.45, -1.85, 1.45, 1.85, 'F.SilkS', 0.12, name),
+             f'\t(fp_circle (center -1.75 -1.85) (end -1.65 -1.85) (stroke (width 0.1) (type solid)) '
+             f'(fill yes) (layer "F.SilkS") (uuid "{uid(name, "pin1")}"))'] + pads
+    return name, footprint(name, 'Knowles SPH0655LM4H-1 LGA-5, 3.5 x 2.65 mm, bottom port (datasheet rev D page 8)',
+                           'smd', items)
+
+
 def pogo(n):
     """n round SMD test pads on 2.54 mm for a pogo clip, pressed-in pins or soldered wires."""
     name = f'TestPads_1x{n:02d}_P2.54mm_D1.2mm'
@@ -291,7 +343,7 @@ def main():
     open(os.path.join(HERE, 'dbfob.kicad_sym'), 'w').write('\n'.join(sym) + '\n')
     d = os.path.join(HERE, 'dbfob.pretty')
     os.makedirs(d, exist_ok=True)
-    for gen in (xqfn8, im66d130m, pogo5, pogo6, slot27, bs08, l2016, aaa_contacts):
+    for gen in (xqfn8, im66d130m, sph0655, pogo5, pogo6, slot27, bs08, l2016, aaa_contacts):
         name, text = gen()
         open(os.path.join(d, name + '.kicad_mod'), 'w').write(text)
     print('wrote', os.path.join(HERE, 'dbfob.kicad_sym'), 'and', d)

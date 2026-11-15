@@ -25,7 +25,7 @@ Along the stick from the tip:
 | U3 | TLV61220DBVR, C111811 | boost, 0.7 V start-up, 3.0 V out (R9 1 MΩ / R10 200 kΩ); EN to the cell, always on |
 | L1 | MPL2016S4R7MHT, C98335 | 4.7 µH, 2.0 × 1.6 mm, multilayer |
 | C5, C7 | 10 µF | boost output, input |
-| MK1 | IM66D130M, C52053030 | **20 at JLC on 2026-11-09** (0 on 2026-11-03): order early. 0.5 mm port (NPTH) through the board, inside the coil |
+| MK1 | Knowles SPH0655LM4H-1, C22376158 | 132.5 dB SPL AOP, −37 ±1 dBFS, normal mode 1.1–4.8 MHz (below 0.9 MHz it drops to low-power mode, 116 dB AOP: keep the clock at 1.5 MHz). 0.6 mm port (NPTH) through the board, inside the coil. Replaces the IM66D130M, which JLC assembles only as Standard PCBA |
 | R8, C6 | 100 Ω, 1 µF (C15849) | mic supply from PA4, filtered against the boost's burst ripple |
 | U1 | NT3H2111W0FHKH, C710403 | NTAG I2C plus 1k, powered from PB14 |
 | C1, C2 | 0603 trim, **not fitted** | C0G, value found on the bench |
@@ -75,7 +75,7 @@ Experiment 4 runs here (the test board was dropped). The tag runs from the phone
 ## Regenerate
 
 ```sh
-python3 hardware/lib/gen_lib.py          # symbols, IM66D130M, AAA contact + pad footprints
+python3 hardware/lib/gen_lib.py          # symbols, mic, AAA contact + pad footprints
 python3 hardware/b1/tools/gen_sch.py     # tables -> schematic
 python3 hardware/b1/tools/make_pcb.py    # antenna + placement + hand vias, the router does the rest
 python3 hardware/b1/tools/fab.py         # -> production/
@@ -87,14 +87,15 @@ Same procedure as rev A ([../README.md](../README.md)). Routing is signals first
 - **ERC:** clean, apart from the library-table warnings and two whitelisted pin-to-pin notes: NFC_VCC, a GPIO-driven supply as on rev A, and PA7 reading the power-flagged VCELL.
 - **DRC:** 0 errors, 0 unconnected, 0 parity issues.
 - **Repeatability:** two runs give byte-identical boards.
-- **CPL:** 24 of 25 placements checked against JLC's EasyEDA footprints. U3 (SOT-23-6) needs a 180° correction, which fab.py applies. MK1 has no EasyEDA footprint: check its rotation in JLC's DFM preview.
+- **CPL:** all 25 placements checked against JLC's EasyEDA footprints, MK1's port hole included. U3 (SOT-23-6) needs a 180° correction, which fab.py applies.
 
 ## Before ordering
 
-- Stock on 2026-11-10: CH32L103F8U6 119 (708 on 11-03, 481 on 11-09: falling fast), TLV61220 10 665, IM66D130M 20, MY-AAA-07 3 594. Recheck the MCU and the mic on order day.
+- Stock on 2026-11-15: CH32L103F8U6 5 294, TLV61220 10 950, SPH0655LM4H-1 3 630, NT3H2111 46 922, MY-AAA-07 3 555. Recheck the MCU on order day (it was down to 119 on 11-10).
+- **Economic PCBA:** every placed part is Economic-eligible on 2026-11-15. The board is 10.5 mm wide against Economic's 10 mm minimum. The MY-AAA-07 contacts are not placed: order 2 per board from LCSC.
 - Extended parts (JLC setup fee each): D1–D3, L1, MK1, U1, U2, U3. The rest are Basic.
-- **ENIG finish:** the mic's pads are NSMD (0.05 mm mask clearance on them).
-- **Check JLC's DFM preview** for the mic: its rotation, and that the copper ring round the 0.5 mm port isn't trimmed (JLC may remove thin copper rings at NPTHs).
+- **ENIG finish:** flat pads for the mic's seal ring and the QFNs, and J1's pads are bare contacts for pogo pins.
+- **Check JLC's DFM preview** for the mic: its rotation, and that the copper ring round the 0.6 mm port isn't trimmed (JLC may remove thin copper rings at NPTHs).
 - 4 layers at 1.0 mm.
 - U2's GND via sits in the exposed pad, between the paste windows: expect a little solder wicking.
 - Only a small ring slot (H1) in the PCB: a keyring with keys goes on the case. J1's 2.4 mm clip holes can take locating pegs from the case's front half; on the back they're under the cell, so pegs from that side must stop short of it.

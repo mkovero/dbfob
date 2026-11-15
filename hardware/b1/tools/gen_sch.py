@@ -4,7 +4,7 @@
 B1: rev A done properly, as a stick (docs/rev-b.md, "B1 stick"). 10.5 x 76.5 mm, an AAA cell on
 the back between two spring contacts, a TLV61220 boost converter making 3.0 V from it, the NFC
 coil in the tip (../lib/antenna.py, identical to the NFC test board's), and on the parts face:
-CH32L103 MCU, IM66D130M PDM mic at the tip, NT3H2111 tag, four LEDs, button.
+CH32L103 MCU, SPH0655LM4H-1 PDM mic at the tip, NT3H2111 tag, four LEDs, button.
 Same method as rev A's gen_sch.py (etofab.md §1): the tables are the source, labels on pin tips,
 UUIDs from reference designators.
 
@@ -83,18 +83,19 @@ PARTS = {
            {'1': 'VDD', '2': 'FB'}, False),
     'R10': ('Device:R', '200k', R_FP, 'C25811', '0603WAF2003T5E', 'feedback bottom', (330, 150, 0),
             {'1': 'FB', '2': 'GND'}, False),
-    # Mic: IM66D130M at the tip, inside the coil, bottom port through the board. Powered from PA4
+    # Mic: Knowles SPH0655LM4H-1 at the tip, inside the coil, bottom port through the board. (The
+    # IM66D130M planned first is Standard-PCBA-only at JLC; this one is Economic.) Powered from PA4
     # only while measuring, through R8 + C6 (1.6 kHz): the boost converter's burst ripple at light
-    # load stays off the mic's supply. 100 Ohm x 0.54 mA = 54 mV. LR to
-    # GND as rev A's SELECT: data valid on the same clock edge. 0 stock at JLC on
-    # 2026-11-03, 20 on 2026-11-09: order early, or global sourcing / consignment.
-    'MK1': ('dbfob:IM66D130M', 'IM66D130M', 'dbfob:Infineon_IM66D130M_LGA-5_3x2mm', 'C52053030',
-            'IM66D130MV01XTMA1', 'bottom port: the 0.5 mm NPTH in the footprint is the sound inlet; '
-            '20 at JLC on 2026-11-09, no EasyEDA footprint', (200, 60, 0),
+    # load stays off the mic's supply. 100 Ohm x 0.75 mA (normal mode at 1.536 MHz) = 75 mV.
+    # SELECT to GND as rev A. Normal mode is 1.1 to 4.8 MHz: 132.5 dB SPL AOP, -37 dBFS +-1 dB.
+    # Below 0.9 MHz it drops to low-power mode (116 dB AOP): keep the clock at 1.5 MHz.
+    'MK1': ('dbfob:SPH0655LM4H', 'SPH0655LM4H-1', 'dbfob:Knowles_SPH0655LM4H_LGA-5_3.5x2.65mm', 'C22376158',
+            'SPH0655LM4H-1-8', 'bottom port: the 0.6 mm NPTH in the footprint is the sound inlet',
+            (200, 60, 0),
             {'5': 'MIC_VDD', '4': 'MIC_CLK', '2': 'GND', '1': 'MIC_DATA', '3': 'GND'}, False),
     'R8': ('Device:R', '100', R_FP, 'C22775', '0603WAF1000T5E', 'mic supply filter, with C6', (215, 40, 90),
            {'1': 'MIC_PWR', '2': 'MIC_VDD'}, False),
-    'C6': ('Device:C', '1u', C_FP, 'C15849', 'CL10A105KB8NNNC', 'mic decoupling, next to MK1 (DS table 5 note 2: 1 uF)',
+    'C6': ('Device:C', '1u', C_FP, 'C15849', 'CL10A105KB8NNNC', 'mic decoupling, next to MK1 (DS: 0.1 uF or more)',
            (230, 60, 0), {'1': 'MIC_VDD', '2': 'GND'}, False),
     # NFC: NT3H2111 pinout from the NXP datasheet's table 3 (XQFN8). The antenna block (U1, NT1,
     # C1-C3 and the coil) is placed by ../lib/antenna.py exactly as on the NFC test board.

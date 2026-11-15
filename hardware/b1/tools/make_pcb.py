@@ -12,8 +12,8 @@ Board: the stick, 10.5 x 76.5 x 1.0 mm, 4 layers, every machine-placed part on t
 outline and the antenna block (coil in the tip, the LB crossover, tag, trim pads, the AAA
 contacts on the back) come from ../lib/antenna.py, identical to the NFC test board's. Along
 the stick from the tip: the mic inside the coil with its port through the board, the tag, the
-LED bar, the Tag-Connect footprint, the MCU, the boost converter, the button, a 2.7 mm ring hole in the
-corner. A keyring is the case's job. Everything past the coil sits under the cell, which lies on the back.
+LED bar, the button, the Tag-Connect footprint (on the back), the MCU, the boost converter, a 2.7 x 3.1 mm
+ring slot in the far corner. A keyring is the case's job. Everything past the coil sits under the cell, which lies on the back.
 
 Four layers because two would not route in 10.5 mm: the MCU's fan-out, the tag's lines and the
 mic's lines out of the coil share one corridor, and the cell contacts' pads fill the middle of
@@ -22,7 +22,7 @@ detunes it, so GND is tracks like everything else, and every layer under the coi
 apart from the band at its cell end, where LB and the mic's nets cross under the turns.
 Hand-drawn: a via in U2's exposed pad, the mic's GND ring tied to its GND pad, and the boost
 converter's switching and output loops.
-Routing: signals first, then the power nets, with the router's inside_out net ordering, forward direction and no extra via
+Routing: signals first, then the power nets, with the router's mps net ordering, backward direction and no extra via
 cost near pads (the default tenfold one keeps the MCU's bottom pins off the inner layers).
 """
 import json, math, os, re, shutil, subprocess, sys, tempfile, uuid
@@ -60,12 +60,16 @@ BOOST_DX = 12.0   # the boost converter right after U2, over the + contact's bas
 # J1 pin 1 (VDD) is boxed in by the pads and holes: a stub out between two clip holes to a via
 J1_VDD_VIA = (J1X - 1.9, 2.9)
 
+MK1X = 5.07
+MIC_RING_R = (1.1 + 1.625) / 4   # centre line of the footprint's GND ring
+
 # The antenna block (coil, LB crossover, NT1, U1, C1-C3, BT1) is ../lib/antenna.py's.
 PLACE = dict(ant.PLACE, **{
-    # mic at the tip inside the coil, pads towards the cell end; port at x 4.36
-    'MK1': (4.9, 5.25, 180, False),
-    'C6': (7.5, 5.25, 90, False),
-    'R8': (9.2, 5.25, 90, False),
+    # mic at the tip inside the coil, long axis along the stick, pads towards the cell end; port
+    # at x 4.36 (MK1X - 0.71)
+    'MK1': (MK1X, 5.25, 270, False),
+    'C6': (8.0, 5.25, 90, False),
+    'R8': (9.7, 5.25, 90, False),
     # tag pull-ups right of U1, signal pad left, each level with its pin
     'R1': (32.0, 2.3, 180, False),     # SDA
     'R3': (32.0, 4.0, 180, False),     # FD
@@ -93,8 +97,8 @@ PLACE = dict(ant.PLACE, **{
 })
 
 # The mic's GND ring (pad 3, round the port) tied to its GND pad 2: the router can't get in
-# between the pads. Ring centre line at r 0.6 round the port.
-RING_TIE = ['MK1.2', (4.36 + 0.6 * math.cos(math.radians(40)), 5.25 - 0.6 * math.sin(math.radians(40)))]
+# between the pads. Pad 2 (SELECT, tied low) is up and to the right of the port.
+RING_TIE = ['MK1.2', (MK1X - 0.71 + MIC_RING_R * math.cos(math.radians(40)), 5.25 - MIC_RING_R * math.sin(math.radians(40)))]
 
 # The boost converter's hot loops, drawn by hand (TLV61220 DS 12.1: output cap as close as possible
 # to VOUT and GND). The SOT-23-6 has GND (2) and VOUT (5) on opposite sides, so GND runs from pin 2

@@ -192,6 +192,53 @@
 		)
 		(embedded_fonts no)
 	)
+	(symbol "SPH0655LM4H"
+		(pin_names (offset 1.016))
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(property "Reference" "MK" (at -7.62 6.35 0) (effects (font (size 1.27 1.27))))
+		(property "Value" "SPH0655LM4H" (at 0 -11.43 0) (effects (font (size 1.27 1.27))))
+		(property "Footprint" "dbfob:Knowles_SPH0655LM4H_LGA-5_3.5x2.65mm" (at 0 0 0) (effects (font (size 1.27 1.27)) (hide yes)))
+		(property "Datasheet" "" (at 0 0 0) (effects (font (size 1.27 1.27)) (hide yes)))
+		(property "Description" "Knowles SPH0655LM4H-1 PDM MEMS microphone, 132.5 dB SPL AOP in normal mode, bottom port, 3.5 x 2.65 mm" (at 0 0 0) (effects (font (size 1.27 1.27)) (hide yes)))
+		(symbol "SPH0655LM4H_0_1"
+			(rectangle (start -7.62 5.08) (end 7.62 -7.62) (stroke (width 0.254) (type default)) (fill (type background)))
+		)
+		(symbol "SPH0655LM4H_1_1"
+			(pin power_in line
+				(at -10.16 2.54 0)
+				(length 2.54)
+				(name "VDD" (effects (font (size 1.27 1.27))))
+				(number "5" (effects (font (size 1.27 1.27))))
+			)
+			(pin input line
+				(at -10.16 0 0)
+				(length 2.54)
+				(name "CLK" (effects (font (size 1.27 1.27))))
+				(number "4" (effects (font (size 1.27 1.27))))
+			)
+			(pin input line
+				(at -10.16 -2.54 0)
+				(length 2.54)
+				(name "SELECT" (effects (font (size 1.27 1.27))))
+				(number "2" (effects (font (size 1.27 1.27))))
+			)
+			(pin output line
+				(at 10.16 2.54 180)
+				(length 2.54)
+				(name "DATA" (effects (font (size 1.27 1.27))))
+				(number "1" (effects (font (size 1.27 1.27))))
+			)
+			(pin power_in line
+				(at 0 -10.16 90)
+				(length 2.54)
+				(name "GND" (effects (font (size 1.27 1.27))))
+				(number "3" (effects (font (size 1.27 1.27))))
+			)
+		)
+		(embedded_fonts no)
+	)
 	(symbol "NT3H2111W0FHK"
 		(pin_names (offset 1.016))
 		(exclude_from_sim no)
