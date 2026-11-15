@@ -62,8 +62,10 @@ BOOST_DX = 12.0   # the boost converter right after U2, over the + contact's bas
 J1_VDD_VIA = (J1X - 1.9, 2.9)
 
 MK1X = 5.07
-R11X = 68.5
-VSENSE_VIA = (R11X - 0.5, 9.0)       # below the contact's body on the back (y 2.1 to 8.4)
+LED_X0, LED_P = 33.85, 4.9 / 3        # the LED bar's first column and pitch (1.633): D4 ends up at 38.75, hard by SW1
+R3Y = 4.275                           # midway between R1 and R2
+R11X = 69.0                           # in the FB divider's row, on its pitch
+VSENSE_VIA = (R11X - 1.3, 9.4)       # between R9 and R11, below the contact's body on the back (y 2.1 to 8.4)
 R11_VCELL_VIA = (R11X + 0.48, 5.25)   # onto the B.Cu strap between the + contact's pads
 MIC_RING_R = (1.1 + 1.625) / 4   # centre line of the footprint's GND ring
 
@@ -74,22 +76,24 @@ PLACE = dict(ant.PLACE, **{
     'MK1': (MK1X, 5.25, 270, False),
     'C6': (8.0, 5.25, 90, False),
     'R8': (9.7, 5.25, 90, False),
-    # tag pull-ups (0402) right of U1, signal pad left, each near its pin; a gap between R3 and R2 for FD
+    # tag pull-ups (0402) right of U1, signal pad left, in an even column (1.125 mm); FD comes in
+    # through the gap between R3 and R2
     'R1': (31.15, 3.15, 180, False),   # SDA
-    'R3': (31.15, 4.09, 180, False),   # FD
+    'R3': (31.15, R3Y, 180, False),    # FD
     'R2': (31.15, 5.4, 180, False),    # SCL
     # LED bar right after the tag, green to red. Each column: the LED at the top, cathode to the
     # edge, anode down onto its resistor, whose U2 end faces the middle of the stick.
-    # D1 and D2 are 0805 (narrow-pad footprint), D3 and D4 0603, where rev B's first layout had them
-    'D1': (33.85, 2.0, 270, False), 'D2': (35.6, 2.0, 270, False), 'D3': (37.25, 1.9, 270, False), 'D4': (38.75, 1.9, 270, False),
-    'R4': (33.85, 5.25, 90, False), 'R5': (35.6, 5.25, 90, False), 'R6': (37.25, 5.0, 90, False), 'R7': (38.75, 5.0, 90, False),
+    # D1 and D2 are 0805 (narrow-pad footprint), D3 and D4 0603. Four columns on one pitch (LED_P)
+    # between the pull-ups and SW1, the LEDs in one row and the resistors in another on the centre line
+    **{'D%d' % (i + 1): (LED_X0 + i * LED_P, 2.0, 270, False) for i in range(4)},
+    **{'R%d' % (i + 4): (LED_X0 + i * LED_P, 5.25, 90, False) for i in range(4)},
     'J1': (J1X, 5.25, J1ROT, True),
     'U2': (U2X, 5.25, 0, False),
     'C4': (U2X + 0.375, 1.3, 0, False),   # VDD decoupling along the top edge, pad 1 straight over pin 19 (BOOST)
     # boost: L1 over U3, SW (pin 1) top left, VBAT (pin 6) top right, VOUT (5) and FB (4) right
     'U3': (51.5 + BOOST_DX, 5.25, 0, False),
     'L1': (51.5 + BOOST_DX, 2.2, 180, False),
-    'C7': (54.7 + BOOST_DX, 2.4, 90, False),
+    'C7': (54.7 + BOOST_DX, 2.2, 90, False),     # level with L1
     # output cap across the bottom of U3: GND pad under the channel between U3's pad columns, VDD
     # pad on the right, so the output loop stays on F.Cu (see BOOST)
     'C5': (52.3 + BOOST_DX, 7.8, 180, False),
@@ -101,8 +105,8 @@ PLACE = dict(ant.PLACE, **{
     # body runs tipward from there: the slot starts at x 74.5, beside the narrow foot tab only.
     # A slot counts as board edge: 0.5 mm clear of the foot pad, 0.75 mm web to the side, 0.9 mm to the end
     'H1': (76.05, 2.1, 0, False),
-    # PA7's series resistor, in the open strip between the boost and the + contact's foot pad
-    'R11': (R11X, 7.4, 0, False),          # pad 1 = VSENSE (towards U2), pad 2 = VCELL
+    # PA7's series resistor, third in the row with R10 and R9 (3.2 mm apart)
+    'R11': (R11X, 9.4, 0, False),          # pad 1 = VSENSE (towards U2), pad 2 = VCELL
 })
 
 # The mic's GND ring (pad 3, round the port) tied to its GND pad 2: the router can't get in
@@ -114,7 +118,7 @@ RING_TIE = ['MK1.2', (MK1X - 0.71 + MIC_RING_R * math.cos(math.radians(40)), 5.2
 # down the channel between the pad columns to C5, VDD round the right of pin 4. SW is drawn
 # whole, kept from the router, and put back after it (restore_hand); FB and EN are left to the
 # router. (net, width, points)
-PULLUP_VIAS = [(32.45, 4.09), (31.66, 6.6), (30.64, 2.15)]   # R3's VDD beside the pad, R2's NFC_VCC below it
+PULLUP_VIAS = [(32.45, R3Y), (31.66, 6.6), (30.64, 2.15)]   # R3's VDD beside the pad, R2's NFC_VCC below it
 BOOST = [
     ('/SW', 0.4, ['L1.2', 'U3.1']),
     ('/GND', 0.3, ['U3.2', (51.5 + BOOST_DX, 5.25), (51.5 + BOOST_DX, 7.8), 'C5.2']),
@@ -132,7 +136,7 @@ BOOST = [
     # SW1. The router may reshape it (it is in its net list), so it is not put back afterwards.
     ('/FD', 0.15, ['U2.8', (U2X, 7.95), (U2X + 0.15, 8.1), (U2X + 0.15, 9.4),
                    (U2X - 0.325, 9.875), (39.9, 9.875), (38.855, 8.83), (36.0, 8.83),
-                   (35.0, 8.83), (33.0, 6.83), (33.0, 5.1), (32.645, 4.745), (31.295, 4.745), 'R3.2', 'U1.4']),   # up between the pull-ups and R4, in between R3 and R2
+                   (35.0, 8.83), (33.0, 6.83), (33.0, 5.195), (32.645, 4.84), (31.2, 4.84), 'R3.2', 'U1.4']),   # up between the pull-ups and R4, in between R3 and R2
 ]
 # J1's pads are on the back: pin 1 up between two clip holes to its via, GND pins 3 and 9
 # (diagonal neighbours, between pins 2 and 8) joined. Drawn on B.Cu.
@@ -152,7 +156,7 @@ NPTH_GROW = 0.2
 # via below R11. R11's cell end goes to a via the router ties into VCELL. U3's EN pin (3) keeps its
 # via in the + contact's base pad. (net, layer, width, points)
 VCELL_ADC = [('/VSENSE', 'F', 0.15, ['U2.7', (U2X - 0.4, 8.3)]),
-             ('/VSENSE', 'In2', 0.15, [(U2X - 0.4, 8.3), (U2X + 0.9, 9.6), (VSENSE_VIA[0] - 0.6, 9.6), VSENSE_VIA]),
+             ('/VSENSE', 'In2', 0.15, [(U2X - 0.4, 8.3), (U2X + 0.9, 9.6), (VSENSE_VIA[0] - 0.2, 9.6), VSENSE_VIA]),
              ('/VSENSE', 'F', 0.15, ['R11.1', VSENSE_VIA]),
              ('/VCELL', 'F', 0.15, ['R11.2', R11_VCELL_VIA]),
              ('/VCELL', 'F', 0.15, [(50.3 + BOOST_DX, 7.4), 'U3.3'])]
