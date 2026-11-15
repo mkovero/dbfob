@@ -3738,6 +3738,63 @@
 		(uuid "2db8a313-4fbc-572f-a9d0-fb0b8a2657ec")
 	)
 	(symbol
+		(lib_id "Device:R")
+		(at 22.86 139.7 0)
+		(unit 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(dnp no)
+		(uuid "b7c5ee28-5705-5b83-aa21-65c73a04e677")
+		(property "Reference" "R11"
+			(at 25.86 133.7 0)
+			(effects (font (size 1.27 1.27)))
+		)
+		(property "Value" "4.7k"
+			(at 25.86 145.7 0)
+			(effects (font (size 1.27 1.27)))
+		)
+		(property "Footprint" "Resistor_SMD:R_0402_1005Metric"
+			(at 22.86 139.7 0)
+			(effects (font (size 1.27 1.27)) (hide yes))
+		)
+		(property "Datasheet" ""
+			(at 22.86 139.7 0)
+			(effects (font (size 1.27 1.27)) (hide yes))
+		)
+		(property "LCSC" "C25900"
+			(at 22.86 139.7 0)
+			(effects (font (size 1.27 1.27)) (hide yes))
+		)
+		(property "MPN" "0402WGF4701TCE"
+			(at 22.86 139.7 0)
+			(effects (font (size 1.27 1.27)) (hide yes))
+		)
+		(property "Note" "PA7 series resistor"
+			(at 22.86 139.7 0)
+			(effects (font (size 1.27 1.27)) (hide yes))
+		)
+		(pin "1"
+			(uuid "7d2d2d90-0462-5fec-b624-53dbe7eb1a9d")
+		)
+		(pin "2"
+			(uuid "d94c349c-0112-5dbf-b788-99da2e68a780")
+		)
+		(instances (project "b1" (path "/20f8934c-30b5-5975-96bf-813a8789ed2a" (reference "R11") (unit 1))))
+	)
+	(label "VSENSE"
+		(at 22.86 135.89 90)
+		(fields_autoplaced yes)
+		(effects (font (size 1.27 1.27)) (justify left bottom))
+		(uuid "bc6f5ef0-4000-5ad7-8d88-f1124c83cc9e")
+	)
+	(label "VCELL"
+		(at 22.86 143.51 270)
+		(fields_autoplaced yes)
+		(effects (font (size 1.27 1.27)) (justify right bottom))
+		(uuid "5b240a7d-9596-5428-be45-c9db8255d137")
+	)
+	(symbol
 		(lib_id "Switch:SW_Push")
 		(at 60.96 60.96 0)
 		(unit 1)
@@ -4059,11 +4116,11 @@
 		(effects (font (size 1.27 1.27)) (justify right bottom))
 		(uuid "f81ab58c-860d-5567-80a4-8f4f7bef1128")
 	)
-	(label "VCELL"
+	(label "VSENSE"
 		(at 104.14 104.14 180)
 		(fields_autoplaced yes)
 		(effects (font (size 1.27 1.27)) (justify right bottom))
-		(uuid "c30a8c69-85eb-557a-b0b0-33f5b04621c1")
+		(uuid "ce9cc36d-c483-57aa-a96c-1979f5e6a8f1")
 	)
 	(label "NFC_VCC"
 		(at 134.62 96.52 0)
@@ -4388,11 +4445,11 @@
 		(effects (font (size 1.5 1.5)) (justify left bottom))
 		(uuid "ece3aefd-1287-581a-b734-b94f79af2cce")
 	)
-	(text "AAA (0.9-1.8 V) -> TLV61220 -> VDD 3.0 V. PA7 (ADC7) reads the cell."
+	(text "AAA (0.9-1.8 V) -> TLV61220 -> VDD 3.0 V. PA7 (ADC7) reads the cell through R11."
 		(exclude_from_sim no)
 		(at 20 170 0)
 		(effects (font (size 1.5 1.5)) (justify left bottom))
-		(uuid "bbcc6608-7356-5000-be91-b2dae8fd100f")
+		(uuid "3a78d12b-c66c-5a18-a6e2-fbee8fdaf752")
 	)
 	(sheet_instances
 		(path "/"

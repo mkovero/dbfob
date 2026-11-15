@@ -8,7 +8,7 @@ under our fab rules, UUIDs derive from content, DRC with schematic parity is the
   python3 hardware/b1/tools/make_pcb.py
   python3 hardware/b1/tools/fab.py
 
-Board: the stick, 10.5 x 76.5 x 1.0 mm, 4 layers, every machine-placed part on the front. The
+Board: the stick, 10.5 x 78.5 x 1.0 mm, 4 layers, every machine-placed part on the front. The
 outline and the antenna block (coil in the tip, the LB crossover, tag, trim pads, the AAA
 contacts on the back) come from ../lib/antenna.py, identical to the NFC test board's. Along
 the stick from the tip: the mic inside the coil with its port through the board, the tag, the
@@ -62,6 +62,9 @@ BOOST_DX = 12.0   # the boost converter right after U2, over the + contact's bas
 J1_VDD_VIA = (J1X - 1.9, 2.9)
 
 MK1X = 5.07
+R11X = 68.5
+VSENSE_VIA = (R11X - 0.5, 9.0)       # below the contact's body on the back (y 2.1 to 8.4)
+R11_VCELL_VIA = (R11X + 0.48, 5.25)   # onto the B.Cu strap between the + contact's pads
 MIC_RING_R = (1.1 + 1.625) / 4   # centre line of the footprint's GND ring
 
 # The antenna block (coil, LB crossover, NT1, U1, C1-C3, BT1) is ../lib/antenna.py's.
@@ -93,9 +96,13 @@ PLACE = dict(ant.PLACE, **{
     'R10': (50.6 + BOOST_DX, 9.4, 180, False),    # FB divider in a row below, R10's GND end by U3's GND side
     'R9': (53.8 + BOOST_DX, 9.4, 180, False),     # VDD pad under C5's VDD track
     'SW1': (42.3, 5.25, 90, False),
-    # ring slot in the far corner, past the + contact's plate (x 71.7). A slot counts as board edge:
-    # 0.5 mm clear of the contact's foot pad, 0.75 mm web to the side, 0.9 mm to the end
-    'H1': (74.05, 2.1, 0, False),
+    # ring slot in the far corner, past the + contact's plate. The MY-AAA-07 drawing puts the plate
+    # about 2 mm inboard of the foot's tip (x 75.9), so near x 73.7, and the contact's 6.35 mm wide
+    # body runs tipward from there: the slot starts at x 74.5, beside the narrow foot tab only.
+    # A slot counts as board edge: 0.5 mm clear of the foot pad, 0.75 mm web to the side, 0.9 mm to the end
+    'H1': (76.05, 2.1, 0, False),
+    # PA7's series resistor, in the open strip between the boost and the + contact's foot pad
+    'R11': (R11X, 7.4, 0, False),          # pad 1 = VSENSE (towards U2), pad 2 = VCELL
 })
 
 # The mic's GND ring (pad 3, round the port) tied to its GND pad 2: the router can't get in
@@ -140,13 +147,17 @@ ROUTER_KEEPOUTS = [(49.85 + BOOST_DX, 2.85, 51.15 + BOOST_DX, 4.25)]   # it chec
 # The router knows pad clearance (0.15) but not the 0.25 mm hole clearance, so J1's and H1's NPTH
 # pads are grown by this much in diameter while it routes, then put back (restore_npth).
 NPTH_GROW = 0.2
-# The cell to U2's ADC pin (7, bottom row), which the router can't reach between its neighbours:
-# down to In2, along the bottom edge past U2's escape vias, up to a via in the + contact's base pad by U3's EN pin (3). (net, layer, width, points)
-VCELL_ADC = [('/VCELL', 'F', 0.15, ['U2.7', (U2X - 0.4, 8.3)]),
-             ('/VCELL', 'In2', 0.15, [(U2X - 0.4, 8.3), (U2X + 0.9, 9.6), (49.5 + BOOST_DX, 9.6),
-                                      (50.3 + BOOST_DX, 8.8), (50.3 + BOOST_DX, 7.4)]),
+# The cell to U2's ADC pin (7, bottom row) through R11, which the router can't reach between its
+# neighbours: down to In2, along the bottom edge past U2's escape vias and the FB divider, up to a
+# via below R11. R11's cell end goes to a via the router ties into VCELL. U3's EN pin (3) keeps its
+# via in the + contact's base pad. (net, layer, width, points)
+VCELL_ADC = [('/VSENSE', 'F', 0.15, ['U2.7', (U2X - 0.4, 8.3)]),
+             ('/VSENSE', 'In2', 0.15, [(U2X - 0.4, 8.3), (U2X + 0.9, 9.6), (VSENSE_VIA[0] - 0.6, 9.6), VSENSE_VIA]),
+             ('/VSENSE', 'F', 0.15, ['R11.1', VSENSE_VIA]),
+             ('/VCELL', 'F', 0.15, ['R11.2', R11_VCELL_VIA]),
              ('/VCELL', 'F', 0.15, [(50.3 + BOOST_DX, 7.4), 'U3.3'])]
-VCELL_VIAS = [('/VCELL', (U2X - 0.4, 8.3)), ('/VCELL', (50.3 + BOOST_DX, 7.4))]   # the second one in the + pad
+VCELL_VIAS = [('/VSENSE', (U2X - 0.4, 8.3)), ('/VSENSE', VSENSE_VIA), ('/VCELL', R11_VCELL_VIA),
+              ('/VCELL', (50.3 + BOOST_DX, 7.4))]   # the last one in the + pad, for EN
 # U2's right column faces the + contact's base pad (no vias there): LED_R (14) and NFC_VCC (12) out
 # on F.Cu over it, down to vias in the strip below the pad, LED_R round the outside.
 U2_ESCAPE = [('/NFC_VCC', 'F', 0.15, ['U2.12', (U2X + 2.15, 5.65), (U2X + 2.15, 8.6)]),

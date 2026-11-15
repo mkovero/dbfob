@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Generate hardware/b1/b1.kicad_sch from the tables below.
 
-B1: rev A done properly, as a stick (docs/rev-b.md, "B1 stick"). 10.5 x 76.5 mm, an AAA cell on
+B1: rev A done properly, as a stick (docs/rev-b.md, "B1 stick"). 10.5 x 78.5 mm, an AAA cell on
 the back between two spring contacts, a TLV61220 boost converter making 3.0 V from it, the NFC
 coil in the tip (../lib/antenna.py, identical to the NFC test board's), and on the parts face:
 CH32L103 MCU, SPH0655LM4H-1 PDM mic at the tip, NT3H2111 tag, four LEDs, button.
@@ -49,7 +49,8 @@ R0402_FP = 'Resistor_SMD:R_0402_1005Metric'   # the tag's pull-ups, in a narrow 
 #                   Shares PB7 = CC2: keep CC2_PD off.
 #   5 PA4           MIC_PWR, through R8 + C6 to the mic (also SPI1_NSS: use SSM=1, SSOE=0)
 #   6 PA5 SPI1_SCK  MIC_CLK (PDM clock)   20 PA6 SPI1_MISO MIC_DATA
-#   7 PA7 ADC7      VCELL: the cell, straight in (0.9-1.8 V, under VDD), for the low-battery lockout
+#   7 PA7 ADC7      VSENSE: the cell through R11 (0.9-1.8 V), for the low-battery lockout. PA7 is not
+#                   5 V tolerant and VDD lags VCELL by a diode drop while the boost starts
 #   8 PB0           FD (EXTI: a phone's field wakes the MCU; Standby wake by EXTI event is
 #                   still to be shown on the bench, Stop is the fallback)
 #   9 PB10 I2C2_SCL SCL (PB1 shares the pad: keep it an input)    10 PB11 I2C2_SDA SDA
@@ -59,7 +60,7 @@ R0402_FP = 'Resistor_SMD:R_0402_1005Metric'   # the tag's pull-ups, in a narrow 
 #  11 PB13, 13 PB15: spare.  19 VDD, 21 EP: VSS.  No NRST pin, BOOT0 tied low inside.
 #  Firmware: PB2 (no pin on this package) as pull-down input in low power (DS note 5).
 MCU = {'1': 'BTN', '2': 'LED_O', '3': 'LED_Y', '4': 'LED_G', '14': 'LED_R', '18': 'LED_R_K',
-       '5': 'MIC_PWR', '6': 'MIC_CLK', '20': 'MIC_DATA', '7': 'VCELL', '12': 'NFC_VCC', '8': 'FD',
+       '5': 'MIC_PWR', '6': 'MIC_CLK', '20': 'MIC_DATA', '7': 'VSENSE', '12': 'NFC_VCC', '8': 'FD',
        '9': 'SCL', '10': 'SDA', '15': 'TX', '17': 'SWDIO', '16': 'SWCLK', '19': 'VDD', '21': 'GND'}
 
 PARTS = {
@@ -124,6 +125,9 @@ PARTS = {
     # to VDD: PA0/WKUP has its own pull-down in Standby (see the pin table)
     'SW1': ('Switch:SW_Push', 'measure', 'Button_Switch_SMD:SW_Push_1P1T_XKB_TS-1187A', 'C318884',
             'TS-1187A-B-A-B', '', (60, 60, 0), {'1': 'BTN', '2': 'VDD'}, False),
+    # limits the current into PA7's clamp diode at cell insertion, when VCELL is above VDD
+    'R11': ('Device:R', '4.7k', R0402_FP, 'C25900', '0402WGF4701TCE', 'PA7 series resistor',
+            (22, 140, 0), {'1': 'VSENSE', '2': 'VCELL'}, False),
     'BT1': ('Device:Battery_Cell', 'AAA', 'dbfob:BatteryContacts_MYOUNG_MY-AAA-07_1xAAA', '',
             'MY-AAA-07', 'two spring contacts, hand-fit on the back (LCSC C6937109); + towards the far end',
             (40, 140, 0), {'1': 'VCELL', '2': 'GND'}, False),
@@ -165,7 +169,7 @@ TEXT = [
     ('PDM mic on SPI1: PA5 SCK -> CLK at 1.5 MHz, PA6 MISO <- DATA. Mic powered from PA4 (via R8/C6) while measuring.', (20, 158), 1.5),
     ('LED PWM: PA1 O, PA2 Y, PA3 G (TIM2 CH2-4), PA8 R (TIM1 CH1). D4 cathode on PA10 = light sense.', (20, 162), 1.5),
     ('Tag on I2C2 (PB10/PB11), powered from PB14; FD (PB0) wakes. BTN on PA0/WKUP to VDD. TX on PA9.', (20, 166), 1.5),
-    ('AAA (0.9-1.8 V) -> TLV61220 -> VDD 3.0 V. PA7 (ADC7) reads the cell.', (20, 170), 1.5),
+    ('AAA (0.9-1.8 V) -> TLV61220 -> VDD 3.0 V. PA7 (ADC7) reads the cell through R11.', (20, 170), 1.5),
 ]
 
 

@@ -55,10 +55,8 @@ def preflight():
                 if v['type'] in ('lib_symbol_issues', 'footprint_link_issues'):
                     continue            # no global library tables for kicad-cli on this machine
                 items = ' '.join(i['description'] for i in v.get('items', []))
-                # NFC_VCC is a GPIO-driven supply, flagged on purpose (as rev A's PC6); PA7 reads the
-                # flagged cell (VCELL) through the ADC
-                if v['type'] == 'pin_to_pin' and 'U2' in items and (
-                        ('#FLG01' in items and 'Pin 7 ' in items) or ('#FLG04' in items and 'Pin 12 ' in items)):
+                # NFC_VCC is a GPIO-driven supply, flagged on purpose (as rev A's PC6)
+                if v['type'] == 'pin_to_pin' and 'U2' in items and '#FLG04' in items and 'Pin 12 ' in items:
                     continue
                 out.append(f"ERC {v['severity']} {v['type']}: {v['description'][:60]} {items[:80]}")
         drc = os.path.join(td, 'drc.json')
@@ -105,8 +103,8 @@ def main():
     g = os.path.join(stage, 'gerbers'); os.makedirs(g)
     run('pcb', 'export', 'gerbers', '--layers', 'F.Cu,In1.Cu,In2.Cu,B.Cu,F.Paste,B.Paste,F.SilkS,B.SilkS,F.Mask,B.Mask,Edge.Cuts',
         '--subtract-soldermask', '--no-protel-ext', '--use-drill-file-origin', '-o', g, PCB)
-    run('pcb', 'export', 'drill', '--format', 'excellon', '--excellon-separate-th', '--generate-map',
-        '--drill-origin', 'plot', '--map-format', 'gerberx2', '-o', g + '/', PCB)
+    run('pcb', 'export', 'drill', '--format', 'excellon', '--excellon-separate-th',
+        '--drill-origin', 'plot', '-o', g + '/', PCB)
     z = os.path.join(stage, NAME + '-gerbers.zip')
     with zipfile.ZipFile(z, 'w', zipfile.ZIP_DEFLATED) as zf:
         for f in sorted(os.listdir(g)): zf.write(os.path.join(g, f), f)
