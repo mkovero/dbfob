@@ -107,7 +107,7 @@ PLACE = dict(ant.PLACE, **{
     # drawing, the plate's top lip stands 1.4 mm inboard of the foot's tip, and the contact can sit
     # 0.3 mm either way on its pads: lip at x 74.2 to 74.5, with another 0.4 mm of scaling and part
     # tolerance. The hole starts at x 75.2 and takes the rest: 0.9 mm of web to the end and to the
-    # side, 0.65 mm to the foot pad (a hole counts as board edge).
+    # side, 0.72 mm to the foot pad (a hole counts as board edge).
     'H1': (76.4, 2.1, 0, False),
     # PA7's series resistor, third in the row with R10 and R9 (3.2 mm apart)
     'R11': (R11X, 9.4, 0, False),          # pad 1 = VSENSE (towards U2), pad 2 = VCELL
