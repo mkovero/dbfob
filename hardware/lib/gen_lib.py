@@ -30,8 +30,7 @@ Sources, by part:
                  0.25 mm hole-to-copper; outer 1.625 as drawn. Paste: four ring segments with 0.2 mm
                  vents, as the example stencil.
   LED_0805_narrow  KiCad's LED_0805_2012Metric with the pads 1.25 mm wide (the LED body's width) instead
-                 of 1.4 and the courtyard 0.175 mm off the body, so a row stands on 1.63 mm. Pad 1 = K, 2 = A,
-                 as KiCad's.
+                 of 1.4, so a row stands on 1.75 mm with 0.5 mm between bodies. Pad 1 = K, 2 = A, as KiCad's.
   BS-08-B2AA001  MYOUNG CR2032 holder, LCSC C964777: pads and body from the EasyEDA footprint and
                  3D model JLC places it with (pad 1 = +, 3.8 x 3.8 at x +11.02; pad 2 = -, 4.3 x
                  2.8 at x -10.98; body 25.4 x 15.7 x 5.3 mm centred at x -0.34). The holder brings
@@ -272,11 +271,11 @@ def led0805n():
     items = [fp_text('Reference', 'REF**', 0, -1.5, 'F.SilkS'), fp_text('Value', name, 0, 1.5, 'F.Fab'),
              rect(-1.0, -0.625, 1.0, 0.625, 'F.Fab', 0.1, name),
              line(-0.7, -0.625, -0.7, 0.625, 'F.Fab', 0.1, name),        # cathode end
-             rect(-1.68, -0.8, 1.68, 0.8, 'F.CrtYd', 0.05, name),
+             rect(-1.68, -0.875, 1.68, 0.875, 'F.CrtYd', 0.05, name),
              line(-1.6, -0.6, -1.6, 0.6, 'F.SilkS', 0.12, name)] + pads   # cathode bar
     items.append('\t(model "${KICAD10_3DMODEL_DIR}/LED_SMD.3dshapes/LED_0805_2012Metric.step" (offset (xyz 0 0 0)) '
                  '(scale (xyz 1 1 1)) (rotate (xyz 0 0 0)))')
-    return name, footprint(name, 'LED 0805, pads 1.25 mm wide for a close-set row (1.63 mm pitch); pad 1 = cathode', 'smd', items)
+    return name, footprint(name, 'LED 0805, pads 1.25 mm wide for a 1.75 mm pitch row; pad 1 = cathode', 'smd', items)
 
 
 def pogo(n):
@@ -293,15 +292,15 @@ def pogo5(): return pogo(5)
 def pogo6(): return pogo(6)
 
 
-def slot27():
-    """2.7 x 3.1 mm NPTH slot for a small split ring or cord (no stock KiCad footprint this size)."""
-    name = 'Slot_2.7x3.1mm'
-    items = [fp_text('Reference', 'REF**', 0, -2.2, 'F.Fab'), fp_text('Value', name, 0, 2.2, 'F.Fab'),
-             f'\t(fp_rect (start -1.8 -1.6) (end 1.8 1.6) (stroke (width 0.05) (type solid)) (fill no) '
+def ringhole():
+    """2.4 mm round NPTH for a small split ring or cord (no stock KiCad footprint this size)."""
+    name = 'RingHole_2.4mm'
+    items = [fp_text('Reference', 'REF**', 0, -2.0, 'F.Fab'), fp_text('Value', name, 0, 2.0, 'F.Fab'),
+             f'\t(fp_circle (center 0 0) (end 1.45 0) (stroke (width 0.05) (type solid)) (fill no) '
              f'(layer "F.CrtYd") (uuid "{uid(name, "crtyd")}"))',
-             f'\t(pad "" np_thru_hole oval (at 0 0) (size 3.1 2.7) (drill oval 3.1 2.7) (layers "*.Cu" "*.Mask") '
+             f'\t(pad "" np_thru_hole circle (at 0 0) (size 2.4 2.4) (drill 2.4) (layers "*.Cu" "*.Mask") '
              f'(uuid "{uid(name, "hole")}"))']
-    return name, footprint(name, '2.7 x 3.1 mm NPTH slot, for a small split ring or cord', 'exclude_from_pos_files exclude_from_bom', items)
+    return name, footprint(name, '2.4 mm NPTH, for a small split ring or cord', 'exclude_from_pos_files exclude_from_bom', items)
 
 
 def bs08():
@@ -359,7 +358,7 @@ def main():
     open(os.path.join(HERE, 'dbfob.kicad_sym'), 'w').write('\n'.join(sym) + '\n')
     d = os.path.join(HERE, 'dbfob.pretty')
     os.makedirs(d, exist_ok=True)
-    for gen in (xqfn8, im66d130m, sph0655, led0805n, pogo5, pogo6, slot27, bs08, l2016, aaa_contacts):
+    for gen in (xqfn8, im66d130m, sph0655, led0805n, pogo5, pogo6, ringhole, bs08, l2016, aaa_contacts):
         name, text = gen()
         open(os.path.join(d, name + '.kicad_mod'), 'w').write(text)
     print('wrote', os.path.join(HERE, 'dbfob.kicad_sym'), 'and', d)

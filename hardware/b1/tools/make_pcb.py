@@ -12,8 +12,8 @@ Board: the stick, 10.5 x 78.5 x 1.0 mm, 4 layers, every machine-placed part on t
 outline and the antenna block (coil in the tip, the LB crossover, tag, trim pads, the AAA
 contacts on the back) come from ../lib/antenna.py, identical to the NFC test board's. Along
 the stick from the tip: the mic inside the coil with its port through the board, the tag, the
-LED bar, the button, the Tag-Connect footprint (on the back), the MCU, the boost converter, a 2.7 x 3.1 mm
-ring slot in the far corner. A keyring is the case's job. Everything past the coil sits under the cell, which lies on the back.
+LED bar, the button, the Tag-Connect footprint (on the back), the MCU, the boost converter, a 2.4 mm
+ring hole in the far corner. A keyring is the case's job. Everything past the coil sits under the cell, which lies on the back.
 
 Four layers because two would not route in 10.5 mm: the MCU's fan-out, the tag's lines and the
 mic's lines out of the coil share one corridor, and the cell contacts' pads fill the middle of
@@ -62,7 +62,9 @@ BOOST_DX = 12.0   # the boost converter right after U2, over the + contact's bas
 J1_VDD_VIA = (J1X - 1.9, 2.9)
 
 MK1X = 5.07
-LED_X0, LED_P = 33.85, 4.9 / 3        # the LED bar's first column and pitch (1.633): D4 ends up at 38.75, hard by SW1
+LED_X0, LED_P = 33.5, 1.75            # the LED bar's first column and pitch: D4 ends up at 38.75, hard by SW1
+PULLUP_X = 31.25                      # 1.05 mm from U1's body (JLC: 1.0 mm from a QFN)
+BT1_GROW = 0.2                        # BT1's pads grown this much each side while routing: other nets' vias stay 0.35 mm off the hand-soldered pads
 R3Y = 4.275                           # midway between R1 and R2
 R11X = 69.0                           # in the FB divider's row, on its pitch
 VSENSE_VIA = (R11X - 1.3, 9.4)       # between R9 and R11, below the contact's body on the back (y 2.1 to 8.4)
@@ -78,9 +80,10 @@ PLACE = dict(ant.PLACE, **{
     'R8': (9.7, 5.25, 90, False),
     # tag pull-ups (0402) right of U1, signal pad left, in an even column (1.125 mm); FD comes in
     # through the gap between R3 and R2
-    'R1': (31.15, 3.15, 180, False),   # SDA
-    'R3': (31.15, R3Y, 180, False),    # FD
-    'R2': (31.15, 5.4, 180, False),    # SCL
+    'R1': (PULLUP_X, 3.15, 180, False),   # SDA
+    'R3': (PULLUP_X, R3Y, 180, False),    # FD
+    'R2': (PULLUP_X, 5.4, 180, False),    # SCL
+    'C3': (28.9, 1.75, 0, False),         # antenna.py's C3, 0.15 mm further from U1's body (1.05 mm)
     # LED bar right after the tag, green to red. Each column: the LED at the top, cathode to the
     # edge, anode down onto its resistor, whose U2 end faces the middle of the stick.
     # D1 and D2 are 0805 (narrow-pad footprint), D3 and D4 0603. Four columns on one pitch (LED_P)
@@ -100,11 +103,12 @@ PLACE = dict(ant.PLACE, **{
     'R10': (50.6 + BOOST_DX, 9.4, 180, False),    # FB divider in a row below, R10's GND end by U3's GND side
     'R9': (53.8 + BOOST_DX, 9.4, 180, False),     # VDD pad under C5's VDD track
     'SW1': (42.3, 5.25, 90, False),
-    # ring slot in the far corner, past the + contact's plate. The MY-AAA-07 drawing puts the plate
-    # about 2 mm inboard of the foot's tip (x 75.9), so near x 73.7, and the contact's 6.35 mm wide
-    # body runs tipward from there: the slot starts at x 74.5, beside the narrow foot tab only.
-    # A slot counts as board edge: 0.5 mm clear of the foot pad, 0.75 mm web to the side, 0.9 mm to the end
-    'H1': (76.05, 2.1, 0, False),
+    # ring hole in the far corner, past the + contact's plate, 2.4 mm round. Scaled from the MY-AAA-07
+    # drawing, the plate's top lip stands 1.4 mm inboard of the foot's tip, and the contact can sit
+    # 0.3 mm either way on its pads: lip at x 74.2 to 74.5, with another 0.4 mm of scaling and part
+    # tolerance. The hole starts at x 75.2 and takes the rest: 0.9 mm of web to the end and to the
+    # side, 0.65 mm to the foot pad (a hole counts as board edge).
+    'H1': (76.4, 2.1, 0, False),
     # PA7's series resistor, third in the row with R10 and R9 (3.2 mm apart)
     'R11': (R11X, 9.4, 0, False),          # pad 1 = VSENSE (towards U2), pad 2 = VCELL
 })
@@ -118,7 +122,7 @@ RING_TIE = ['MK1.2', (MK1X - 0.71 + MIC_RING_R * math.cos(math.radians(40)), 5.2
 # down the channel between the pad columns to C5, VDD round the right of pin 4. SW is drawn
 # whole, kept from the router, and put back after it (restore_hand); FB and EN are left to the
 # router. (net, width, points)
-PULLUP_VIAS = [(32.45, R3Y), (31.66, 6.6), (30.64, 2.15)]   # R3's VDD beside the pad, R2's NFC_VCC below it
+PULLUP_VIAS = [(32.45, R3Y), (PULLUP_X + 0.51, 6.6), (PULLUP_X - 0.51, 2.15)]   # R3's VDD beside the pad, R2's NFC_VCC below it
 BOOST = [
     ('/SW', 0.4, ['L1.2', 'U3.1']),
     ('/GND', 0.3, ['U3.2', (51.5 + BOOST_DX, 5.25), (51.5 + BOOST_DX, 7.8), 'C5.2']),
@@ -136,7 +140,7 @@ BOOST = [
     # SW1. The router may reshape it (it is in its net list), so it is not put back afterwards.
     ('/FD', 0.15, ['U2.8', (U2X, 7.95), (U2X + 0.15, 8.1), (U2X + 0.15, 9.4),
                    (U2X - 0.325, 9.875), (39.9, 9.875), (38.855, 8.83), (36.0, 8.83),
-                   (35.0, 8.83), (33.0, 6.83), (33.0, 5.195), (32.645, 4.84), (31.2, 4.84), 'R3.2', 'U1.4']),   # up between the pull-ups and R4, in between R3 and R2
+                   (34.78, 8.83), (32.78, 6.83), (32.78, 5.195), (32.425, 4.84), (31.3, 4.84), 'R3.2', 'U1.4']),   # up between the pull-ups and R4, in between R3 and R2
 ]
 # J1's pads are on the back: pin 1 up between two clip holes to its via, GND pins 3 and 9
 # (diagonal neighbours, between pins 2 and 8) joined. Drawn on B.Cu.
@@ -293,6 +297,10 @@ def build():
         for p in fp.Pads():
             net = pins.get((ref, p.GetNumber()))
             if net in nets: p.SetNet(nets[net])
+        if ref == 'BT1':
+            for p in fp.Pads():
+                g = pcbnew.FromMM(2 * BT1_GROW)
+                p.SetSize(pcbnew.VECTOR2I(p.GetSize().x + g, p.GetSize().y + g))
         if ref in ('J1', 'H1'):
             for p in fp.Pads():
                 if p.GetAttribute() == pcbnew.PAD_ATTRIB_NPTH:
@@ -439,8 +447,15 @@ def restore_npth():
             out += [t[last:m.start()], m.group(1), f'(size {dx} {dy})', m.group(4), m.group(5),
                     f' {m.group(6)}' if m.group(6) else '', ')']
             last, k = m.end(), k + 1
-    open(PCB, 'w').write(''.join(out) + t[last:])
-    assert k == 8, f'restore_npth: {k} pads'      # J1's seven, H1's slot
+    t, n = ''.join(out) + t[last:], 0
+    def shrink(m):
+        nonlocal n
+        n += 1
+        return f'{m.group(1)}(size {float(m.group(2)) - 2 * BT1_GROW:g} {float(m.group(3)) - 2 * BT1_GROW:g})'
+    t = re.sub(r'(\(pad "[12]" smd rect\s+\(at [^)]*\)\s+)\(size (4\.65) (5\.7|3)\)', shrink, t)   # BT1's four
+    assert n == 4, f'restore_npth: {n} BT1 pads'
+    open(PCB, 'w').write(t)
+    assert k == 8, f'restore_npth: {k} pads'      # J1's seven, H1
 
 
 def drc():

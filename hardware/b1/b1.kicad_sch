@@ -2824,7 +2824,7 @@
 			(at 33.48 115.22 0)
 			(effects (font (size 1.27 1.27)))
 		)
-		(property "Footprint" "dbfob:Slot_2.7x3.1mm"
+		(property "Footprint" "dbfob:RingHole_2.4mm"
 			(at 30.48 109.22 0)
 			(effects (font (size 1.27 1.27)) (hide yes))
 		)
@@ -2840,7 +2840,7 @@
 			(at 30.48 109.22 0)
 			(effects (font (size 1.27 1.27)) (hide yes))
 		)
-		(property "Note" "ring / cord slot, 2.7 x 3.1 mm NPTH"
+		(property "Note" "ring / cord hole, 2.4 mm NPTH"
 			(at 30.48 109.22 0)
 			(effects (font (size 1.27 1.27)) (hide yes))
 		)
