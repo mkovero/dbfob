@@ -26,7 +26,7 @@ S_COIL = (0.25, 0.25, 22.0, 10.0)         # coil zone: x, y, length, width (oute
 S_TW, S_PITCH, S_TURNS = 0.15, 0.30, 9
 S_CELL = (26.0, 44.5, 10.5)               # x start, length, diameter (Energizer L92)
 S_LANYARD = 5.0                           # case past the board's far end, for a lanyard hole
-S_PARTS_H, S_BOARD_T = 1.5, 1.0           # tallest part (button), board thickness
+S_PARTS_H, S_BOARD_T = 1.5, 1.6           # tallest part (button), board thickness
 
 # CR1632 stick: cell under the far end of the board, coil zone at the tip, as on B1.
 C_W, C_L, C_CELL_D = 18.0, 40.0, 16.0

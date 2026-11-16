@@ -8,7 +8,7 @@ under our fab rules, UUIDs derive from content, DRC with schematic parity is the
   python3 hardware/b1/tools/make_pcb.py
   python3 hardware/b1/tools/fab.py
 
-Board: the stick, 10.5 x 78.5 x 1.0 mm, 4 layers, every machine-placed part on the front. The
+Board: the stick, 10.5 x 78.5 x 1.6 mm, 4 layers, every machine-placed part on the front. The
 outline and the antenna block (coil in the tip, the LB crossover, tag, trim pads, the AAA
 contacts on the back) come from ../lib/antenna.py, identical to the NFC test board's. Along
 the stick from the tip: the mic inside the coil with its port through the board, the tag, the
@@ -44,7 +44,7 @@ KRT = os.environ.get('KRT', '/home/mui/src/KicadRoutingTools')
 
 W, H = ant.L, ant.W           # board, mm: x along the stick
 X0, Y0 = 100.0, 100.0
-THICKNESS = 1.0
+THICKNESS = 1.6          # JLC would not take 1.0 mm with this order (2026-11-16)
 TRACK, CLEAR, VIA, DRILL = 0.15, 0.15, ant.VIA, ant.DRILL
 POWER = ['/GND', '/VDD', '/VCELL']
 LAYERS = ['F.Cu', 'In1.Cu', 'In2.Cu', 'B.Cu']   # 4 layers, no planes: the inner two are for signals

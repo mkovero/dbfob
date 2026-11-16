@@ -1,6 +1,6 @@
 # B1 (rev B)
 
-A stick, 10.5 × 78.5 × 1.0 mm, 4 layers, with the mic at the tip and one AAA cell on the back: rev A's metering, with the log readable by tapping a phone. Scope and part choices are in [docs/rev-b.md](../../docs/rev-b.md#b1-stick-aaa-instead-of-cr2032-decided-2026-11-09).
+A stick, 10.5 × 78.5 × 1.6 mm, 4 layers, with the mic at the tip and one AAA cell on the back: rev A's metering, with the log readable by tapping a phone. Scope and part choices are in [docs/rev-b.md](../../docs/rev-b.md#b1-stick-aaa-instead-of-cr2032-decided-2026-11-09).
 
 ![top render](production/render-top.png)
 
@@ -97,7 +97,7 @@ Same procedure as rev A ([../README.md](../README.md)). Routing is signals first
 - Extended parts (JLC setup fee each): L1, MK1, U1, U2, U3. The rest are Basic.
 - **ENIG finish:** flat pads for the mic's seal ring and the QFNs, and J1's pads are bare contacts for pogo pins.
 - **Check JLC's DFM preview** for the mic: its rotation, and that the copper ring round the 0.6 mm port isn't trimmed (JLC may remove thin copper rings at NPTHs).
-- 4 layers at 1.0 mm.
+- 4 layers at 1.6 mm. Drawn for 1.0 mm, but JLC's order form would not take 1.0 mm for this order (2026-11-16); nothing in the layout depends on it. The mic's port is 0.6 mm longer for it.
 - U2's GND via sits in the exposed pad, between the paste windows: expect a little solder wicking.
 - Only a small ring hole (H1) in the PCB: a keyring with keys goes on the case. J1's 2.4 mm clip holes can take locating pegs from the case's front half; on the back they're under the cell, so pegs from that side must stop short of it.
 - No reverse-cell protection: a reversed AAA puts −1.5 V on the TLV61220 (abs. min −0.3 V). The case must key the cell's direction.
