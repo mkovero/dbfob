@@ -194,6 +194,17 @@ int main()
 			mic_test();
 		}
 		was_pressed = step ? pressed : 0;
+		if( step % 25 == 0 )                    // ADC diagnostics: raw counts (0..4095), two ADC clocks
+		{
+			for( int pre = 0; pre < 4; pre += 3 )
+			{
+				RCC->CFGR0 = ( RCC->CFGR0 & ~RCC_ADCPRE ) | ( pre << 14 );
+				printf( "adc pre=%d ctlr2=%08lx raw: pa7=%lu temp=%lu vref=%lu cal18=%lu\n", pre ? 8 : 2,
+					(unsigned long)ADC1->CTLR2, (unsigned long)adc_read( 7 ) / 16, (unsigned long)adc_read( 16 ) / 16,
+					(unsigned long)adc_read( 17 ) / 16, (unsigned long)adc_read( 18 ) / 16 );
+			}
+			RCC->CFGR0 &= ~RCC_ADCPRE;
+		}
 		if( step % 5 == 0 )
 		{
 			uint32_t ref = adc_read( 17 ), cell = adc_read( 7 );
