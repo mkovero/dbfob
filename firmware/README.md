@@ -93,6 +93,8 @@ You need one programmer. minichlink detects either of these automatically.
 | WCH-LinkE | 3V3 | SWDIO | GND | RX |
 | ESP32-S2 with [esp32s2-funprog](https://github.com/cnlohr/esp32s2-cookbook/tree/master/ch32v003programmer) | **3V3, never 5 V** (the mic's maximum is 3.6 V) | GPIO6, optional 10 kΩ pull-up to 3V3 | GND | GPIO7, through 1 kΩ. Not read by the stock firmware; reserved for a future USB-serial bridge. |
 
+**B1 (CH32L103)** uses two debug wires instead of one. J1 is a Tag-Connect footprint on the back (pad map in [hardware/b1/README.md](../hardware/b1/README.md)): pad 1 VDD → 3V3, pad 2 SWDIO → GPIO6, pad 4 SWCLK → GPIO4, pad 3 GND. The same programmer firmware (5.x) tries one wire first and then two. The owner's programmer has the clock lead on **GPIO5**, so it runs a build with `SWCLK_PIN 5` in `ch32v003programmer/main/pindefs.h` (ESP-IDF 5.2.5; the stock binary will not find a 2-wire chip on it). Rev A boards work with either build.
+
 Setting up the ESP32-S2 (once):
 1. Hold BOOT while plugging it in.
 2. From `esp32s2-cookbook/ch32v003programmer`, flash the prebuilt firmware:

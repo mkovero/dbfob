@@ -4,7 +4,7 @@ A stick, 10.5 × 78.5 × 1.6 mm, 4 layers, with the mic at the tip and one AAA c
 
 ![top render](production/render-top.png)
 
-**Status: ordered from JLCPCB on 2026-11-16** (commit e3a0548: 5 boards, 4 layers, 1.6 mm, ENIG, Economic PCBA on the top side, mic SPH0655LM4H-1). Redrawn as the AAA stick on 2026-11-09. The first draft (2026-11-03) was a 30 × 26 mm CR2032 board. The [NFC test board](../nfc-test/README.md) shares its antenna, outline and cell but was dropped from the order on 2026-11-12: B1 finds its own trim (see [On the bench](#on-the-bench-nfc)).
+**Status: boards arrived, bring-up started 2026-11-26** (see [Bring-up](#bring-up)). Ordered from JLCPCB on 2026-11-16 (commit e3a0548: 5 boards, 4 layers, 1.6 mm, ENIG, Economic PCBA on the top side, mic SPH0655LM4H-1). Redrawn as the AAA stick on 2026-11-09. The first draft (2026-11-03) was a 30 × 26 mm CR2032 board. The [NFC test board](../nfc-test/README.md) shares its antenna, outline and cell but was dropped from the order on 2026-11-12: B1 finds its own trim (see [On the bench](#on-the-bench-nfc)).
 
 ## What's on it
 
@@ -63,6 +63,14 @@ Along the stick from the tip:
 - Waking Standby by an EXTI event on FD (PB0). The reference manual says any EXTI event wakes Standby, but no example does it. If it doesn't work, FD wakes from Stop (about 4.5 µA) instead.
 - R3 (100 kΩ) against the tag's FD leakage (10 µA max). Measure FD current with NFC_VCC off (PB0 as an analog input, meter in series with R3 or across it); keep 100 kΩ only if it is well under 1 µA.
 - The boost's ripple at the mic, and the converter's real standby draw from an AAA.
+
+## Bring-up
+
+**2026-11-26, board 1**, powered at 3.3 V from the programmer through J1, no cell, test firmware [`firmware/b1-test`](../../firmware/b1-test) (882792f):
+- The CH32L103 answers on the 2-wire debug interface and identifies as CH32L103, 64 kB, read protection off. It flashed first time.
+- Programmer: the ESP32-S2 from rev A (esp32s2-funprog 5.30) with minichlink; it finds 2-wire chips by itself. Wiring is in [firmware/README.md](../../firmware/README.md#flash).
+- All four LEDs light in the sweep. The green one is by far the brightest at 3.3 V, the opposite of what the table above expects: R4 needs to go up, not down. Check again on the cell's 3.0 V rail before picking a value.
+- Not yet checked: the button, printf over the debug wires, the boost converter, the mic, NFC, the cell contacts.
 
 ## On the bench: NFC
 
