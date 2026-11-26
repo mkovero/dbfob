@@ -13,3 +13,8 @@ firmware/*.map
 firmware/build/
 hardware/nfc-test/production.staging/
 hardware/b1/production.staging/
+firmware/b1-test/*.elf
+firmware/b1-test/*.bin
+firmware/b1-test/*.hex
+firmware/b1-test/*.lst
+firmware/b1-test/*.map
