@@ -82,7 +82,8 @@ Along the stick from the tip:
 - **Standby current** ([`firmware/b1-standby`](../../firmware/b1-standby) be1a019, nothing attached, DP832A on the contact pads, 34461A in series, 2 s averages): 17.2 µA at 1.7 V, 19.4 µA at 1.5 V, 22.9 µA at 1.3 V, 27.7 µA at 1.1 V, 35.0 µA at 0.9 V. That is a constant 29–31 µW, about 8 µA on the 3.0 V rail, as estimated above (converter, divider, MCU). Awake at 16 MHz with one LED blinking it draws 7.2–8.7 mA at 1.5 V.
 - **Getting into Standby took three tries.** With the entry sequence from ch32fun's `examples_l103/standby` the board sat at 1.75 mA (0.75 mA on the 3.0 V rail, constant power over 0.9–1.7 V in) and did not wake on the button. It works with WCH's own sequence (`EVT/EXAM/PWR/Standby_Mode`): switch off the USB-PD pins' 5.1 kΩ pull-downs, which are on after reset (`USBPD->PORT_CC1/2 &= ~CC_PD`), then write PWR_CTLR once with flash low-power mode 1, CWUF and PDDS. Which of the two changes did it is not yet isolated.
 - **Measure Standby on the DMM's 10 mA range, not the 100 µA range.** On the 34461A's 100 µA range the reading was overload for 10 s on end: either the range change restarts the board and it then cannot get through its awake phase across that range's shunt, or the converter's refill bursts exceed the range. Back on the 10 mA range it read 17.6 µA again at once.
-- Not yet checked: the wake by the button out of Standby, VDD's ripple, the antenna trim and read distance, the cell contacts.
+- The button wakes it out of Standby (PA0/WKUP, no resistor): the firmware sees the wake-up and standby flags, runs its 8 s and goes back to sleep.
+- Not yet checked: VDD's ripple, the antenna trim and read distance, the cell contacts.
 
 ## On the bench: NFC
 
