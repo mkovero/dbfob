@@ -35,7 +35,9 @@ static const uint8_t leds[4] = { LED_G, LED_Y, LED_O, LED_R };
 
 // ---- ADC: one conversion of a channel, longest sample time (PA7 has 4.7 kOhm in series) ----
 
-static void adc_init( void )
+static uint32_t adc_calval;
+
+static void adc_init( int calibrate )
 {
 	RCC->APB2PCENR |= RCC_APB2Periph_ADC1;
 	RCC->APB2PRSTR |= RCC_APB2Periph_ADC1;
@@ -46,10 +48,12 @@ static void adc_init( void )
 	ADC1->RSQR1 = 0;                           // one conversion
 	ADC1->CTLR2 = ADC_ADON | ADC_EXTSEL | ADC_EXTTRIG | ADC_TSVREFE;   // software start, Vrefint on
 	Delay_Ms( 2 );
+	if( !calibrate ) return;
 	ADC1->CTLR2 |= ADC_RSTCAL;
 	while( ADC1->CTLR2 & ADC_RSTCAL ) { }
 	ADC1->CTLR2 |= ADC_CAL;
 	while( ADC1->CTLR2 & ADC_CAL ) { }
+	adc_calval = ADC1->RDATAR;
 }
 
 static uint32_t adc_read( int channel )      // sum of 16 conversions
@@ -179,7 +183,7 @@ int main()
 		funPinMode( leds[i], GPIO_CFGLR_OUT_10Mhz_PP );
 		funDigitalWrite( leds[i], FUN_LOW );
 	}
-	adc_init();
+	adc_init( 1 );
 
 	unsigned step = 0;
 	int was_pressed = 1;                       // run the tests once at start
@@ -194,16 +198,15 @@ int main()
 			mic_test();
 		}
 		was_pressed = step ? pressed : 0;
-		if( step % 25 == 0 )                    // ADC diagnostics: raw counts (0..4095), two ADC clocks
+		if( step % 25 == 0 )                    // ADC diagnostics: raw counts (0..4095), without and with calibration
 		{
-			for( int pre = 0; pre < 4; pre += 3 )
+			for( int cal = 0; cal < 2; cal++ )
 			{
-				RCC->CFGR0 = ( RCC->CFGR0 & ~RCC_ADCPRE ) | ( pre << 14 );
-				printf( "adc pre=%d ctlr2=%08lx raw: pa7=%lu temp=%lu vref=%lu cal18=%lu\n", pre ? 8 : 2,
-					(unsigned long)ADC1->CTLR2, (unsigned long)adc_read( 7 ) / 16, (unsigned long)adc_read( 16 ) / 16,
+				adc_init( cal );
+				printf( "adc cal=%d calval=%lu raw: pa7=%lu temp=%lu vref=%lu cal18=%lu\n", cal, (unsigned long)adc_calval,
+					(unsigned long)adc_read( 7 ) / 16, (unsigned long)adc_read( 16 ) / 16,
 					(unsigned long)adc_read( 17 ) / 16, (unsigned long)adc_read( 18 ) / 16 );
 			}
-			RCC->CFGR0 &= ~RCC_ADCPRE;
 		}
 		if( step % 5 == 0 )
 		{
