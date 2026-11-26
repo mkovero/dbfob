@@ -28,7 +28,7 @@ Along the stick from the tip:
 | MK1 | Knowles SPH0655LM4H-1, C22376158 | 132.5 dB SPL AOP, −37 ±1 dBFS, normal mode 1.1–4.8 MHz (below 0.9 MHz it drops to low-power mode, 116 dB AOP: keep the clock at 1.5 MHz). 0.6 mm port (NPTH) through the board, inside the coil. Replaces the IM66D130M, which JLC assembles only as Standard PCBA |
 | R8, C6 | 100 Ω, 1 µF (C15849) | mic supply from PA4, filtered against the boost's burst ripple |
 | U1 | NT3H2111W0FHKH, C710403 | NTAG I2C plus 1k, powered from PB14 |
-| C1, C2 | 0603 trim, **not fitted** | C0G, value found on the bench |
+| C1, C2 | 0603 trim, **not fitted** | C0G, value found on the bench: 22 pF in C1 on board 1 (see Bring-up) |
 | C3, C4 | 100 nF | tag and MCU decoupling |
 | R1, R2 | 4.7 kΩ, 0402 (C25900) | SDA / SCL pull-ups to NFC_VCC. 0402 to make room for the 0805 LEDs |
 | R3 | 100 kΩ, 0402 (C25741) | FD pull-up to VDD |
@@ -82,6 +82,7 @@ Along the stick from the tip:
 - Coil: 2.25 Ω across C1's pads, so it is whole and joined to the tag.
 - Phone tap, antenna untrimmed (C1/C2 empty): one phone reacted once before the tag was formatted, and none since, formatted or not. The trim is the open point (see below).
 - **Untrimmed resonance: 16.83 MHz**, Q about 32 (LibreVNA, one-turn loop of about 205 nH on port 1, 5–35 MHz, −20 dBm, board unpowered, no cell; three sweeps agree). Seen as a 4.2 Ω bump in the loop's resistance, 1.4 dB in S11. That is 3.3 MHz above the carrier with a half-width of 0.26 MHz, which explains the phones. With the tag's 50 pF this makes the coil about 1.8 µH, and the trim formula below gives 27 pF for 13.56 MHz and 22 pF for 14.0 MHz.
+- **C1 = 22 pF fitted: 13.90 MHz**, Q still about 32 (same set-up, no cell, no phone). The shift says the tag and strays were 47 pF, so the formula holds on this board.
 - **Standby current** ([`firmware/b1-standby`](../../firmware/b1-standby) be1a019, nothing attached, DP832A on the contact pads, 34461A in series, 2 s averages): 17.2 µA at 1.7 V, 19.4 µA at 1.5 V, 22.9 µA at 1.3 V, 27.7 µA at 1.1 V, 35.0 µA at 0.9 V. That is a constant 29–31 µW, about 8 µA on the 3.0 V rail, as estimated above (converter, divider, MCU). Awake at 16 MHz with one LED blinking it draws 7.2–8.7 mA at 1.5 V.
 - **Getting into Standby took three tries.** With the entry sequence from ch32fun's `examples_l103/standby` the board sat at 1.75 mA (0.75 mA on the 3.0 V rail, constant power over 0.9–1.7 V in) and did not wake on the button. It works with WCH's own sequence (`EVT/EXAM/PWR/Standby_Mode`): switch off the USB-PD pins' 5.1 kΩ pull-downs, which are on after reset (`USBPD->PORT_CC1/2 &= ~CC_PD`), then write PWR_CTLR once with flash low-power mode 1, CWUF and PDDS. Which of the two changes did it is not yet isolated.
 - **Measure Standby on the DMM's 10 mA range, not the 100 µA range.** On the 34461A's 100 µA range the reading was overload for 10 s on end: either the range change restarts the board and it then cannot get through its awake phase across that range's shunt, or the converter's refill bursts exceed the range. Back on the 10 mA range it read 17.6 µA again at once.
