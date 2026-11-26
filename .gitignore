@@ -18,3 +18,8 @@ firmware/b1-test/*.bin
 firmware/b1-test/*.hex
 firmware/b1-test/*.lst
 firmware/b1-test/*.map
+firmware/b1-standby/*.elf
+firmware/b1-standby/*.bin
+firmware/b1-standby/*.hex
+firmware/b1-standby/*.lst
+firmware/b1-standby/*.map

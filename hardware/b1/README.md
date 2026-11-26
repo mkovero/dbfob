@@ -77,7 +77,9 @@ Along the stick from the tip:
 - Mic: powered from PA4 and clocked at 2 MHz from SPI1, its bit stream is half ones. Per 512 bits the count stays within 258–261 in a quiet room and swings between 53 and 397 when blown on: it hears.
 - ADC: **do not run the ADC's calibration (RSTCAL/CAL) as on other CH32 parts.** With it, every reading came out 2048 counts too high, or zero. Without it, Vrefint reads 1497 at 3.3 V (1.2 V × 4095 / 1497 = 3.28 V) and the calibration channel 18 reads 2057, 9 counts over half scale; the test firmware takes that off as the offset. The proper sequence for this chip is still to be read from WCH's library.
 - Cell reading on PA7 (through R11, 16 conversions averaged, 239.5-cycle sample time, Vrefint taken as 1.200 V), board on a bench supply with only the debug wires attached: 1500–1504 mV at 1.5064 V on the DMM, 998–1003 mV at 1.0081 V. That is 0.4–0.8 % low with ±2 mV of noise, uncalibrated: good enough for the low-battery lockout as it is. VDD reads 3022–3026 mV against the DMM's 3.024 V.
-- Not yet checked: VDD's ripple, the start-up voltage from 0, a phone tap, the cell contacts, Standby.
+- The converter also starts from 0 at 0.57 V (datasheet: 0.7 V typical).
+- Phone tap, antenna untrimmed (C1/C2 empty), supply on: one phone reacted once, then nothing. Not a verdict yet: the tag is blank, which an iPhone ignores silently, and the trim is still to be found (see below).
+- Not yet checked: VDD's ripple, the antenna trim and read distance, the cell contacts, Standby current ([`firmware/b1-standby`](../../firmware/b1-standby)).
 
 ## On the bench: NFC
 
