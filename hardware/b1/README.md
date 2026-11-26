@@ -70,7 +70,9 @@ Along the stick from the tip:
 - The CH32L103 answers on the 2-wire debug interface and identifies as CH32L103, 64 kB, read protection off. It flashed first time.
 - Programmer: the ESP32-S2 from rev A (esp32s2-funprog 5.30) with minichlink; it finds 2-wire chips by itself. Wiring is in [firmware/README.md](../../firmware/README.md#flash).
 - All four LEDs light in the sweep. The green one is by far the brightest at 3.3 V, the opposite of what the table above expects: R4 needs to go up, not down. Check again on the cell's 3.0 V rail before picking a value.
-- Not yet checked: the button, printf over the debug wires, the boost converter, the mic, NFC, the cell contacts.
+- The button reads on PA0 (pull-down, no bounce trouble at a 200 ms poll), and printf over the two debug wires works through the ESP32-S2 (`make monitor`).
+- The yellow LED (590 nm) looks orange next to the green.
+- Not yet checked: the boost converter, the mic, NFC, the cell contacts, Standby.
 
 ## On the bench: NFC
 
