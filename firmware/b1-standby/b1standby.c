@@ -27,7 +27,8 @@ int main()
 {
 	SystemInit();
 	funGpioInitAll();
-	RCC->APB1PCENR |= RCC_PWREN;
+	RCC->APB1PCENR |= RCC_PWREN | RCC_BKPEN;
+	PWR->CTLR |= PWR_CTLR_DBP;
 
 	uint32_t csr = PWR->CSR;
 	int woke = ( csr & PWR_CSR_WUF ) && ( csr & PWR_CSR_SBF );
@@ -58,5 +59,8 @@ int main()
 	NVIC->SCTLR |= ( 1 << 2 );
 	__WFI();
 
-	while( 1 ) flash( LED_O, 1, 50 );          // not reached: fast red flicker means Standby was refused
+	// Not reached if Standby was entered. The pins were released above: take the green LED back
+	// and flicker it, so a refused Standby shows.
+	funPinMode( LED_G, GPIO_CFGLR_OUT_10Mhz_PP );
+	while( 1 ) flash( LED_G, 1, 50 );
 }
