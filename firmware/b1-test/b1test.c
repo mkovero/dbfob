@@ -35,9 +35,11 @@ static const uint8_t leds[4] = { LED_G, LED_Y, LED_O, LED_R };
 
 // ---- ADC: one conversion of a channel, longest sample time (PA7 has 4.7 kOhm in series) ----
 
-static uint32_t adc_calval;
-
-static void adc_init( int calibrate )
+// No ADC_CAL: on the bench (2026-11-26) the calibration sequence known from the other CH32 parts
+// left every reading 2048 counts too high, or at zero. Without it the readings are right to a few
+// counts, and channel 18 (the internal calibration channel, half scale) shows the offset, which
+// is taken off here.
+static void adc_init( void )
 {
 	RCC->APB2PCENR |= RCC_APB2Periph_ADC1;
 	RCC->APB2PRSTR |= RCC_APB2Periph_ADC1;
@@ -48,12 +50,6 @@ static void adc_init( int calibrate )
 	ADC1->RSQR1 = 0;                           // one conversion
 	ADC1->CTLR2 = ADC_ADON | ADC_EXTSEL | ADC_EXTTRIG | ADC_TSVREFE;   // software start, Vrefint on
 	Delay_Ms( 2 );
-	if( !calibrate ) return;
-	ADC1->CTLR2 |= ADC_RSTCAL;
-	while( ADC1->CTLR2 & ADC_RSTCAL ) { }
-	ADC1->CTLR2 |= ADC_CAL;
-	while( ADC1->CTLR2 & ADC_CAL ) { }
-	adc_calval = ADC1->RDATAR;
 }
 
 static uint32_t adc_read( int channel )      // sum of 16 conversions
@@ -183,7 +179,7 @@ int main()
 		funPinMode( leds[i], GPIO_CFGLR_OUT_10Mhz_PP );
 		funDigitalWrite( leds[i], FUN_LOW );
 	}
-	adc_init( 1 );
+	adc_init();
 
 	unsigned step = 0;
 	int was_pressed = 1;                       // run the tests once at start
@@ -198,22 +194,16 @@ int main()
 			mic_test();
 		}
 		was_pressed = step ? pressed : 0;
-		if( step % 25 == 0 )                    // ADC diagnostics: raw counts (0..4095), without and with calibration
-		{
-			for( int cal = 0; cal < 2; cal++ )
-			{
-				adc_init( cal );
-				printf( "adc cal=%d calval=%lu raw: pa7=%lu temp=%lu vref=%lu cal18=%lu\n", cal, (unsigned long)adc_calval,
-					(unsigned long)adc_read( 7 ) / 16, (unsigned long)adc_read( 16 ) / 16,
-					(unsigned long)adc_read( 17 ) / 16, (unsigned long)adc_read( 18 ) / 16 );
-			}
-		}
 		if( step % 5 == 0 )
 		{
-			uint32_t ref = adc_read( 17 ), cell = adc_read( 7 );
-			if( !ref ) ref = 1;
-			printf( "b1test %u btn=%d vdd=%lu mV cell=%lu mV\n", step / 5, pressed,
-				(unsigned long)( VREFINT_MV * 4095u * 16u / ref ), (unsigned long)( cell * VREFINT_MV / ref ) );
+			// sums of 16 conversions; the offset is what channel 18 reads above half scale
+			int32_t off = (int32_t)adc_read( 18 ) - 2048 * 16;
+			int32_t ref = (int32_t)adc_read( 17 ) - off, cell = (int32_t)adc_read( 7 ) - off;
+			if( ref < 1 ) ref = 1;
+			if( cell < 0 ) cell = 0;
+			printf( "b1test %u btn=%d vdd=%lu mV cell=%lu mV (adc offset %ld)\n", step / 5, pressed,
+				(unsigned long)( VREFINT_MV * 4095u * 16u / (uint32_t)ref ),
+				(unsigned long)( (uint32_t)cell * VREFINT_MV / (uint32_t)ref ), (long)( off / 16 ) );
 		}
 		step++;
 		Delay_Ms( 200 );

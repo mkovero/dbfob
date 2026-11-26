@@ -73,7 +73,10 @@ Along the stick from the tip:
 - The button reads on PA0 (pull-down, no bounce trouble at a 200 ms poll), and printf over the two debug wires works through the ESP32-S2 (`make monitor`).
 - The yellow LED (590 nm) looks orange next to the green.
 - Boost converter from a bench supply on the contact pads, first test firmware running (MCU awake at 96 MHz, one LED lit): 16.3 mA at 1.5 V. VDD is 3.024 V at 1.5 V in, 3.047 V at 1.0 V, 3.036 V at 0.8 V, and still 3.024 V at 0.57 V. So the rail holds well past the end of an alkaline cell (0.9 V); the firmware's low-battery lockout decides the real end. With a DMM in series for current the board died at 0.66–0.67 V instead (48 mA there): that was the meter's burden voltage, not the converter, and not the supply's current limit.
-- Not yet checked: VDD's ripple, the start-up voltage from 0, the mic, NFC, the cell contacts, Standby.
+- NFC tag from the MCU: powered from PB14, both pull-ups work, it answers at I2C address 0x55 and gives a valid NXP serial number (04 70 36 aa 62 26 90). Its capability bytes are 00: blank, no NDEF format yet.
+- Mic: powered from PA4 and clocked at 2 MHz from SPI1, its bit stream is half ones. Per 512 bits the count stays within 258–261 in a quiet room and swings between 53 and 397 when blown on: it hears.
+- ADC: **do not run the ADC's calibration (RSTCAL/CAL) as on other CH32 parts.** With it, every reading came out 2048 counts too high, or zero. Without it, Vrefint reads 1497 at 3.3 V (1.2 V × 4095 / 1497 = 3.28 V) and the calibration channel 18 reads 2057, 9 counts over half scale; the test firmware takes that off as the offset. The proper sequence for this chip is still to be read from WCH's library.
+- Not yet checked: the cell reading on PA7 from a real supply, VDD's ripple, the start-up voltage from 0, a phone tap, the cell contacts, Standby.
 
 ## On the bench: NFC
 
