@@ -4,7 +4,7 @@ A stick, 10.5 × 78.5 × 1.6 mm, 4 layers, with the mic at the tip and one AAA c
 
 ![top render](production/render-top.png)
 
-**Status: boards arrived, bring-up started 2026-11-26** (see [Bring-up](#bring-up)). Ordered from JLCPCB on 2026-11-16 (commit e3a0548: 5 boards, 4 layers, 1.6 mm, ENIG, Economic PCBA on the top side, mic SPH0655LM4H-1). Redrawn as the AAA stick on 2026-11-09. The first draft (2026-11-03) was a 30 × 26 mm CR2032 board. The [NFC test board](../nfc-test/README.md) shares its antenna, outline and cell but was dropped from the order on 2026-11-12: B1 finds its own trim (see [On the bench](#on-the-bench-nfc)).
+**Status: boards arrived 2026-11-26; board 1 passes bring-up as far as it can go without cell contacts** (see [Bring-up](#bring-up)): supply, MCU, LEDs, button, Standby, mic, and the tag read by a phone after a 22 pF trim. Open: the contacts, FD wake, ripple, boards 2–5. Ordered from JLCPCB on 2026-11-16 (commit e3a0548: 5 boards, 4 layers, 1.6 mm, ENIG, Economic PCBA on the top side, mic SPH0655LM4H-1). Redrawn as the AAA stick on 2026-11-09. The first draft (2026-11-03) was a 30 × 26 mm CR2032 board. The [NFC test board](../nfc-test/README.md) shares its antenna, outline and cell but was dropped from the order on 2026-11-12: B1 finds its own trim (see [On the bench](#on-the-bench-nfc)).
 
 ## What's on it
 

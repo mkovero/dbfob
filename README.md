@@ -10,15 +10,16 @@ dbfob is an open-hardware sound level indicator sized for a keyring. It exists b
 
 ## Status
 
-**Rev A prototype: boards up and measuring. Calibration at loud levels is not done yet.**
+**Rev A prototype: boards up and measuring. Calibration at loud levels is not done yet. Rev B (B1, an AAA stick with NFC) arrived 2026-11-26 and its first board passes bring-up.**
 
 | Part | State |
 |---|---|
 | [Hardware](hardware/README.md) | 5 assembled boards from JLCPCB, arrived 2026-10-12. Three are running, with no assembly faults so far. Standby measures 8.2 µA ([bring-up log](hardware/README.md#bring-up-log)). |
 | [Firmware](firmware/README.md) | Spot check and dosimeter both work: PDM capture, A-weighting, LAeq, dose, and a flash log of the last dosimeter run (40 % CPU, no overruns). At about 61 dBA it reads within 0.5 dB of a consumer meter. The quiet-room floor is about 48 dBA, which doesn't matter for the bands. |
 | [Case](hardware/case/README.md) | Two-shell case, in SLA and FDM builds. The FDM build is printed; a fit check with a board is due this week. |
+| [Rev B board B1](hardware/b1/README.md) | 5 assembled boards from JLCPCB, arrived 2026-11-26: a 10.5 × 78.5 mm stick with one AAA cell on the back, a boost converter, a CH32L103, a new mic and an NFC tag. Board 1 passes every block tested so far ([bring-up](hardware/b1/README.md#bring-up)): it runs and starts from 0.57 V, Standby is 19 µA at 1.5 V, the button wakes it, the mic hears, and a phone reads the tag from a couple of centimetres once the antenna is trimmed (22 pF). It has only bring-up test firmware, the metering firmware is not ported yet. Not done: the cell contacts (it has run from a bench supply only), the wake by a phone tap, supply ripple, boards 2–5, a case. |
 
-Next steps: confirm a full 12 h dosimeter night, then calibrate at 85–105 dBA against a reference meter. See [Next](#next).
+Next steps: confirm a full 12 h dosimeter night, then calibrate at 85–105 dBA against a reference meter. On rev B: fit the cell contacts, finish the bring-up and port the firmware. See [Next](#next).
 
 ## How it works
 
@@ -84,6 +85,8 @@ A cased and a bare fob side by side through a night in front of a big PA: [docs/
 
 ## Hardware
 
+This section describes rev A. Rev B's parts are in [hardware/b1](hardware/b1/README.md).
+
 No radio, no display, no app. The design goal was **under €2 all-in**. The rev A parts come to about $1.85 per board at 1,000 units. A 130 dB-capable mic alone is about €1.2, so sub-€1 is out unless mic prices drop.
 
 | Block | Part | Why |
@@ -112,8 +115,11 @@ A 94 dB pistonphone won't couple to a MEMS port. Calibrate by substitution inste
 ```
 hardware/        KiCad project, generated from the tables in hardware/tools/ (schematic, PCB, JLC outputs)
 hardware/case/   FreeCAD case script, STEP/STL for printing, board geometry it is built from
+hardware/b1/     rev B board (AAA stick, CH32L103, NFC tag): KiCad project, JLC outputs, bring-up log
 firmware/        CH32V003 firmware on ch32fun: PDM capture, A-weighting, LAeq, LEDs, standby, dosimeter and its
                  flash log (tools/dose_log.py decodes it); host tests
+firmware/b1-*/   rev B bring-up tests for the CH32L103: b1-test (LEDs, button, supply, tag, mic),
+                 b1-standby (sleep current), b1-fd (wake by a phone's field)
 docs/            part selection, hardware audit, log readout ideas
 ```
 
@@ -127,7 +133,11 @@ docs/            part selection, hardware audit, log readout ideas
 - [x] Print the case.
 - [ ] Check the printed case: the tolerances, the button flexure and the mic seal.
 - [ ] A calibration procedure anyone can repeat with a known-good meter.
-- [ ] Rev B board ([directions, checked facts, experiments](docs/rev-b.md)): centre the mic port, add UART RX for a bootloader, CH32V002/V006 if in stock, possibly a power latch for shelf life, a way to read the dose log without a programmer ([ideas](docs/log-readout.md)). Full-band A-weighting to 20 kHz: rev A stops at 11.7 kHz, which reads only ~0.2–0.9 dB low on broadband noise, but high-frequency content is exactly what a listener stops noticing after a few drinks at a club. Needs ~47 kHz samples, so an MCU with PDM hardware or the headroom for the 3 MHz mic clock without a battery penalty ([band limit](firmware/README.md#signal-chain)).
+- [x] Rev B board designed and ordered: [B1](hardware/b1/README.md), an AAA stick with a boost converter, a CH32L103 (hardware multiplier, runs from 1.8 V), a mic port at the tip and an NFC tag for reading the dose log without a programmer ([directions, checked facts, experiments](docs/rev-b.md); [readout ideas](docs/log-readout.md)).
+- [x] Rev B first bring-up on board 1: power from 0.57 V, programming, LEDs, button, Standby (19 µA at 1.5 V), mic, tag and antenna trim ([log](hardware/b1/README.md#bring-up)).
+- [ ] Rev B: fit the cell contacts and run from a real AAA; wake by a phone tap; supply ripple at the mic; bring up boards 2–5.
+- [ ] Rev B: port the metering firmware to the CH32L103 and the new mic, and write the log to the tag. Full-band A-weighting to 20 kHz is the goal there: rev A stops at 11.7 kHz, which reads only ~0.2–0.9 dB low on broadband noise, but high-frequency content is exactly what a listener stops noticing after a few drinks at a club ([band limit](firmware/README.md#signal-chain)).
+- [ ] Rev B: a case for the stick.
 - [ ] Dosimeter: confirm the 12 h auto-off and the flash log over a full night, then occlusion (pocket) detection.
 - [ ] Get a batch into a venue and see if people use them.
 
