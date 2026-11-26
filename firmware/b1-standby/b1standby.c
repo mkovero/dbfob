@@ -27,8 +27,7 @@ int main()
 {
 	SystemInit();
 	funGpioInitAll();
-	RCC->APB1PCENR |= RCC_PWREN | RCC_BKPEN;
-	PWR->CTLR |= PWR_CTLR_DBP;
+	RCC->APB1PCENR |= RCC_PWREN;
 
 	uint32_t csr = PWR->CSR;
 	int woke = ( csr & PWR_CSR_WUF ) && ( csr & PWR_CSR_SBF );
@@ -50,12 +49,19 @@ int main()
 	GPIOB->CFGHR = 0;
 	GPIOB->OUTDR = 0;
 
-	PWR->CTLR |= PWR_CTLR_CWUF | PWR_CTLR_CSBF;
+	// The rest follows WCH's own example (EVT/EXAM/PWR/Standby_Mode and PWR_EnterSTANDBYMode).
+	// The USB-PD pins' 5.1 kOhm pull-downs are on after reset: switch them off (PB7 = CC2 shares
+	// its pad with PA10, PB6 = CC1 with PB13).
+	RCC->AHBPCENR |= RCC_USBPD;
+	USBPD->PORT_CC1 &= ~CC_PD;
+	USBPD->PORT_CC2 &= ~CC_PD;
+
 	PWR->CSR |= PWR_CSR_EWUP;
-	// as ch32fun's examples_l103/standby: no RAM retention, flash in low power, Standby on deep sleep
-	PWR->CTLR &= ~( PWR_RAMLV | PWR_CTLR_R18KVBAT | PWR_CTLR_R2KVBAT | PWR_CTLR_R18KSTY |
-		PWR_CTLR_R2KSTY | PWR_CTLR_LDO_EC | PWR_CTLR_AUTO_LDO_EC | PWR_CTLR_FLASH_LP | PWR_CTLR_PVDE );
-	PWR->CTLR |= PWR_CTLR_FLASH_LP_REG | PWR_CTLR_FLASH_LP_1 | PWR_CTLR_PDDS;
+	uint32_t ctlr = PWR->CTLR;
+	ctlr &= ~PWR_CTLR_FLASH_LP;                // flash low-power mode 1
+	ctlr |= PWR_CTLR_FLASH_LP_1;
+	ctlr |= PWR_CTLR_CWUF | PWR_CTLR_PDDS;
+	PWR->CTLR = ctlr;
 	NVIC->SCTLR |= ( 1 << 2 );
 	__WFI();
 
