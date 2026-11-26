@@ -72,7 +72,8 @@ Along the stick from the tip:
 - All four LEDs light in the sweep. The green one is by far the brightest at 3.3 V, the opposite of what the table above expects: R4 needs to go up, not down. Check again on the cell's 3.0 V rail before picking a value.
 - The button reads on PA0 (pull-down, no bounce trouble at a 200 ms poll), and printf over the two debug wires works through the ESP32-S2 (`make monitor`).
 - The yellow LED (590 nm) looks orange next to the green.
-- Not yet checked: the boost converter, the mic, NFC, the cell contacts, Standby.
+- Boost converter from a bench supply on the contact pads (50 mA limit), test firmware running (MCU awake, one LED lit): 16.3 mA at 1.5 V. Turning the supply down, it keeps running to 0.67 V, where it draws 48 mA, close to the supply's limit; at 0.66 V only the green LED lights, below that it dies. So the converter is good past the end of an alkaline cell (0.9 V); the firmware's low-battery lockout decides the real end. VDD not yet measured.
+- Not yet checked: VDD's voltage and ripple, the start-up voltage from 0, the mic, NFC, the cell contacts, Standby.
 
 ## On the bench: NFC
 
