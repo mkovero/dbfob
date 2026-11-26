@@ -23,3 +23,8 @@ firmware/b1-standby/*.bin
 firmware/b1-standby/*.hex
 firmware/b1-standby/*.lst
 firmware/b1-standby/*.map
+firmware/b1-fd/*.elf
+firmware/b1-fd/*.bin
+firmware/b1-fd/*.hex
+firmware/b1-fd/*.lst
+firmware/b1-fd/*.map
