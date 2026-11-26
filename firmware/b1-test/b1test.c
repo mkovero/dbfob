@@ -4,8 +4,9 @@
 //
 // - LED sweep green -> yellow -> red -> red, one step per 200 ms; all four lit while the button is held.
 // - Once a second: a line with the button, VDD and the cell voltage (PA7 through R11).
-// - At start and at every button press: reads the tag's first block over I2C, and clocks the mic
-//   for a moment and reports how many of its bits were ones.
+// - At start and at every button press: reads the tag's first three blocks over I2C, and clocks the
+//   mic for a moment and reports how many of its bits were ones.
+// - At start it also formats a blank tag: NDEF capability bytes and a URL (see nfc_format).
 //
 // Pins (hardware/b1/README.md): PA3 green D1, PA2 yellow D2, PA1 red D3, PA8 red D4 with its
 // cathode on PA10 (held low here), PA0 button to VDD (input with pull-down; never an output),
@@ -94,35 +95,102 @@ static uint8_t i2c_read( int ack )
 	return b;
 }
 
-static void nfc_test( void )
+static void nfc_power( int on )
 {
-	uint8_t blk[16];
-	funDigitalWrite( SCL, 1 );
-	funDigitalWrite( SDA, 1 );
-	funPinMode( SCL, GPIO_CFGLR_OUT_10Mhz_OD );
-	funPinMode( SDA, GPIO_CFGLR_OUT_10Mhz_OD );
-	funPinMode( NFC_VCC, GPIO_CFGLR_OUT_10Mhz_PP );
-	funDigitalWrite( NFC_VCC, 1 );
-	Delay_Ms( 10 );
-	int idle = funDigitalRead( SCL ) | funDigitalRead( SDA ) << 1;   // both should be high: 3
+	if( on )
+	{
+		funDigitalWrite( SCL, 1 );
+		funDigitalWrite( SDA, 1 );
+		funPinMode( SCL, GPIO_CFGLR_OUT_10Mhz_OD );
+		funPinMode( SDA, GPIO_CFGLR_OUT_10Mhz_OD );
+		funPinMode( NFC_VCC, GPIO_CFGLR_OUT_10Mhz_PP );
+		funDigitalWrite( NFC_VCC, 1 );
+		Delay_Ms( 10 );
+	}
+	else
+	{
+		// lines to analog before the tag's supply drops (README: firmware notes)
+		funPinMode( SCL, GPIO_CFGLR_IN_ANALOG );
+		funPinMode( SDA, GPIO_CFGLR_IN_ANALOG );
+		funDigitalWrite( NFC_VCC, 0 );
+	}
+}
 
+static int nfc_read_block( int n, uint8_t * blk )   // returns the three ACKs as 0..7 (7 = all)
+{
 	i2c_start();
-	int a1 = i2c_write( TAG_ADDR << 1 );
-	int a2 = i2c_write( 0 );                   // block 0
+	int a = i2c_write( TAG_ADDR << 1 );
+	a = a << 1 | i2c_write( n );
 	i2c_stop();
 	i2c_start();
-	int a3 = i2c_write( TAG_ADDR << 1 | 1 );
+	a = a << 1 | i2c_write( TAG_ADDR << 1 | 1 );
 	for( int i = 0; i < 16; i++ ) blk[i] = i2c_read( i < 15 );
 	i2c_stop();
+	return a;
+}
 
-	// lines to analog before the tag's supply drops (README: firmware notes)
-	funPinMode( SCL, GPIO_CFGLR_IN_ANALOG );
-	funPinMode( SDA, GPIO_CFGLR_IN_ANALOG );
-	funDigitalWrite( NFC_VCC, 0 );
+static int nfc_write_block( int n, const uint8_t * blk )   // returns 1 if every byte was ACKed
+{
+	i2c_start();
+	int ok = i2c_write( TAG_ADDR << 1 ) & i2c_write( n );
+	for( int i = 0; i < 16; i++ ) ok &= i2c_write( blk[i] );
+	i2c_stop();
+	Delay_Ms( 10 );                            // EEPROM write time (4 ms in the datasheet)
+	return ok;
+}
 
-	printf( "nfc idle=%d ack=%d%d%d block0:", idle, a1, a2, a3 );
+static void print_block( const char * name, int ack, const uint8_t * blk )
+{
+	printf( "%s ack=%d:", name, ack );
 	for( int i = 0; i < 16; i++ ) printf( " %02x", blk[i] );
 	printf( "\n" );
+}
+
+// NDEF message for blocks 1 and 2 (the tag's user memory starts at block 1):
+// TLV 03, length 29; one URI record (D1 01 19 55), prefix 04 = "https://", then the address; FE ends it.
+static const uint8_t ndef[32] = {
+	0x03, 0x1d, 0xd1, 0x01, 0x19, 0x55, 0x04,
+	'g','i','t','h','u','b','.','c','o','m','/','m','k','o','v','e','r','o','/','d','b','f','o','b',
+	0xfe };
+
+// Formats a blank tag: capability container E1 10 6D 00 (NTAG I2C plus 1k) and the URL above.
+// Writes only what differs, so it does nothing on a tag that is already set up.
+static void nfc_format( void )
+{
+	uint8_t blk[16];
+	if( nfc_read_block( 0, blk ) != 7 ) { printf( "nfc format: no tag\n" ); return; }
+	if( blk[12] != 0xe1 || blk[13] != 0x10 || blk[14] != 0x6d || blk[15] != 0x00 )
+	{
+		// Block 0 over I2C: byte 0 is the tag's I2C address (it always reads back as 04), so it
+		// must be written as 0xAA, or the tag moves to another address. Bytes 1-9 are the serial
+		// number and internal bytes (read-only), 10-11 the static lock bits (left at 0).
+		if( blk[10] || blk[11] ) { printf( "nfc format: lock bits set, not touching block 0\n" ); return; }
+		blk[0] = TAG_ADDR << 1;
+		blk[12] = 0xe1; blk[13] = 0x10; blk[14] = 0x6d; blk[15] = 0x00;
+		printf( "nfc format: block 0 written, ok=%d\n", nfc_write_block( 0, blk ) );
+	}
+	for( int n = 1; n <= 2; n++ )
+	{
+		const uint8_t * want = ndef + ( n - 1 ) * 16;
+		int same = nfc_read_block( n, blk ) == 7;
+		for( int i = 0; i < 16; i++ ) same &= blk[i] == want[i];
+		if( !same ) printf( "nfc format: block %d written, ok=%d\n", n, nfc_write_block( n, want ) );
+	}
+}
+
+static void nfc_test( int format )
+{
+	uint8_t blk[16];
+	nfc_power( 1 );
+	int idle = funDigitalRead( SCL ) | funDigitalRead( SDA ) << 1;   // both should be high: 3
+	printf( "nfc idle=%d\n", idle );
+	if( format ) nfc_format();
+	for( int n = 0; n <= 2; n++ )
+	{
+		int a = nfc_read_block( n, blk );
+		print_block( n == 0 ? "nfc block0" : n == 1 ? "nfc block1" : "nfc block2", a, blk );
+	}
+	nfc_power( 0 );
 }
 
 // ---- mic: 2 MHz clock from SPI1, count the ones in its bit stream ----
@@ -190,7 +258,7 @@ int main()
 			funDigitalWrite( leds[i], ( pressed || i == (int)( step & 3 ) ) ? FUN_HIGH : FUN_LOW );
 		if( step == 0 || ( pressed && !was_pressed ) )
 		{
-			nfc_test();
+			nfc_test( step == 0 );             // formats a blank tag once, at start
 			mic_test();
 		}
 		was_pressed = step ? pressed : 0;
